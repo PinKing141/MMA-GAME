@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAGE · MMA Career</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app">
+        <header class="brand">
+            <div class="brand-mark">
+                <div class="brand-logo">CAGE<span class="accent">.</span></div>
+                <div class="brand-tag">MMA Career · Build 0.3</div>
+            </div>
+            <div class="brand-meta">
+                <strong id="phase-label">Phase 1</strong> · Fighter Genesis
+            </div>
+        </header>
+
+        <section class="scene active" id="scene-setup">
+            <div class="eyebrow">Step 01 · Identity</div>
+            <h1 class="scene-title">Shape the fighter<br>before the camp.</h1>
+            <p class="scene-subtitle">Lock in the basics first. Name, nation, and age sit here. The physical frame gets
+                its own page next so you can read the size profile properly.</p>
+
+            <div class="setup-grid">
+                <div class="form-card">
+                    <div class="form-section">
+                        <div class="form-section-label">Identity</div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label class="field-label" for="f-first">First Name</label>
+                                <input id="f-first" type="text" placeholder="e.g. Marcus" maxlength="24" />
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="f-last">Last Name</label>
+                                <input id="f-last" type="text" placeholder="e.g. Adesina" maxlength="24" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label class="field-label" for="f-nation">Country</label>
+                                <select id="f-nation"></select>
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="f-age">Age</label>
+                                <input id="f-age" type="number" min="18" max="28" value="20" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn" id="btn-to-frame">Continue to Physical Frame</button>
+                        <button class="btn ghost" id="btn-randomise-identity">Randomise Identity</button>
+                    </div>
+                    <p class="form-error" id="setup-error" hidden></p>
+                </div>
+
+                <aside class="preview-card">
+                    <div class="preview-title">Prospect Preview</div>
+                    <div class="preview-name" id="pv-name">Unnamed Prospect</div>
+                    <div class="preview-flag" id="pv-flag"></div>
+                    <div class="preview-class-pill" id="pv-class">Welterweight</div>
+
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <div class="label">Height</div>
+                            <div class="value" id="pv-height">5'10"</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Weight</div>
+                            <div class="value" id="pv-weight">170</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Reach</div>
+                            <div class="value" id="pv-reach">5'11"</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Stance</div>
+                            <div class="value" id="pv-stance">Orthodox</div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-frame">
+            <div class="eyebrow">Step 02 · Physical Frame</div>
+            <h1 class="scene-title">Build the frame.<br>See the measurements.</h1>
+            <p class="scene-subtitle">Choose the weight class first, then tune height, reach, and weight on sliders that
+                stay inside that division's physical range.</p>
+
+            <div class="frame-grid">
+                <div class="form-card frame-card">
+                    <div class="form-section">
+                        <div class="form-section-label">Division</div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label class="field-label" for="f-weight-class">Weight Class</label>
+                                <select id="f-weight-class"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-label">Measurements</div>
+                        <div class="slider-stack">
+                            <div class="slider-row">
+                                <div class="slider-head">
+                                    <div>
+                                        <label class="field-label" for="f-height-slider">Height</label>
+                                        <div class="slider-range-hint" id="f-height-range">5'7" - 6'2"</div>
+                                    </div>
+                                    <div class="slider-value" id="f-height-display">5'10"</div>
+                                </div>
+                                <input id="f-height-slider" class="frame-slider" type="range" min="67" max="74"
+                                    value="70" />
+                            </div>
+
+                            <div class="slider-row">
+                                <div class="slider-head">
+                                    <div>
+                                        <label class="field-label" for="f-reach-slider">Reach</label>
+                                        <div class="slider-range-hint" id="f-reach-range">5'7" - 6'5"</div>
+                                    </div>
+                                    <div class="slider-value" id="f-reach-display">5'11"</div>
+                                </div>
+                                <input id="f-reach-slider" class="frame-slider" type="range" min="67" max="77"
+                                    value="71" />
+                            </div>
+
+                            <div class="slider-row">
+                                <div class="slider-head">
+                                    <div>
+                                        <label class="field-label" for="f-weight-slider">Weight</label>
+                                        <div class="slider-range-hint" id="f-weight-range">156 - 170 lbs</div>
+                                    </div>
+                                    <div class="slider-value" id="f-weight-display">170 lbs</div>
+                                </div>
+                                <input id="f-weight-slider" class="frame-slider" type="range" min="156" max="170"
+                                    value="170" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-label">Stance</div>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="hand" value="right" checked />
+                                <span>Orthodox</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="hand" value="left" />
+                                <span>Southpaw</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn" id="btn-allocate">Begin Allocation</button>
+                        <button class="btn ghost" id="btn-randomize">Randomise Prospect</button>
+                        <button class="btn ghost" id="btn-back-setup">Back to Identity</button>
+                    </div>
+                    <p class="form-error" id="frame-error" hidden></p>
+                </div>
+
+                <aside class="preview-card frame-preview-card">
+                    <div class="preview-title">Frame Preview</div>
+                    <div class="preview-name" id="ff-name">Unnamed Prospect</div>
+                    <div class="preview-flag" id="ff-flag"></div>
+                    <div class="preview-class-pill" id="ff-class">Welterweight</div>
+
+                    <div class="preview-stats frame-preview-stats">
+                        <div class="preview-stat">
+                            <div class="label">Height</div>
+                            <div class="value" id="ff-height">5'10"</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Weight</div>
+                            <div class="value" id="ff-weight">170</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Reach</div>
+                            <div class="value" id="ff-reach">5'11"</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="label">Stance</div>
+                            <div class="value" id="ff-stance">Orthodox</div>
+                        </div>
+                    </div>
+
+                    <div class="frame-summary-box">
+                        <div class="path-title">Why this page exists</div>
+                        <p>Reach now reads in feet and inches, and the physical frame is isolated from the stat build so
+                            you can judge size before style.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-allocate">
+            <div class="eyebrow">Step 03 · Build Board</div>
+            <h1 class="scene-title">Tune the sheet.<br>Define the style.</h1>
+            <p class="scene-subtitle">Each fighter starts at 10 in every attribute. You have <strong
+                    class="accent-text">1000 points</strong> to shape a boxer, kick boxer, wrestler, grappler, or a true
+                all-rounder. Every preset carries clear strengths and clear trade-offs.</p>
+
+            <div class="alloc-header">
+                <div class="alloc-title">
+                    Attribute Allocation
+                    <small id="alloc-name">Unnamed Prospect</small>
+                </div>
+                <div class="points-counter">
+                    <div class="label">Points Remaining</div>
+                    <div class="value" id="points-left">1000</div>
+                </div>
+                <div class="ovr-badge">
+                    <div class="label">OVR</div>
+                    <div class="value" id="ovr-value">10</div>
+                </div>
+            </div>
+
+            <div class="alloc-grid">
+                <div class="alloc-categories" id="alloc-categories"></div>
+
+                <aside class="alloc-side">
+                    <div class="build-card">
+                        <div class="title">Build Board</div>
+                        <div class="build-stage-copy">
+                            <span>Attribute chassis</span>
+                            <strong>Standup · Grappling · Health · Mind</strong>
+                        </div>
+                        <div class="build-stage">
+                            <div class="build-visual-panel">
+                                <div class="build-visual-copy">
+                                    <span>Style footprint</span>
+                                    <p>The radar updates live so the shape of the build stays readable while you spend
+                                        points.</p>
+                                </div>
+                                <svg viewBox="-150 -150 300 300" class="hex-svg" id="hex-svg"></svg>
+                            </div>
+                        </div>
+                        <div class="build-category-meters" id="build-category-meters"></div>
+                    </div>
+
+                    <div class="info-card" id="info-card">
+                        <div class="title">Attribute Detail</div>
+                        <div class="stat-name" id="info-name">Punch Speed</div>
+                        <div class="stat-cat" id="info-cat">STU · Standup</div>
+                        <div class="stat-desc" id="info-desc">Affects the speed of punches.</div>
+                    </div>
+
+                    <div class="preset-card">
+                        <div class="title">Archetypes</div>
+                        <div class="preset-focus">
+                            <div class="preset-focus-head">
+                                <div class="preset-focus-icon" id="preset-icon"></div>
+                                <div>
+                                    <div class="preset-focus-name" id="preset-name">All-Rounder</div>
+                                    <p class="preset-focus-blurb" id="preset-blurb"></p>
+                                </div>
+                            </div>
+                            <p class="preset-style-note" id="preset-style-note"></p>
+                            <p class="preset-focus-detail" id="preset-detail"></p>
+                            <div class="archetype-examples-block">
+                                <div class="modifier-title">Known Examples</div>
+                                <div class="archetype-example-list" id="preset-examples"></div>
+                            </div>
+                            <div class="modifier-columns">
+                                <div class="modifier-block">
+                                    <div class="modifier-title">Strengths</div>
+                                    <ul class="modifier-list" id="preset-strengths"></ul>
+                                </div>
+                                <div class="modifier-block">
+                                    <div class="modifier-title">Weaknesses</div>
+                                    <ul class="modifier-list" id="preset-weaknesses"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preset-buttons" id="preset-buttons"></div>
+                        <button class="btn ghost small full-width" id="btn-reset-build">Reset Build</button>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="actions">
+                <button class="btn" id="btn-finalize">Finalise Fighter</button>
+                <button class="btn ghost" id="btn-back-frame">Back to Frame</button>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-profile">
+            <div class="eyebrow">Fighter Profile · Pro Debut Pending</div>
+
+            <div class="profile-header">
+                <div class="profile-id">
+                    <div class="profile-class-pill" id="pr-class">Welterweight</div>
+                    <div class="name" id="pr-name">Unnamed Fighter</div>
+                    <div class="nickname-slot" id="pr-nickname">Nickname unearned · win it in the cage</div>
+                    <div class="profile-discipline-tag" id="pr-discipline">All-Rounder</div>
+                    <p class="profile-style-note" id="pr-style-note"></p>
+                    <div class="meta">
+                        <span id="pr-flag"></span>
+                        <span class="sep">/</span>
+                        <span id="pr-age">20 y/o</span>
+                        <span class="sep">/</span>
+                        <span id="pr-stance">Orthodox</span>
+                        <span class="sep">/</span>
+                        <span id="pr-record">0-0-0 (Pro Debut)</span>
+                    </div>
+                </div>
+                <div class="profile-vitals">
+                    <div class="profile-vital">
+                        <div class="label">Height</div>
+                        <div class="value" id="pr-height">5'10"</div>
+                    </div>
+                    <div class="profile-vital">
+                        <div class="label">Weight</div>
+                        <div class="value" id="pr-weight">170</div>
+                    </div>
+                    <div class="profile-vital">
+                        <div class="label">Reach</div>
+                        <div class="value" id="pr-reach">5'11"</div>
+                    </div>
+                    <div class="profile-vital">
+                        <div class="label">Overall</div>
+                        <div class="ovr-big" id="pr-ovr">10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+                <div class="profile-groups" id="profile-groups"></div>
+
+                <div class="identity-card">
+                    <div class="stat-card-header">
+                        <span class="title">Build Identity</span>
+                        <span class="avg">Nearest Style <strong id="identity-name">Preset</strong></span>
+                    </div>
+                    <div class="identity-hero">
+                        <div class="identity-hero-icon" id="profile-archetype-icon"></div>
+                        <div class="identity-hero-copy">
+                            <p id="profile-archetype-blurb"></p>
+                            <p class="preset-focus-detail" id="profile-archetype-detail"></p>
+                        </div>
+                    </div>
+                    <div class="archetype-examples-block profile-examples-block">
+                        <div class="modifier-title">Known Examples</div>
+                        <div class="archetype-example-list" id="profile-archetype-examples"></div>
+                    </div>
+                    <div class="build-category-meters profile-meter-grid" id="profile-category-meters"></div>
+                    <div class="modifier-columns profile-modifiers">
+                        <div class="modifier-block">
+                            <div class="modifier-title">Strengths</div>
+                            <ul class="modifier-list" id="profile-strengths"></ul>
+                        </div>
+                        <div class="modifier-block">
+                            <div class="modifier-title">Weaknesses</div>
+                            <ul class="modifier-list" id="profile-weaknesses"></ul>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-header split-top">
+                        <span class="title">Career State</span>
+                        <span class="avg" id="career-day">Week 1</span>
+                    </div>
+                    <div class="career-row">
+                        <div class="career-stat">
+                            <div class="label">Fitness</div>
+                            <div class="value" id="career-fitness">100<span class="unit">%</span></div>
+                        </div>
+                        <div class="career-stat">
+                            <div class="label">Morale</div>
+                            <div class="value" id="career-morale">100<span class="unit">%</span></div>
+                        </div>
+                        <div class="career-stat">
+                            <div class="label">Sharpness</div>
+                            <div class="value" id="career-sharpness">35<span class="unit">%</span></div>
+                        </div>
+                        <div class="career-stat">
+                            <div class="label">Reputation</div>
+                            <div class="value" id="career-reputation">0</div>
+                        </div>
+                    </div>
+                    <div class="nick-info" id="career-story">Nicknames are earned through cage performance. The archetype only sets the
+                        foundation. The finishes decide what the sport remembers.</div>
+                </div>
+            </div>
+
+            <div class="continue-bar">
+                <div class="text">
+                    <div class="head" id="profile-next-head">Next: Pick an Opponent · Then Build Camp</div>
+                    <p id="profile-next-copy">Pick a head coach, stack training blocks, and tune your first game plan around the style you just
+                        built.</p>
+                </div>
+                <button class="btn" id="btn-profile-progress">Select Opponent</button>
+                <button class="btn ghost small" id="btn-restart">Start Over</button>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-opponent">
+            <div class="eyebrow">Step 05 · Matchmaking</div>
+            <h1 class="scene-title">Book the debut.<br>Choose the problem first.</h1>
+            <p class="scene-subtitle">Camp should answer a matchup, not a guess. Pick the opponent before the gym opens.</p>
+
+            <div class="opponent-grid">
+                <div class="opponent-main-card">
+                    <div class="stat-card-header">
+                        <span class="title">Available Opponents</span>
+                        <span class="avg">Debut Board</span>
+                    </div>
+                    <div class="opponent-list" id="opponent-cards"></div>
+                </div>
+
+                <aside class="opponent-side">
+                    <div class="identity-card opponent-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Your Booking</span>
+                            <span class="avg">OVR <strong id="opponent-player-ovr">10</strong></span>
+                        </div>
+                        <div class="preview-class-pill" id="opponent-player-class">Welterweight</div>
+                        <div class="career-row opponent-player-meta">
+                            <div class="career-stat">
+                                <div class="label">Player Rank</div>
+                                <div class="value" id="opponent-player-rank">NR</div>
+                            </div>
+                            <div class="career-stat">
+                                <div class="label">Cash</div>
+                                <div class="value opponent-money" id="opponent-player-cash">$0</div>
+                            </div>
+                        </div>
+                        <div class="opponent-summary" id="opponent-summary"></div>
+                        <p class="gym-complete-note" id="opponent-cut-note"></p>
+                        <div class="stat-card-header split-top">
+                            <span class="title">Division Rankings</span>
+                            <span class="avg">Live Board</span>
+                        </div>
+                        <div class="ranking-board" id="opponent-rankings"></div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="continue-bar">
+                <div class="text">
+                    <div class="head">The opponent now drives the camp</div>
+                    <p>Once the fight is booked, coach selection, injury risk, and the weight cut all matter inside training camp.</p>
+                </div>
+                <button class="btn" id="btn-begin-camp" disabled>Take Fight To Camp</button>
+                <button class="btn ghost" id="btn-back-profile-from-opponent">Back to Profile</button>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-gym">
+            <div class="eyebrow">Step 06 · Gym Camp</div>
+            <h1 class="scene-title">Train the prospect.<br>Build the first camp.</h1>
+            <p class="scene-subtitle">Each week is a choice. Raise the right skills, manage fatigue, and leave camp sharper than you entered.</p>
+
+            <div class="gym-grid">
+                <div class="gym-main-card">
+                    <div class="gym-header">
+                        <div>
+                            <div class="preview-title">Camp Fighter</div>
+                            <div class="preview-name" id="gym-name">Unnamed Fighter</div>
+                        </div>
+                        <div class="gym-week-pill" id="gym-week">Week 1 of 4</div>
+                    </div>
+
+                    <div class="gym-brief-grid">
+                        <div class="gym-brief-card">
+                            <div class="modifier-title">Booked Opponent</div>
+                            <div id="gym-opponent-summary"></div>
+                        </div>
+                        <div class="gym-brief-card">
+                            <div class="modifier-title">Choose Coach</div>
+                            <div class="coach-grid" id="gym-coaches"></div>
+                        </div>
+                    </div>
+
+                    <div class="gym-status" id="gym-status"></div>
+                    <div class="gym-action-grid" id="gym-actions"></div>
+                </div>
+
+                <aside class="gym-side">
+                    <div class="identity-card gym-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Camp Snapshot</span>
+                            <span class="avg">4 Week Block</span>
+                        </div>
+                        <div class="career-row" id="gym-metrics"></div>
+                        <p class="gym-complete-note" id="gym-coach-note"></p>
+                        <p class="gym-complete-note" id="gym-complete-note"></p>
+                    </div>
+
+                    <div class="identity-card gym-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Risk Report</span>
+                            <span class="avg">Camp Wear</span>
+                        </div>
+                        <div class="gym-injury-list" id="gym-injuries"></div>
+                    </div>
+
+                    <div class="identity-card gym-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Training Log</span>
+                            <span class="avg">Camp Notes</span>
+                        </div>
+                        <div class="gym-log" id="gym-history"></div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="continue-bar">
+                <div class="text">
+                    <div class="head">Camp changes now feed fight night directly</div>
+                    <p>Coach bonuses, injuries, the cut, and overtraining now follow the fighter into the booked fight.</p>
+                </div>
+                <button class="btn" id="btn-fight-night" disabled>Fight Night</button>
+                <button class="btn ghost" id="btn-back-profile-from-gym">Back to Profile</button>
+            </div>
+        </section>
+
+        <section class="scene" id="scene-fight">
+            <div class="eyebrow">Step 07 · Fight Night</div>
+            <h1 class="scene-title">Walk to the cage.<br>See if camp held up.</h1>
+            <p class="scene-subtitle">The fight result now reads from your build, your booked opponent, and everything that happened through camp.</p>
+
+            <div class="fight-grid">
+                <div class="fight-main-card">
+                    <div class="fight-matchup-grid">
+                        <div class="fight-fighter-card">
+                            <div class="modifier-title">Player</div>
+                            <div class="fight-fighter-name" id="fight-player-name">Unnamed Fighter</div>
+                            <p class="fight-fighter-meta" id="fight-player-meta"></p>
+                        </div>
+                        <div class="fight-fighter-card">
+                            <div class="modifier-title">Opponent</div>
+                            <div class="fight-fighter-name" id="fight-opponent-name">Booked Opponent</div>
+                            <p class="fight-fighter-meta" id="fight-opponent-meta"></p>
+                        </div>
+                    </div>
+
+                    <div class="identity-card fight-result-card">
+                        <div class="stat-card-header">
+                            <span class="title">Fight Result</span>
+                            <span class="avg">Sim Readout</span>
+                        </div>
+                        <div class="fight-result-headline" id="fight-result-headline">No fight booked</div>
+                        <p class="fight-result-copy" id="fight-result-copy">Select an opponent and finish camp before running the fight.</p>
+                        <div class="fight-note-list" id="fight-result-notes"></div>
+                    </div>
+                </div>
+
+                <aside class="fight-side">
+                    <div class="identity-card fight-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Camp Readout</span>
+                            <span class="avg">Fight Inputs</span>
+                        </div>
+                        <div id="fight-camp-readout"></div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="continue-bar">
+                <div class="text">
+                    <div class="head">A complete camp is now routed into the fight</div>
+                    <p>The result uses the final build, the booked opponent, and the condition you carried into the cage.</p>
+                </div>
+                <button class="btn" id="btn-simulate-fight">Simulate Fight</button>
+                <button class="btn ghost small" id="btn-back-gym">Back to Camp</button>
+                <button class="btn ghost" id="btn-fight-back-profile">Back to Profile</button>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
