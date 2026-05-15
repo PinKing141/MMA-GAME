@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18" role="img" aria-labelledby="title">
+  <title>Flag of Chechnya</title>
+  <rect width="27" height="18" fill="#ffffff"/>
+  <rect x="4" width="23" height="13" fill="#129447"/>
+  <rect x="4" y="13" width="23" height="5" fill="#d53a34"/>
+  <path d="M1.2 1.3h1v15.4h-1zM2.6 1.3h.5v15.4h-.5z" fill="#f0b539"/>
+  <path d="M.6 2.2c.7.2 1.1.6 1.5 1.1.4-.5.8-.9 1.5-1.1-.7.9-1.1 1.9-1.5 2.9-.4-1- .8-2  -1.5-2.9Zm0 4.5c.7.2 1.1.6 1.5 1.1.4-.5.8-.9 1.5-1.1-.7.9-1.1 1.9-1.5 2.9-.4-1-.8-2-1.5-2.9Zm0 4.5c.7.2 1.1.6 1.5 1.1.4-.5.8-.9 1.5-1.1-.7.9-1.1 1.9-1.5 2.9-.4-1-.8-2-1.5-2.9Z" fill="#f0b539"/>
+</svg>
