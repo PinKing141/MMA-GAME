@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../src/octagon-design.css">
 <style>
 /* Inline :root mirrors the canonical OCTAGON tokens from /src/octagon-design.css.
    Keep both in lockstep — see DESIGN.md. */
@@ -998,10 +997,12 @@ document.addEventListener('DOMContentLoaded', () => {
   setStatus('blue', 'pending');
   setLog('Awaiting ceremony…');
 
-  // Auto-start the ceremony shortly after load — game can override via setFighters first.
-  setTimeout(() => {
-    window.WeighIn.autoRun();
-  }, 600);
+  // When opened standalone, auto-start. When embedded by the career app,
+  // wait for the bridge to call setFighters/setVenue/autoRun().
+  const embedded = new URLSearchParams(window.location.search).get('embed') === '1';
+  if (!embedded) {
+    setTimeout(() => { window.WeighIn.autoRun(); }, 600);
+  }
 });
 </script>
 

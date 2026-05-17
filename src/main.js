@@ -7,7 +7,10 @@ import {
     openFightSceneAction,
     openGymSceneAction,
     openOpponentSceneAction,
+    openPostFightInterviewAction,
+    openPreFightInterviewAction,
     openProfileSceneAction,
+    openWeighInAction,
     selectCoachAction,
     selectEventAction,
     selectOpponentAction,
@@ -15,6 +18,8 @@ import {
     simulateFightAction
 } from './lib/actions/career-actions.js';
 import { closeFightReplayModal, openFightReplayModal } from './lib/fight-engine-bridge.js';
+import { closeInterviewModal } from './lib/interview-bridge.js';
+import { closeWeighInModal } from './lib/weigh-in-bridge.js';
 import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, restartGameAction } from './lib/actions/setup-actions.js';
 import { state } from './lib/core.js';
 import { formatSaveStatus, getSavedGameMeta, hasSavedGame, loadGameState, SAVE_META_EVENT, saveGameState, scheduleGameSave } from './lib/persistence.js';
@@ -174,7 +179,25 @@ function wireEvents() {
     });
 
     document.getElementById('btn-fight-night').addEventListener('click', () => {
-        openFightSceneAction();
+        if (!openWeighInAction()) {
+            openFightSceneAction();
+        }
+    });
+
+    document.getElementById('btn-close-weigh-in').addEventListener('click', () => {
+        closeWeighInModal();
+        openPreFightInterviewAction();
+    });
+
+    document.getElementById('btn-close-interview').addEventListener('click', () => {
+        closeInterviewModal();
+        // After a pre-fight presser, advance into the fight scene if camp is ready.
+        // After a post-fight presser, drop back to the career hub.
+        if (state.career.lastFightResult && state.career.contract === null) {
+            openProfileSceneAction();
+        } else {
+            openFightSceneAction();
+        }
     });
 
     document.getElementById('btn-back-gym').addEventListener('click', () => {
@@ -195,6 +218,10 @@ function wireEvents() {
         closeFightReplayModal();
     });
 
+    document.getElementById('btn-post-fight-presser').addEventListener('click', () => {
+        openPostFightInterviewAction();
+    });
+
     document.getElementById('btn-fight-back-profile').addEventListener('click', () => {
         openProfileSceneAction();
     });
@@ -212,6 +239,17 @@ function wireEvents() {
     document.addEventListener('click', event => {
         if (event.target.closest('[data-close-fight-replay]')) {
             closeFightReplayModal();
+            return;
+        }
+
+        if (event.target.closest('[data-close-weigh-in]')) {
+            closeWeighInModal();
+            openPreFightInterviewAction();
+            return;
+        }
+
+        if (event.target.closest('[data-close-interview]')) {
+            closeInterviewModal();
             return;
         }
 
@@ -244,6 +282,8 @@ function wireEvents() {
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             closeFightReplayModal();
+            closeWeighInModal();
+            closeInterviewModal();
         }
     });
 }

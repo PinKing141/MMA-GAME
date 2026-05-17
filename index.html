@@ -306,7 +306,9 @@
         </section>
 
         <section class="scene" id="scene-profile">
-            <div class="eyebrow">Career Hub · First Fight Ahead</div>
+            <div class="eyebrow">Career Hub · Your Run So Far</div>
+            <h1 class="scene-title">The career hub.<br>Plan the next move.</h1>
+            <p class="scene-subtitle">Your build, your record, and what comes next — all on one page. Fight offers, camp, weigh-in, and presser flow from here.</p>
 
             <div class="profile-header">
                 <div class="profile-id">
@@ -578,6 +580,7 @@
                 </div>
                 <button class="btn" id="btn-simulate-fight">Run Career Fight</button>
                 <button class="btn ghost" id="btn-open-fight-replay" hidden>Open Live Fight</button>
+                <button class="btn ghost" id="btn-post-fight-presser" hidden>Post-Fight Presser</button>
                 <button class="btn ghost small" id="btn-back-gym">Back to Camp</button>
                 <button class="btn ghost" id="btn-fight-back-profile">Back to Profile</button>
             </div>
@@ -595,6 +598,34 @@
                 <button class="btn ghost small" id="btn-close-fight-replay">Close</button>
             </div>
             <iframe id="fight-engine-frame" class="fight-replay-frame" src="/fight-engine/index.html" title="Octagon live fight" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <div class="fight-replay-modal" id="weigh-in-modal" hidden>
+        <div class="fight-replay-backdrop" data-close-weigh-in></div>
+        <div class="fight-replay-window" role="dialog" aria-modal="true" aria-label="Weigh-in ceremony">
+            <div class="fight-replay-topbar">
+                <div>
+                    <div class="eyebrow">Fight Week</div>
+                    <div class="fight-replay-title">Ceremonial Weigh-In</div>
+                </div>
+                <button class="btn ghost small" id="btn-close-weigh-in">Continue To Presser</button>
+            </div>
+            <iframe id="weigh-in-frame" class="fight-replay-frame" title="Octagon weigh-in" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <div class="fight-replay-modal" id="interview-modal" hidden>
+        <div class="fight-replay-backdrop" data-close-interview></div>
+        <div class="fight-replay-window" role="dialog" aria-modal="true" aria-label="Press conference">
+            <div class="fight-replay-topbar">
+                <div>
+                    <div class="eyebrow" id="interview-modal-eyebrow">Fight Week</div>
+                    <div class="fight-replay-title" id="interview-modal-title">Press Conference</div>
+                </div>
+                <button class="btn ghost small" id="btn-close-interview">Close</button>
+            </div>
+            <iframe id="interview-frame" class="fight-replay-frame" title="Octagon press conference" loading="lazy"></iframe>
         </div>
     </div>
 

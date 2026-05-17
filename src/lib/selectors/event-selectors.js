@@ -1,6 +1,9 @@
 import { getOverallAverage, getWeightClassEntry, state } from '../core.js';
 import { formatMoney, formatRecord, getRankLabel } from '../utils/formatters.js';
 import { getContractPreview } from '../actions/contract-actions.js';
+import { getEventLockReason } from '../data/events.js';
+import { getFlagEmoji } from '../fight-week-adapter.js';
+import { describeOpponentStyle } from '../utils/style-flavor.js';
 import { getPlayerRank } from './career-selectors.js';
 
 export function getOpponentViewModel() {
@@ -44,21 +47,25 @@ export function getOpponentViewModel() {
         playerClass: getWeightClassEntry(state.setup.weight).name,
         playerRankLabel: getRankLabel(playerRank),
         playerCash: formatMoney(state.career.cash),
-        eventCards: state.career.availableEvents.map(event => ({
-            id: event.id,
-            selected: state.career.selectedEvent?.id === event.id,
-            disabled: state.career.reputation < event.reputationRequired,
-            name: event.name,
-            sub: `${event.venue} · ${event.location}`,
-            overall: state.career.reputation < event.reputationRequired ? `Rep ${event.reputationRequired}` : event.stageLabel,
-            meta: state.career.reputation < event.reputationRequired
-                ? `Locked · Need ${event.reputationRequired} reputation`
-                : `${event.stageLabel} · Show ${formatMoney(event.showMoney)} · Win ${formatMoney(event.winBonus)}`,
-            blurb: event.blurb,
-            economy: state.career.reputation < event.reputationRequired
-                ? 'Build your name with wins to unlock this card.'
-                : `Rep bonus +${event.reputationBonus}`
-        })),
+        eventCards: state.career.availableEvents.map(event => {
+            const lockReason = getEventLockReason(event, state.career, playerRank);
+            const locked = Boolean(lockReason);
+            return {
+                id: event.id,
+                selected: state.career.selectedEvent?.id === event.id,
+                disabled: locked,
+                name: event.name,
+                sub: `${event.venue} · ${event.location}`,
+                overall: locked ? 'Locked' : event.stageLabel,
+                meta: locked
+                    ? `Locked · ${lockReason}`
+                    : `${event.stageLabel} · Show ${formatMoney(event.showMoney)} · Win ${formatMoney(event.winBonus)}`,
+                blurb: event.blurb,
+                economy: locked
+                    ? `Earn the booking. ${lockReason}`
+                    : `Rep bonus +${event.reputationBonus}`
+            };
+        }),
         selectedOpponentSummary: selectedOpponent
             ? {
                 name: selectedOpponent.name,
@@ -70,16 +77,23 @@ export function getOpponentViewModel() {
                 purse: formatMoney(selectedOpponent.purse)
             }
             : null,
-        opponentCards: state.career.availableOpponents.map(opponent => ({
-            id: opponent.id,
-            selected: state.career.selectedOpponent?.id === opponent.id,
-            name: opponent.name,
-            sub: `${opponent.nickname} · ${formatRecord(opponent.record)}`,
-            overall: opponent.overall,
-            meta: `${getRankLabel(opponent.rank)} · ${opponent.archetype.name} · ${opponent.difficulty}`,
-            blurb: opponent.blurb,
-            economy: `Purse ${formatMoney(opponent.purse)} · Gym pull ${opponent.gymReputation}`
-        })),
+        opponentCards: state.career.availableOpponents.map(opponent => {
+            const style = describeOpponentStyle(opponent);
+            return {
+                id: opponent.id,
+                selected: state.career.selectedOpponent?.id === opponent.id,
+                name: opponent.name,
+                sub: `"${opponent.nickname}" · ${formatRecord(opponent.record)}`,
+                overall: opponent.overall,
+                rank: opponent.rank,
+                flag: getFlagEmoji(opponent.country?.code || opponent.countryCode),
+                primaryStyle: style.primary,
+                styleFlavor: style.flavor,
+                meta: `${getRankLabel(opponent.rank)} · ${opponent.difficulty}`,
+                blurb: opponent.blurb,
+                economy: `Purse ${formatMoney(opponent.purse)} · Gym pull ${opponent.gymReputation}`
+            };
+        }),
         rankingRows: rankingRows.map(entry => ({
             ...entry,
             rankLabel: getRankLabel(entry.rank)

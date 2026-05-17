@@ -8,6 +8,7 @@ import {
     statColorClass
 } from '../lib/core.js';
 import { getProfileViewModel } from '../lib/selectors/profile-selectors.js';
+import { describeFighterStyle } from '../lib/utils/style-flavor.js';
 import { renderArchetypeExamples, renderArchetypeImage, renderCategoryStat, renderCountryBadge, renderModifierList } from '../lib/ui/markup.js';
 
 export function renderProfile() {
@@ -15,8 +16,9 @@ export function renderProfile() {
 
     document.getElementById('pr-name').textContent = vm.fullName;
     document.getElementById('pr-class').textContent = vm.weightClass;
-    document.getElementById('pr-discipline').textContent = vm.archetype.name;
-    document.getElementById('pr-style-note').textContent = vm.archetype.styleNote;
+    const style = describeFighterStyle(vm.archetype, state.stats);
+    document.getElementById('pr-discipline').textContent = style.primary;
+    document.getElementById('pr-style-note').textContent = `${vm.archetype.styleNote} ${style.flavor}`;
     document.getElementById('pr-flag').innerHTML = renderCountryBadge(vm.country);
     document.getElementById('pr-age').textContent = vm.ageLabel;
     document.getElementById('pr-stance').textContent = vm.stanceLabel;
