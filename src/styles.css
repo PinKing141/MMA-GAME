@@ -2948,3 +2948,151 @@ body.fight-replay-open {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+ * Editorial opponent card · monogram avatar + style flavor
+ * ============================================================ */
+
+.opponent-card {
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.opponent-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border-strong);
+    pointer-events: none;
+}
+
+.opponent-card.event-card::before { background: var(--gold); }
+.opponent-card.fighter-card::before { background: var(--red-bright); }
+.opponent-card.fighter-card.selected::before { background: var(--gold-bright); }
+
+.opponent-card:hover,
+.opponent-card.selected {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: 0 20px 60px -20px var(--red-glow);
+}
+
+.opponent-card.event-card:hover,
+.opponent-card.event-card.selected {
+    box-shadow: 0 20px 60px -20px var(--gold-glow);
+}
+
+.opponent-card-head {
+    align-items: center;
+}
+
+.opponent-card-head-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.opponent-avatar {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--surface-3);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.opponent-avatar.tier-elite { border-color: var(--gold-bright); }
+.opponent-avatar.tier-ranked { border-color: var(--red-bright); }
+.opponent-avatar.tier-prospect { border-color: var(--border-strong); }
+
+.opponent-avatar-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 60%, var(--red-glow), transparent 70%);
+    opacity: 0.55;
+}
+
+.opponent-avatar.tier-elite .opponent-avatar-glow {
+    background: radial-gradient(circle at 50% 60%, var(--gold-glow), transparent 70%);
+    opacity: 0.7;
+}
+
+.opponent-avatar.tier-prospect .opponent-avatar-glow {
+    opacity: 0.25;
+}
+
+.opponent-avatar-mono {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    line-height: 1;
+}
+
+.opponent-avatar-flag {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    line-height: 1;
+    z-index: 2;
+}
+
+.opponent-style-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: baseline;
+    margin-top: 2px;
+}
+
+.opponent-primary-style {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-bright);
+    padding: 3px 8px;
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    border-radius: 2px;
+}
+
+.opponent-flavor-style {
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Disabled (locked) event cards keep their stripe muted */
+.opponent-card.event-card:disabled::before { background: var(--border); opacity: 0.6; }
+.opponent-card.event-card:disabled .opponent-card-economy { color: var(--text-dim); }
+
+/* ============================================================
+ * Career hub — re-skin the profile scene as a championship-night hub
+ * ============================================================ */
+.scene-eyebrow-career-hub::before { background: var(--gold-bright); }
+

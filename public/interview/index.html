@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../src/octagon-design.css">
 <style>
 /* Inline :root mirrors the canonical OCTAGON tokens from /src/octagon-design.css.
    Keep both in lockstep — see DESIGN.md. */
@@ -1392,11 +1391,12 @@ document.addEventListener('DOMContentLoaded', () => {
   setTension(0);
   setHype(0);
 
-  // Game gets a short window to call setFighters / setVenue / setFormat
-  // before the auto-run kicks in. If it doesn't, run with defaults.
-  setTimeout(() => {
-    autoRun();
-  }, 600);
+  // When opened standalone, auto-start. When embedded by the career app,
+  // wait for the bridge to call setFighters/setVenue/run().
+  const embedded = new URLSearchParams(window.location.search).get('embed') === '1';
+  if (!embedded) {
+    setTimeout(() => { autoRun(); }, 600);
+  }
 });
 </script>
 

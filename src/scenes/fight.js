@@ -14,6 +14,7 @@ export function renderFightScene() {
         document.getElementById('btn-simulate-fight').disabled = !vm.canSimulate;
         document.getElementById('btn-back-gym').disabled = !vm.canBackToCamp;
         document.getElementById('btn-open-fight-replay').hidden = true;
+        document.getElementById('btn-post-fight-presser').hidden = true;
         return;
     }
 
@@ -33,4 +34,5 @@ export function renderFightScene() {
     document.getElementById('btn-simulate-fight').disabled = !vm.canSimulate;
     document.getElementById('btn-back-gym').disabled = !vm.canBackToCamp;
     document.getElementById('btn-open-fight-replay').hidden = !vm.canReplay;
+    document.getElementById('btn-post-fight-presser').hidden = !vm.hasResult;
 }

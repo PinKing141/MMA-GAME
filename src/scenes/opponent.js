@@ -2,6 +2,33 @@ import { syncAvailableEvents } from '../lib/actions/event-actions.js';
 import { syncAvailableOpponents } from '../lib/actions/career-state.js';
 import { getOpponentViewModel } from '../lib/selectors/event-selectors.js';
 
+function getInitials(name) {
+    return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0]?.toUpperCase() || '')
+        .join('');
+}
+
+function getTierClass(opponent) {
+    if (typeof opponent.rank === 'number' && opponent.rank <= 10) return 'tier-elite';
+    if (typeof opponent.rank === 'number' && opponent.rank <= 25) return 'tier-ranked';
+    return 'tier-prospect';
+}
+
+function renderOpponentAvatar(opponent) {
+    const initials = getInitials(opponent.name);
+    const tierClass = getTierClass(opponent);
+    return `
+        <div class="opponent-avatar ${tierClass}" aria-hidden="true">
+            <div class="opponent-avatar-glow"></div>
+            <div class="opponent-avatar-mono">${initials}</div>
+            <div class="opponent-avatar-flag">${opponent.flag || ''}</div>
+        </div>
+    `;
+}
+
 export function renderOpponentScene() {
     syncAvailableOpponents();
     syncAvailableEvents();
@@ -12,7 +39,7 @@ export function renderOpponentScene() {
     document.getElementById('opponent-player-rank').textContent = vm.playerRankLabel;
     document.getElementById('opponent-player-cash').textContent = vm.playerCash;
     document.getElementById('opponent-event-cards').innerHTML = vm.eventCards.map(event => `
-        <button class="opponent-card ${event.selected ? 'selected' : ''}" data-event-id="${event.id}" ${event.disabled ? 'disabled' : ''}>
+        <button class="opponent-card event-card ${event.selected ? 'selected' : ''}" data-event-id="${event.id}" ${event.disabled ? 'disabled' : ''}>
             <div class="opponent-card-head">
                 <div>
                     <div class="opponent-card-name">${event.name}</div>
@@ -28,11 +55,16 @@ export function renderOpponentScene() {
     document.getElementById('opponent-cards').innerHTML = vm.opponentCards.length === 0
         ? `<p class="opponent-summary-empty">No matchups in the ${vm.playerClass} division yet. Check back once the roster fills out.</p>`
         : vm.opponentCards.map(opponent => `
-        <button class="opponent-card ${opponent.selected ? 'selected' : ''}" data-opponent-id="${opponent.id}">
+        <button class="opponent-card fighter-card ${opponent.selected ? 'selected' : ''}" data-opponent-id="${opponent.id}">
             <div class="opponent-card-head">
-                <div>
+                ${renderOpponentAvatar(opponent)}
+                <div class="opponent-card-head-text">
                     <div class="opponent-card-name">${opponent.name}</div>
                     <div class="opponent-card-sub">${opponent.sub}</div>
+                    <div class="opponent-style-tag">
+                        <span class="opponent-primary-style">${opponent.primaryStyle}</span>
+                        <span class="opponent-flavor-style">${opponent.styleFlavor}</span>
+                    </div>
                 </div>
                 <div class="opponent-ovr">${opponent.overall}</div>
             </div>

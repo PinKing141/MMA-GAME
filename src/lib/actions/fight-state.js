@@ -128,8 +128,10 @@ export function simulateFightState() {
         state.career.record.draws += 1;
     } else if (simulation.result === 'Win') {
         state.career.record.wins += 1;
+        state.career.winStreak += 1;
     } else {
         state.career.record.losses += 1;
+        state.career.winStreak = 0;
     }
 
     state.career.reputation = clamp(state.career.reputation + simulation.reputationDelta, 0, 999);

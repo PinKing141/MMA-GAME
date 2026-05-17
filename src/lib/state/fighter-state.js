@@ -123,6 +123,7 @@ function createDefaultCareerState() {
             draws: 0,
             finishes: 0
         },
+        winStreak: 0,
         lastFightResult: null
     };
 }

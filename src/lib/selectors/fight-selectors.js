@@ -13,7 +13,8 @@ export function getFightViewModel() {
             copy: 'Pick a card, sign the deal, and finish camp before the fight can run.',
             notes: [],
             canSimulate: false,
-            canBackToCamp: false
+            canBackToCamp: false,
+            hasResult: false
         };
     }
 
@@ -49,6 +50,7 @@ export function getFightViewModel() {
         replay: resolved ? result.replay || null : null,
         canReplay: resolved && Boolean(result.replay),
         canSimulate: !resolved && state.career.campWeeksCompleted >= state.career.campWeeksTotal,
-        canBackToCamp: !resolved
+        canBackToCamp: !resolved,
+        hasResult: resolved
     };
 }
