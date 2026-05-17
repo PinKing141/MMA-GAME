@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OCTAGON · Choose Your Opponent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-grad-top: #0a0a0e;
+  --surface: #14141a;
+  --surface-2: #1c1c24;
+  --surface-3: #25252e;
+  --surface-4: #2f2f3a;
+  --border: #2a2a34;
+  --border-strong: #3a3a46;
+  --text: #f1ede6;
+  --text-muted: #8a8a94;
+  --text-dim: #54545e;
+
+  --red-bright: #e21d36;
+  --red-glow: rgba(225, 29, 54, 0.6);
+  --blue-bright: #2563eb;
+  --blue-glow: rgba(37, 99, 235, 0.6);
+  --green-bright: #16a34a;
+  --green-glow: rgba(22, 163, 74, 0.6);
+  --purple-bright: #a855f7;
+  --purple-glow: rgba(168, 85, 247, 0.5);
+  --gold: #d4af37;
+  --gold-bright: #f0c850;
+
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-quote: 'Playfair Display', Georgia, serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: radial-gradient(ellipse at top, var(--bg-grad-top), #000);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 3px);
+  pointer-events: none; z-index: 1;
+}
+
+.app {
+  position: relative; z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 22px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ============ HEADER ============ */
+.broadcast-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  position: relative;
+}
+.broadcast-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--red-bright) 0%, var(--gold) 50%, var(--blue-bright) 100%);
+}
+
+.brand-block { display: flex; align-items: baseline; gap: 12px; }
+.brand-logo {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.brand-logo .accent { color: var(--red-bright); }
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.title-block { text-align: center; }
+.title-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.title-text {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.fighter-pill {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.fighter-pill .name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.fighter-pill .rank {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--gold-bright);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ============ PHASE 1: PICKER ============ */
+.scene { display: none; }
+.scene.active { display: flex; flex-direction: column; gap: 18px; flex: 1; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.scene-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--red-bright);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.scene-eyebrow::before {
+  content: '';
+  width: 28px; height: 1px;
+  background: var(--red-bright);
+}
+
+.scene-title {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 5vw, 56px);
+  line-height: 0.95;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.scene-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin-bottom: 22px;
+  line-height: 1.55;
+}
+
+/* ============ OPPONENT CARDS ============ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  perspective: 1400px;
+}
+@media (max-width: 960px) {
+  .cards-grid { grid-template-columns: 1fr; max-width: 380px; margin: 0 auto; }
+}
+
+.opp-card {
+  position: relative;
+  background: linear-gradient(180deg, #1c1c26 0%, #14141a 100%);
+  border: 1px solid var(--border);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.opp-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--border-strong);
+}
+.opp-card.tier-easy:hover { box-shadow: 0 20px 60px -20px var(--green-glow), 0 0 0 1px var(--green-bright); }
+.opp-card.tier-medium:hover { box-shadow: 0 20px 60px -20px var(--gold), 0 0 0 1px var(--gold-bright); }
+.opp-card.tier-hard:hover { box-shadow: 0 20px 60px -20px var(--red-glow), 0 0 0 1px var(--red-bright); }
+.opp-card.tier-elite:hover { box-shadow: 0 20px 60px -20px var(--purple-glow), 0 0 0 1px var(--purple-bright); }
+
+/* Difficulty stripe */
+.opp-card .difficulty-stripe {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 5;
+}
+.opp-card.tier-easy .difficulty-stripe {
+  background: var(--green-bright);
+  box-shadow: 0 0 16px var(--green-glow);
+}
+.opp-card.tier-medium .difficulty-stripe {
+  background: var(--gold);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.5);
+}
+.opp-card.tier-hard .difficulty-stripe {
+  background: var(--red-bright);
+  box-shadow: 0 0 16px var(--red-glow);
+}
+.opp-card.tier-elite .difficulty-stripe {
+  background: var(--purple-bright);
+  box-shadow: 0 0 18px var(--purple-glow);
+}
+
+/* === TOP STATS BAR === */
+.card-top-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+}
+.top-stat {
+  text-align: center;
+}
+.top-stat .label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  font-weight: 700;
+}
+.top-stat .value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+/* === PORTRAIT === */
+.card-portrait {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    linear-gradient(180deg, #2a2a36 0%, #14141a 100%);
+}
+.opp-card.tier-easy .card-portrait {
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, rgba(22, 163, 74, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, #1c2a20 0%, #14141a 100%);
+}
+.opp-card.tier-medium .card-portrait {
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, rgba(212, 175, 55, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, #2a261c 0%, #14141a 100%);
+}
+.opp-card.tier-hard .card-portrait {
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, rgba(225, 29, 54, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, #2a1c20 0%, #14141a 100%);
+}
+.opp-card.tier-elite .card-portrait {
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
+    linear-gradient(180deg, #261c2a 0%, #14141a 100%);
+}
+
+/* Backdrop pattern (slash lines) for portraits */
+.card-portrait::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(135deg, transparent 0 8px, rgba(255, 255, 255, 0.02) 8px 9px);
+}
+
+/* Portrait silhouette */
+.portrait-svg {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 250px;
+  z-index: 2;
+}
+
+/* OVR badge (overlaid on portrait) */
+.ovr-badge {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px 6px;
+}
+.ovr-badge .label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 1px;
+  font-weight: 700;
+}
+.ovr-badge .value {
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 0.85;
+  letter-spacing: 1px;
+}
+.opp-card.tier-easy .ovr-badge .value { color: var(--green-bright); }
+.opp-card.tier-medium .ovr-badge .value { color: var(--gold-bright); }
+.opp-card.tier-hard .ovr-badge .value { color: var(--red-bright); }
+.opp-card.tier-elite .ovr-badge .value { color: var(--purple-bright); }
+
+/* Flag indicator */
+.portrait-flag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  font-size: 22px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.portrait-flag .code {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* Tier label corner badge */
+.tier-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 4;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.opp-card.tier-easy .tier-badge { color: var(--green-bright); border: 1px solid rgba(22, 163, 74, 0.4); }
+.opp-card.tier-medium .tier-badge { color: var(--gold-bright); border: 1px solid rgba(212, 175, 55, 0.4); }
+.opp-card.tier-hard .tier-badge { color: var(--red-bright); border: 1px solid rgba(225, 29, 54, 0.4); }
+.opp-card.tier-elite .tier-badge { color: var(--purple-bright); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+/* === NAME BANNER === */
+.name-banner {
+  position: relative;
+  padding: 14px 18px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.opp-card.tier-easy .name-banner { background: linear-gradient(180deg, rgba(22, 163, 74, 0.12), rgba(22, 163, 74, 0.02)); }
+.opp-card.tier-medium .name-banner { background: linear-gradient(180deg, rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.02)); }
+.opp-card.tier-hard .name-banner { background: linear-gradient(180deg, rgba(225, 29, 54, 0.14), rgba(225, 29, 54, 0.02)); }
+.opp-card.tier-elite .name-banner { background: linear-gradient(180deg, rgba(168, 85, 247, 0.16), rgba(168, 85, 247, 0.02)); }
+
+.name-banner .name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.05;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.name-banner .nickname {
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--gold-bright);
+  letter-spacing: 0.5px;
+  min-height: 14px;
+}
+
+/* === BOTTOM STATS === */
+.card-bottom {
+  padding: 14px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.style-pill {
+  display: inline-block;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 12px;
+  background: var(--surface-3);
+  color: var(--text);
+  border-left: 3px solid var(--gold);
+}
+
+.record-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.record-cell .label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.record-cell .value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  color: var(--text);
+}
+.record-cell.wins .value { color: var(--green-bright); }
+.record-cell.losses .value { color: var(--red-bright); }
+
+/* Camp weeks pill at bottom */
+.camp-weeks {
+  margin-top: 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--border);
+}
+.camp-weeks strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 1px;
+  margin-right: 4px;
+}
+
+/* === Footer text === */
+.picker-footer {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding-top: 14px;
+}
+
+/* =========================================
+   PHASE 2: OPPONENT DETAIL PAGE
+   ========================================= */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+}
+@media (max-width: 980px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.detail-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 3px;
+}
+.detail-card.opponent-card::before { background: var(--red-bright); }
+.detail-card.fight-card::before { background: var(--gold); }
+
+/* Opponent feature panel */
+.feature-portrait {
+  position: relative;
+  height: 320px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at center bottom, rgba(0,0,0,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, var(--portrait-glow, rgba(225, 29, 54, 0.2)) 0%, transparent 50%),
+    linear-gradient(180deg, #1c1c26 0%, #14141a 100%);
+}
+.feature-portrait::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(135deg, transparent 0 8px, rgba(255, 255, 255, 0.02) 8px 9px);
+}
+.feature-portrait .portrait-svg {
+  width: 260px;
+  height: 320px;
+  bottom: -10px;
+}
+
+.feature-tier {
+  position: absolute;
+  top: 18px; left: 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 4;
+}
+
+.feature-flag {
+  position: absolute;
+  top: 18px; right: 18px;
+  font-size: 26px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.65);
+  padding: 6px 12px;
+}
+.feature-flag .code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.feature-ovr {
+  position: absolute;
+  bottom: 22px; left: 22px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 10px 18px 8px;
+  z-index: 4;
+}
+.feature-ovr .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.feature-ovr .value {
+  font-family: var(--font-display);
+  font-size: 60px;
+  line-height: 0.85;
+  letter-spacing: 1px;
+}
+
+.feature-name-banner {
+  padding: 18px 24px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.feature-name-banner .name {
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 1.05;
+  letter-spacing: 1px;
+}
+.feature-name-banner .nickname {
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--gold-bright);
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.opponent-detail-stats {
+  padding: 18px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 28px;
+}
+.detail-stat .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  font-weight: 700;
+}
+.detail-stat .value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.detail-stat .value.wins { color: var(--green-bright); }
+.detail-stat .value.losses { color: var(--red-bright); }
+.detail-stat .value.gold { color: var(--gold-bright); }
+
+.archetype-block {
+  margin: 0 24px 20px;
+  padding: 14px 18px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--red-bright);
+}
+.archetype-block .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--red-bright);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.archetype-block .style {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.archetype-block .desc {
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* === FIGHT CARD (right side) === */
+.fight-card-header {
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.fight-card-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.fight-card-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.fight-card-body { padding: 22px 26px; }
+
+.fight-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.fight-row:last-child { border-bottom: none; }
+.fight-row .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.fight-row .value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+.fight-row .value.gold { color: var(--gold-bright); }
+.fight-row .value.weeks {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.fight-row .value.weeks .unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Risk indicator */
+.risk-indicator {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--gold);
+}
+.risk-indicator.tier-easy { border-left-color: var(--green-bright); }
+.risk-indicator.tier-medium { border-left-color: var(--gold); }
+.risk-indicator.tier-hard { border-left-color: var(--red-bright); }
+.risk-indicator.tier-elite { border-left-color: var(--purple-bright); }
+
+.risk-indicator .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.risk-indicator .text {
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* === ACTION BAR for detail page === */
+.detail-actions {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+}
+.btn-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  text-align: center;
+}
+.btn-detail::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+}
+.btn-detail.accept::before {
+  background: var(--gold);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+.btn-detail.accept {
+  background: linear-gradient(180deg, #2a2018 0%, #1c1610 100%);
+  color: var(--gold-bright);
+}
+.btn-detail.accept:hover {
+  background: linear-gradient(180deg, #4a3820 0%, #2a2018 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(212, 175, 55, 0.3);
+}
+
+.btn-detail.back::before { background: var(--text-muted); }
+.btn-detail.back:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.btn-detail .sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.btn-detail:hover .sub { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="broadcast-bar">
+    <div class="brand-block">
+      <div class="brand-logo">OCTA<span class="accent">GON</span></div>
+      <div class="brand-tag" id="bc-stage-tag">Matchmaker</div>
+    </div>
+
+    <div class="title-block">
+      <div class="title-eyebrow" id="title-eyebrow">FIGHT OFFER · ROUND OF 16</div>
+      <div class="title-text" id="title-text">Choose Your Opponent</div>
+    </div>
+
+    <div class="fighter-pill">
+      <div>
+        <div class="rank" id="hdr-rank">#— · WW</div>
+        <div class="name" id="hdr-name">YOUR FIGHTER</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================
+       PHASE 1: PICKER
+       ========================================= -->
+  <section class="scene active" id="scene-picker">
+    <div>
+      <div class="scene-eyebrow">Step 01 · Manager's Office</div>
+      <h1 class="scene-title">Pick your<br>opponent.</h1>
+      <p class="scene-subtitle">
+        Your manager has three options on the table. Each name on this card brings their own style, record, and challenge.
+        Higher-tier opponents mean more weeks of camp prep — and far more risk. Choose carefully.
+      </p>
+    </div>
+
+    <div class="cards-grid" id="cards-grid">
+      <!-- Cards injected by JS -->
+    </div>
+
+    <div class="picker-footer">
+      Click a card to view fight details and accept the offer
+    </div>
+  </section>
+
+  <!-- =========================================
+       PHASE 2: DETAIL PAGE
+       ========================================= -->
+  <section class="scene" id="scene-detail">
+    <div>
+      <div class="scene-eyebrow">Step 02 · Fight Details</div>
+      <h1 class="scene-title">Sign the<br>bout agreement.</h1>
+      <p class="scene-subtitle">
+        Review the matchup, the offered camp, and the payout. Accept the fight to lock it in — or back out and pick someone else.
+      </p>
+    </div>
+
+    <div class="detail-grid">
+
+      <!-- LEFT: Opponent feature panel -->
+      <div class="detail-card opponent-card">
+        <div class="feature-portrait" id="detail-portrait">
+          <div class="feature-tier" id="detail-tier">— TIER —</div>
+          <div class="feature-flag" id="detail-flag">🇳🇬 <span class="code">NGA</span></div>
+          <!-- Portrait SVG injected -->
+          <div class="feature-ovr">
+            <div class="label">Overall</div>
+            <div class="value" id="detail-ovr">—</div>
+          </div>
+        </div>
+
+        <div class="feature-name-banner">
+          <div class="name" id="detail-name">— FIGHTER —</div>
+          <div class="nickname" id="detail-nickname">"—"</div>
+        </div>
+
+        <div class="opponent-detail-stats">
+          <div class="detail-stat">
+            <div class="label">Record</div>
+            <div class="value" id="detail-record">— · — · —</div>
+          </div>
+          <div class="detail-stat">
+            <div class="label">Age</div>
+            <div class="value" id="detail-age">— y/o</div>
+          </div>
+          <div class="detail-stat">
+            <div class="label">Wins</div>
+            <div class="value wins" id="detail-wins">—</div>
+          </div>
+          <div class="detail-stat">
+            <div class="label">Losses</div>
+            <div class="value losses" id="detail-losses">—</div>
+          </div>
+          <div class="detail-stat">
+            <div class="label">KOs</div>
+            <div class="value gold" id="detail-kos">—</div>
+          </div>
+          <div class="detail-stat">
+            <div class="label">Submissions</div>
+            <div class="value gold" id="detail-subs">—</div>
+          </div>
+        </div>
+
+        <div class="archetype-block">
+          <div class="label">Fighting Style</div>
+          <div class="style" id="detail-style">—</div>
+          <div class="desc" id="detail-style-desc">—</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Fight terms card -->
+      <div class="detail-card fight-card">
+        <div class="fight-card-header">
+          <div class="fight-card-eyebrow" id="fight-card-eyebrow">BOUT AGREEMENT</div>
+          <div class="fight-card-title">Fight Terms</div>
+        </div>
+
+        <div class="fight-card-body">
+          <div class="fight-row">
+            <span class="label">Promotion</span>
+            <span class="value" id="terms-promotion">—</span>
+          </div>
+          <div class="fight-row">
+            <span class="label">Card Position</span>
+            <span class="value" id="terms-position">—</span>
+          </div>
+          <div class="fight-row">
+            <span class="label">Weight Class</span>
+            <span class="value" id="terms-class">—</span>
+          </div>
+          <div class="fight-row">
+            <span class="label">Camp Time</span>
+            <span class="value weeks" id="terms-weeks">— <span class="unit">weeks</span></span>
+          </div>
+          <div class="fight-row">
+            <span class="label">Base Purse</span>
+            <span class="value gold" id="terms-purse">—</span>
+          </div>
+          <div class="fight-row">
+            <span class="label">Win Bonus</span>
+            <span class="value gold" id="terms-bonus">—</span>
+          </div>
+
+          <div class="risk-indicator" id="risk-block">
+            <div class="label">Risk Assessment</div>
+            <div class="text" id="risk-text">—</div>
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn-detail accept" id="btn-accept-fight">
+              Accept Fight
+              <span class="sub" id="btn-accept-sub">— weeks of camp</span>
+            </button>
+            <button class="btn-detail back" id="btn-back-picker">
+              Back
+              <span class="sub">Other options</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   OCTAGON · OPPONENT PICKER
+   - Career game calls setPlayer + setOpponents
+   - Player clicks card → detail view
+   - Detail view → accept (fires event) or back to picker
+   ============================================================ */
+
+/* ============ ARCHETYPES (style descriptions) ============ */
+const ARCHETYPES = {
+  striker:    { label: 'Striker · KO Artist',     desc: 'Stays on the feet. Heavy hands, kicks the legs to immobilize you, looks for the highlight-reel finish.' },
+  wrestler:   { label: 'Wrestler · Grinder',      desc: 'Single-mindedly chains takedowns and breaks you on the fence. You will fight off your back.' },
+  bjj:        { label: 'BJJ Player',              desc: 'Wants the fight on the floor. Hunts submissions from any position. Dangerous off their back.' },
+  wrestleBox: { label: 'Wrestle-Boxer',           desc: 'Boxes you up until you fade, then takes you down. The "GSP" formula. Threat everywhere.' },
+  grappler:   { label: 'Submission Grappler',     desc: 'Hybrid wrestler-jiujiteiro. Takes you down and immediately hunts the neck or limbs.' },
+  brawler:    { label: 'Brawler',                 desc: 'Heavy hands, granite chin, low fight IQ. Walks into fire and trusts the chin. Fan favourite.' },
+  pressure:   { label: 'Pressure Fighter',        desc: 'Walks you down for 15 minutes. Crushing pace, never lets you breathe, breaks cardio.' },
+  sniper:     { label: 'Counter Sniper',          desc: 'Distance manager. Wants you to lead. Punishes mistakes with surgical counters.' },
+  allrounder: { label: 'All-Rounder',             desc: 'No glaring weakness. Reads what you give them. Can box, can wrestle, can grapple.' }
+};
+
+const TIER_COLORS = {
+  easy:   { stamp: 'EASIER MATCH-UP', hex: 'green' },
+  medium: { stamp: 'EVEN FIGHT',      hex: 'gold' },
+  hard:   { stamp: 'TOUGHER MATCH-UP', hex: 'red' },
+  elite:  { stamp: 'TITLE CONTENDER', hex: 'purple' }
+};
+
+/* ============ DEFAULT DATA ============ */
+const DEFAULT_PLAYER = {
+  name: 'MARCUS ADESINA',
+  weightClass: 'Welterweight',
+  weightClassShort: 'WW',
+  rank: 14
+};
+
+const DEFAULT_OPPONENTS = [
+  {
+    id: 'opp_1',
+    name: 'ANTHONY THOMPSON',
+    nickname: 'The Granite',
+    flag: '🇺🇸',
+    countryCode: 'USA',
+    age: 32,
+    ovr: 64,
+    record: { wins: 11, losses: 5, draws: 1 },
+    kos: 6, subs: 2,
+    style: 'brawler',
+    tier: 'easy',
+    cardPosition: 'Prelims · Bout 3',
+    weeksCamp: 8,
+    basePurse: 12000,
+    winBonus: 12000,
+    riskText: 'Big puncher with limited gas tank. Survive the first round and he\'s yours late.'
+  },
+  {
+    id: 'opp_2',
+    name: 'ARTEM PETRENKO',
+    nickname: 'The Crusher',
+    flag: '🇺🇦',
+    countryCode: 'UKR',
+    age: 28,
+    ovr: 71,
+    record: { wins: 14, losses: 2, draws: 0 },
+    kos: 4, subs: 5,
+    style: 'wrestler',
+    tier: 'medium',
+    cardPosition: 'Main Card · Co-Feature',
+    weeksCamp: 10,
+    basePurse: 18000,
+    winBonus: 18000,
+    riskText: 'Pure wrestler with elite cardio. Stop the takedown or get crushed against the fence.'
+  },
+  {
+    id: 'opp_3',
+    name: 'CARLOS REYES',
+    nickname: 'El Diablo',
+    flag: '🇲🇽',
+    countryCode: 'MEX',
+    age: 26,
+    ovr: 76,
+    record: { wins: 18, losses: 1, draws: 0 },
+    kos: 11, subs: 3,
+    style: 'wrestleBox',
+    tier: 'hard',
+    cardPosition: 'Main Event',
+    weeksCamp: 12,
+    basePurse: 28000,
+    winBonus: 28000,
+    riskText: 'Top-10 ranked. Complete game. A win here moves you up the ranks — a loss sets you back six months.'
+  }
+];
+
+/* ============ STATE ============ */
+const state = {
+  player: { ...DEFAULT_PLAYER },
+  opponents: [...DEFAULT_OPPONENTS],
+  selectedOpponent: null,
+  eventName: 'FIGHT OFFER',
+  cardPositionLabel: 'ROUND OF 16',
+  promotion: 'Cage Warriors'
+};
+
+/* ============ UTILITIES ============ */
+function $(id) { return document.getElementById(id); }
+function fmtMoney(n) { return '$' + n.toLocaleString(); }
+function fmtRecord(r) { return `${r.wins}–${r.losses}${r.draws ? '–' + r.draws : ''}`; }
+
+/* ============ PORTRAIT SVG (overhead figure) ============ */
+function fighterPortraitSVG(tier, size = 200) {
+  const colors = {
+    easy: { stroke: '#16a34a', accent: '#22c55e' },
+    medium: { stroke: '#d4af37', accent: '#f0c850' },
+    hard: { stroke: '#e21d36', accent: '#ff5d72' },
+    elite: { stroke: '#a855f7', accent: '#c084fc' }
+  };
+  const c = colors[tier] || colors.medium;
+
+  return `
+    <svg class="portrait-svg" viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="halo-${tier}" cx="50%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="${c.stroke}" stop-opacity="0.25"/>
+          <stop offset="50%" stop-color="${c.stroke}" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="${c.stroke}" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Atmospheric halo behind figure -->
+      <circle cx="100" cy="80" r="110" fill="url(#halo-${tier})" />
+
+      <!-- Head -->
+      <circle cx="100" cy="50" r="28" fill="#1c1c24" stroke="${c.stroke}" stroke-width="3"/>
+      <path d="M 100 28 L 92 38 L 108 38 Z" fill="${c.accent}"/>
+
+      <!-- Neck/trapezius -->
+      <path d="M 88 76 L 80 92 L 120 92 L 112 76 Z" fill="#1c1c24" stroke="${c.stroke}" stroke-width="2"/>
+
+      <!-- Shoulders/torso -->
+      <path d="M 60 105 Q 75 95 100 95 Q 125 95 140 105
+               L 138 175 Q 138 195 124 195 L 76 195 Q 62 195 62 175 Z"
+            fill="#1c1c24" stroke="${c.stroke}" stroke-width="3"/>
+
+      <!-- Pec line -->
+      <path d="M 80 115 Q 100 125 120 115" stroke="${c.stroke}" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <!-- Center line -->
+      <line x1="100" y1="105" x2="100" y2="180" stroke="${c.stroke}" stroke-width="1" opacity="0.4"/>
+
+      <!-- Arms -->
+      <path d="M 60 108 Q 42 130 38 175" stroke="${c.stroke}" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M 140 108 Q 158 130 162 175" stroke="${c.stroke}" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+      <!-- Hand markers (gloves) -->
+      <circle cx="38" cy="180" r="9" fill="${c.stroke}" opacity="0.85"/>
+      <circle cx="162" cy="180" r="9" fill="${c.stroke}" opacity="0.85"/>
+
+      <!-- Waistline / trunks -->
+      <rect x="60" y="195" width="80" height="8" fill="${c.accent}"/>
+
+      <!-- Legs (partial — bottom cut off by card) -->
+      <path d="M 78 203 L 72 250" stroke="${c.stroke}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 122 203 L 128 250" stroke="${c.stroke}" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+/* ============ RENDER PICKER ============ */
+function renderHeader() {
+  $('title-eyebrow').textContent = `${state.eventName} · ${state.cardPositionLabel}`;
+  $('hdr-rank').textContent = `#${state.player.rank} · ${state.player.weightClassShort || 'WW'}`;
+  $('hdr-name').textContent = state.player.name;
+}
+
+function renderPickerCards() {
+  const grid = $('cards-grid');
+  grid.innerHTML = '';
+
+  state.opponents.forEach(opp => {
+    const card = document.createElement('div');
+    card.className = `opp-card tier-${opp.tier}`;
+    card.dataset.id = opp.id;
+
+    const tierLabel = TIER_COLORS[opp.tier]?.stamp || 'OPPONENT';
+
+    card.innerHTML = `
+      <div class="difficulty-stripe"></div>
+
+      <div class="card-top-stats">
+        <div class="top-stat">
+          <div class="label">Win</div>
+          <div class="value">${opp.record.wins}</div>
+        </div>
+        <div class="top-stat">
+          <div class="label">Loss</div>
+          <div class="value">${opp.record.losses}</div>
+        </div>
+        <div class="top-stat">
+          <div class="label">KO</div>
+          <div class="value">${opp.kos}</div>
+        </div>
+        <div class="top-stat">
+          <div class="label">Sub</div>
+          <div class="value">${opp.subs}</div>
+        </div>
+      </div>
+
+      <div class="card-portrait">
+        <div class="tier-badge">${tierLabel}</div>
+        <div class="portrait-flag">${opp.flag} <span class="code">${opp.countryCode}</span></div>
+        ${fighterPortraitSVG(opp.tier)}
+        <div class="ovr-badge">
+          <div class="label">OVR</div>
+          <div class="value">${opp.ovr}</div>
+        </div>
+      </div>
+
+      <div class="name-banner">
+        <div class="name">${opp.name}</div>
+        <div class="nickname">${opp.nickname ? '"' + opp.nickname + '"' : ''}</div>
+      </div>
+
+      <div class="card-bottom">
+        <div class="style-pill">${ARCHETYPES[opp.style]?.label || 'Mixed Martial Artist'}</div>
+        <div class="record-row">
+          <div class="record-cell wins">
+            <div class="label">Record</div>
+            <div class="value">${fmtRecord(opp.record)}</div>
+          </div>
+          <div class="record-cell">
+            <div class="label">Age</div>
+            <div class="value">${opp.age}</div>
+          </div>
+          <div class="record-cell">
+            <div class="label">Purse</div>
+            <div class="value">${fmtMoney(opp.basePurse)}</div>
+          </div>
+        </div>
+        <div class="camp-weeks">
+          <strong>${opp.weeksCamp}</strong> WEEKS OF CAMP
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => showDetail(opp));
+    grid.appendChild(card);
+  });
+}
+
+/* ============ DETAIL PAGE ============ */
+function showDetail(opp) {
+  state.selectedOpponent = opp;
+
+  // Switch scenes
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  $('scene-detail').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Populate detail
+  const portrait = $('detail-portrait');
+  // Set portrait glow color
+  const glowColors = {
+    easy: 'rgba(22, 163, 74, 0.2)',
+    medium: 'rgba(212, 175, 55, 0.2)',
+    hard: 'rgba(225, 29, 54, 0.2)',
+    elite: 'rgba(168, 85, 247, 0.22)'
+  };
+  portrait.style.setProperty('--portrait-glow', glowColors[opp.tier] || glowColors.medium);
+
+  // Re-inject portrait
+  portrait.innerHTML = `
+    <div class="feature-tier" id="detail-tier">${TIER_COLORS[opp.tier]?.stamp || 'OPPONENT'}</div>
+    <div class="feature-flag">${opp.flag} <span class="code">${opp.countryCode}</span></div>
+    ${fighterPortraitSVG(opp.tier, 260)}
+    <div class="feature-ovr">
+      <div class="label">Overall</div>
+      <div class="value" style="color: ${{
+        easy: 'var(--green-bright)',
+        medium: 'var(--gold-bright)',
+        hard: 'var(--red-bright)',
+        elite: 'var(--purple-bright)'
+      }[opp.tier] || 'var(--gold-bright)'}">${opp.ovr}</div>
+    </div>
+  `;
+
+  // Re-apply tier border on feature-tier
+  const tierClassMap = {
+    easy: 'var(--green-bright)',
+    medium: 'var(--gold-bright)',
+    hard: 'var(--red-bright)',
+    elite: 'var(--purple-bright)'
+  };
+  $('detail-tier').style.color = tierClassMap[opp.tier];
+  $('detail-tier').style.border = `1px solid ${tierClassMap[opp.tier]}`;
+
+  $('detail-name').textContent = opp.name;
+  $('detail-nickname').textContent = opp.nickname ? `"${opp.nickname}"` : '';
+  $('detail-record').textContent = fmtRecord(opp.record);
+  $('detail-age').textContent = `${opp.age} y/o`;
+  $('detail-wins').textContent = opp.record.wins;
+  $('detail-losses').textContent = opp.record.losses;
+  $('detail-kos').textContent = opp.kos;
+  $('detail-subs').textContent = opp.subs;
+
+  $('detail-style').textContent = ARCHETYPES[opp.style]?.label || 'Mixed Martial Artist';
+  $('detail-style-desc').textContent = ARCHETYPES[opp.style]?.desc || '';
+
+  // Fight terms
+  $('terms-promotion').textContent = state.promotion;
+  $('terms-position').textContent = opp.cardPosition;
+  $('terms-class').textContent = state.player.weightClass;
+  $('terms-weeks').innerHTML = `${opp.weeksCamp} <span class="unit">weeks</span>`;
+  $('terms-purse').textContent = fmtMoney(opp.basePurse);
+  $('terms-bonus').textContent = fmtMoney(opp.winBonus);
+
+  // Risk
+  const riskBlock = $('risk-block');
+  riskBlock.className = `risk-indicator tier-${opp.tier}`;
+  $('risk-text').textContent = opp.riskText;
+
+  // Update accept button sub
+  $('btn-accept-sub').textContent = `${opp.weeksCamp} weeks of camp`;
+}
+
+function backToPicker() {
+  state.selectedOpponent = null;
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  $('scene-picker').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function acceptFight() {
+  const opp = state.selectedOpponent;
+  if (!opp) return;
+  // Emit outcome event for career game to consume
+  window.dispatchEvent(new CustomEvent('opponent:accepted', { detail: {
+    opponentId: opp.id,
+    opponent: opp,
+    campWeeks: opp.weeksCamp,
+    purse: opp.basePurse,
+    winBonus: opp.winBonus
+  }}));
+  state.lastAccepted = opp;
+}
+
+/* ============ PUBLIC API ============ */
+window.OpponentPicker = {
+  /** Set the player's info (shown in header pill). */
+  setPlayer(player) {
+    state.player = { ...DEFAULT_PLAYER, ...player };
+    renderHeader();
+  },
+  /** Set the available opponents. Array of up to 3-4 fighter objects. */
+  setOpponents(opponents) {
+    state.opponents = opponents;
+    renderPickerCards();
+  },
+  /** Set event metadata. */
+  setEvent(opts) {
+    if (opts.name) state.eventName = opts.name;
+    if (opts.position) state.cardPositionLabel = opts.position;
+    if (opts.promotion) state.promotion = opts.promotion;
+    renderHeader();
+  },
+  /** Subscribe to accept event. */
+  onAccept(callback) {
+    window.addEventListener('opponent:accepted', (e) => callback(e.detail));
+  },
+  /** Read-only state. */
+  getState() { return JSON.parse(JSON.stringify(state)); },
+  /** Reset back to picker view. */
+  reset() { backToPicker(); }
+};
+
+/* ============ EVENTS ============ */
+function wireEvents() {
+  $('btn-back-picker').addEventListener('click', backToPicker);
+  $('btn-accept-fight').addEventListener('click', acceptFight);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHeader();
+  renderPickerCards();
+  wireEvents();
+});
+</script>
+
+</body>
+</html>
