@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Octagon Live Fight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="broadcast-bar">
+      <div class="brand-block">
+        <div class="brand-logo">OCTA<span class="accent">GON</span></div>
+        <div class="brand-tag">Live Fight</div>
+      </div>
+
+      <div class="fight-title-block">
+        <div class="fight-title-eyebrow" id="bc-eyebrow">Live Fight</div>
+        <div class="fight-title">
+          <span id="bc-red-name">Red Corner</span>
+          <span class="vs">VS</span>
+          <span id="bc-blue-name">Blue Corner</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <aside class="corner-card red">
+        <div class="corner-tag"><strong>Red Corner</strong> · Live feed</div>
+        <div class="fighter-portrait" id="portrait-red"></div>
+        <div class="fighter-id">
+          <div class="fighter-name" id="red-name">—</div>
+          <div class="fighter-nickname" id="red-nick"></div>
+          <div class="fighter-flag" id="red-flag">—</div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <span class="stat-label">HP</span>
+            <span class="bar-track"><span class="bar-fill" id="red-hp" style="width:100%;background:var(--hp-high);"></span></span>
+            <span class="bar-value" id="red-hp-val">100</span>
+          </div>
+          <div class="bar-row">
+            <span class="stat-label">STM</span>
+            <span class="bar-track"><span class="bar-fill" id="red-stm" style="width:100%;background:var(--stamina);"></span></span>
+            <span class="bar-value" id="red-stm-val">100</span>
+          </div>
+        </div>
+        <div class="damage-indicators">
+          <div class="damage-cell" id="red-dmg-head"><div class="label">Head</div><div class="value">0%</div></div>
+          <div class="damage-cell" id="red-dmg-body"><div class="label">Body</div><div class="value">0%</div></div>
+          <div class="damage-cell" id="red-dmg-legs"><div class="label">Legs</div><div class="value">0%</div></div>
+        </div>
+        <div class="fighter-action">
+          <div class="action-label">Current</div>
+          <div class="action-status" id="red-action">Awaiting bell</div>
+        </div>
+        <div class="micro-feed">
+          <div class="micro-feed-head">Corner feed</div>
+          <div class="micro-feed-list" id="red-micro-feed"></div>
+        </div>
+        <div class="scorecard-panel">
+          <div class="scorecard-head">Round scores</div>
+          <div class="scorecard-grid">
+            <div class="scorecard-cell"><div class="scorecard-round">R1</div><div class="scorecard-score" id="red-score-1">—</div></div>
+            <div class="scorecard-cell"><div class="scorecard-round">R2</div><div class="scorecard-score" id="red-score-2">—</div></div>
+            <div class="scorecard-cell"><div class="scorecard-round">R3</div><div class="scorecard-score" id="red-score-3">—</div></div>
+          </div>
+        </div>
+        <div class="micro-feed" style="border-bottom:0;">
+          <div class="micro-feed-head">Skill profile</div>
+          <div class="micro-feed-list skill-grid">
+            <div class="micro-feed-item">STK <strong id="red-s-stk">—</strong></div>
+            <div class="micro-feed-item">GRP <strong id="red-s-grp">—</strong></div>
+            <div class="micro-feed-item">SUB <strong id="red-s-sub">—</strong></div>
+            <div class="micro-feed-item">CRD <strong id="red-s-crd">—</strong></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="cage-viewport">
+        <div class="cage-overlay-top">
+          <div class="corner-indicator red">
+            <span class="corner-dot"></span>
+            <span class="text" id="ind-red">Red</span>
+          </div>
+          <div class="round-badge">
+            <div class="label" id="round-label">Live Fight</div>
+            <div class="value" id="round-num">R1</div>
+            <div class="timer" id="round-timer">5:00</div>
+          </div>
+          <div class="corner-indicator blue right">
+            <span class="corner-dot"></span>
+            <span class="text" id="ind-blue">Blue</span>
+          </div>
+        </div>
+
+        <div class="cage-canvas" id="cage-canvas">
+          <div class="action-callout" id="action-callout">
+            <div class="overlay-kicker">Live fight beat</div>
+            <div class="overlay-text">Fight moment</div>
+          </div>
+
+          <div class="round-end-overlay" id="round-end-overlay">
+            <div class="round-end-panel">
+              <div class="outcome-eyebrow">Round end</div>
+              <div class="round-end-title" id="rend-title">ROUND 1</div>
+              <div class="round-end-sub" id="rend-sub">Corners reset the pace.</div>
+            </div>
+          </div>
+
+          <div class="outcome-banner" id="outcome-banner">
+            <div class="outcome-panel">
+              <div class="outcome-eyebrow" id="outcome-eyebrow">And the winner is</div>
+              <div class="outcome-winner" id="outcome-winner">—</div>
+              <div class="outcome-method" id="outcome-method">—</div>
+              <div class="outcome-timing" id="outcome-timing">—</div>
+            </div>
+          </div>
+
+          <div class="speed-widget">
+            <div class="speed-chip">Fight speed</div>
+            <div class="transport-controls">
+              <button class="transport-btn" id="btn-play-replay">Play</button>
+              <button class="transport-btn active" id="btn-pause-replay">Pause</button>
+            </div>
+            <div class="speed-controls">
+              <button class="speed-btn" data-speed="0.5">0.5x</button>
+              <button class="speed-btn active" data-speed="1">1x</button>
+              <button class="speed-btn" data-speed="2">2x</button>
+              <button class="speed-btn" data-speed="3">3x</button>
+            </div>
+          </div>
+
+          <div class="ticker-panel">
+            <div class="ticker-head">Live ticker</div>
+            <div class="ticker-list" id="ticker-list"></div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="corner-card blue">
+        <div class="corner-tag"><strong>Blue Corner</strong> · Live feed</div>
+        <div class="fighter-portrait" id="portrait-blue"></div>
+        <div class="fighter-id">
+          <div class="fighter-name" id="blue-name">—</div>
+          <div class="fighter-nickname" id="blue-nick"></div>
+          <div class="fighter-flag" id="blue-flag">—</div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <span class="stat-label">HP</span>
+            <span class="bar-track"><span class="bar-fill" id="blue-hp" style="width:100%;background:var(--hp-high);"></span></span>
+            <span class="bar-value" id="blue-hp-val">100</span>
+          </div>
+          <div class="bar-row">
+            <span class="stat-label">STM</span>
+            <span class="bar-track"><span class="bar-fill" id="blue-stm" style="width:100%;background:var(--stamina);"></span></span>
+            <span class="bar-value" id="blue-stm-val">100</span>
+          </div>
+        </div>
+        <div class="damage-indicators">
+          <div class="damage-cell" id="blue-dmg-head"><div class="label">Head</div><div class="value">0%</div></div>
+          <div class="damage-cell" id="blue-dmg-body"><div class="label">Body</div><div class="value">0%</div></div>
+          <div class="damage-cell" id="blue-dmg-legs"><div class="label">Legs</div><div class="value">0%</div></div>
+        </div>
+        <div class="fighter-action">
+          <div class="action-label">Current</div>
+          <div class="action-status" id="blue-action">Awaiting bell</div>
+        </div>
+        <div class="micro-feed">
+          <div class="micro-feed-head">Corner feed</div>
+          <div class="micro-feed-list" id="blue-micro-feed"></div>
+        </div>
+        <div class="scorecard-panel">
+          <div class="scorecard-head">Round scores</div>
+          <div class="scorecard-grid">
+            <div class="scorecard-cell"><div class="scorecard-round">R1</div><div class="scorecard-score" id="blue-score-1">—</div></div>
+            <div class="scorecard-cell"><div class="scorecard-round">R2</div><div class="scorecard-score" id="blue-score-2">—</div></div>
+            <div class="scorecard-cell"><div class="scorecard-round">R3</div><div class="scorecard-score" id="blue-score-3">—</div></div>
+          </div>
+        </div>
+        <div class="micro-feed" style="border-bottom:0;">
+          <div class="micro-feed-head">Skill profile</div>
+          <div class="micro-feed-list skill-grid">
+            <div class="micro-feed-item">STK <strong id="blue-s-stk">—</strong></div>
+            <div class="micro-feed-item">GRP <strong id="blue-s-grp">—</strong></div>
+            <div class="micro-feed-item">SUB <strong id="blue-s-sub">—</strong></div>
+            <div class="micro-feed-item">CRD <strong id="blue-s-crd">—</strong></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

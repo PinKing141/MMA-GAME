@@ -31,6 +31,18 @@ export function inchesToFeetInchesString(totalInches) {
     return feetInchesString(feet, inches);
 }
 
+export function formatMoney(amount) {
+    return `$${amount.toLocaleString()}`;
+}
+
+export function formatRecord(record) {
+    return `${record.wins}-${record.losses}-${record.draws}`;
+}
+
+export function getRankLabel(rank) {
+    return rank ? `#${rank}` : 'NR';
+}
+
 export function statColorClass(value) {
     if (value < 30) {
         return 's-red';

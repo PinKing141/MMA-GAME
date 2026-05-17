@@ -1,6 +1,7 @@
-export { state, resetCampProgress, resetCareer, resetStats } from './state/fighter-state.js';
+export { hydrateState, SCENE_NAMES, state, resetCampProgress, resetCareer, resetGame, resetSetup, resetStats } from './state/fighter-state.js';
 export {
     buildPresetStats,
+    clamp,
     detectArchetype,
     getArchetypeDistance,
     getAttributeAverage,

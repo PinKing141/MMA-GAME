@@ -5,6 +5,10 @@ const ROOKIE_BASELINE_BONUS = 15;
 const ROOKIE_TEMPLATE_BUDGET = 700;
 const ROOKIE_TEMPLATE_CAP = 68;
 
+export function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
 export function roundStat(value) {
     return Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE, Math.round(value)));
 }

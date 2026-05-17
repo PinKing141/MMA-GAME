@@ -1,10 +1,6 @@
 import { COUNTRIES, REGION_LABELS, WEIGHT_CLASSES } from '../lib/data.js';
-import { feetInchesString, getStance, getWeightClass, getWeightClassByKey, getWeightClassEntry, inchesToFeetInchesString, state } from '../lib/core.js';
+import { clamp, feetInchesString, getStance, getWeightClass, getWeightClassByKey, getWeightClassEntry, inchesToFeetInchesString, state } from '../lib/core.js';
 import { renderCountryBadge } from '../lib/ui/markup.js';
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
 
 function getSelectedWeightClass() {
     const select = document.getElementById('f-weight-class');
@@ -30,6 +26,20 @@ function setHtml(id, value) {
     if (element) {
         element.innerHTML = value;
     }
+}
+
+function randomItem(items) {
+    return items[Math.floor(Math.random() * items.length)];
+}
+
+function writeRandomIdentity() {
+    const firstNames = ['Marcus', 'Kai', 'Dmitri', 'Diego', 'Sean', 'Khabib', 'Israel', 'Aljamain', 'Demetrious', 'Petr', 'Jiri', 'Alex', 'Charles', 'Kamaru', 'Leon', 'Ilia', 'Sergei', 'Magomed', 'Cory', 'Brandon', 'Yair', 'Hiroto', 'Aung', 'Eddie', 'Conor', 'Michael', 'Robert', 'Jamahal'];
+    const lastNames = ['Adesina', 'Volkanovski', 'Makhachev', 'Topuria', 'Pereira', 'Sterling', 'Oliveira', 'Usman', 'Edwards', 'Sandhagen', 'Garbrandt', 'Moreno', 'Holloway', 'Hooker', 'Prochazka', 'Pantoja', 'La Rosa', 'Pavlovich', 'Yan', 'Petrov', 'Nurmagomedov', 'McGregor', 'Aldo', 'Whittaker', 'Strickland', 'Hill'];
+
+    document.getElementById('f-first').value = randomItem(firstNames);
+    document.getElementById('f-last').value = randomItem(lastNames);
+    document.getElementById('f-nation').value = randomItem(COUNTRIES).code;
+    document.getElementById('f-age').value = 18 + Math.floor(Math.random() * 7);
 }
 
 export function renderNations() {
@@ -61,6 +71,22 @@ export function renderWeightClasses() {
   `).join('');
 
     select.value = getWeightClassEntry(state.setup.weight).key;
+}
+
+export function syncSetupFormFromState() {
+    document.getElementById('f-first').value = state.setup.firstName;
+    document.getElementById('f-last').value = state.setup.lastName;
+    document.getElementById('f-nation').value = state.setup.country.code;
+    document.getElementById('f-age').value = String(state.setup.age);
+    document.getElementById('f-weight-class').value = getWeightClassEntry(state.setup.weight).key;
+    document.getElementById('f-height-slider').value = String((state.setup.feet * 12) + state.setup.inches);
+    document.getElementById('f-reach-slider').value = String(state.setup.reach);
+    document.getElementById('f-weight-slider').value = String(state.setup.weight);
+
+    const selectedHand = document.querySelector(`input[name="hand"][value="${state.setup.hand}"]`);
+    if (selectedHand) {
+        selectedHand.checked = true;
+    }
 }
 
 export function syncFrameControls({ preserveValues = true } = {}) {
@@ -149,16 +175,15 @@ export function updatePreview() {
     setText('ff-stance', getStance(setup.hand));
 }
 
+export function randomiseIdentity() {
+    writeRandomIdentity();
+    updatePreview();
+}
+
 export function randomiseFrame() {
-    const firstNames = ['Marcus', 'Kai', 'Dmitri', 'Diego', 'Sean', 'Khabib', 'Israel', 'Aljamain', 'Demetrious', 'Petr', 'Jiri', 'Alex', 'Charles', 'Kamaru', 'Leon', 'Ilia', 'Sergei', 'Magomed', 'Cory', 'Brandon', 'Yair', 'Hiroto', 'Aung', 'Eddie', 'Conor', 'Michael', 'Robert', 'Jamahal'];
-    const lastNames = ['Adesina', 'Volkanovski', 'Makhachev', 'Topuria', 'Pereira', 'Sterling', 'Oliveira', 'Usman', 'Edwards', 'Sandhagen', 'Garbrandt', 'Moreno', 'Holloway', 'Hooker', 'Prochazka', 'Pantoja', 'La Rosa', 'Pavlovich', 'Yan', 'Petrov', 'Nurmagomedov', 'McGregor', 'Aldo', 'Whittaker', 'Strickland', 'Hill'];
+    writeRandomIdentity();
 
-    document.getElementById('f-first').value = firstNames[Math.floor(Math.random() * firstNames.length)];
-    document.getElementById('f-last').value = lastNames[Math.floor(Math.random() * lastNames.length)];
-    document.getElementById('f-nation').value = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)].code;
-    document.getElementById('f-age').value = 18 + Math.floor(Math.random() * 7);
-
-    const weightClass = WEIGHT_CLASSES[Math.floor(Math.random() * WEIGHT_CLASSES.length)];
+    const weightClass = randomItem(WEIGHT_CLASSES);
     document.getElementById('f-weight-class').value = weightClass.key;
     const totalInches = Math.round(weightClass.heightMin + (Math.random() * (weightClass.heightMax - weightClass.heightMin)));
     const reachBounds = getReachBounds(weightClass, totalInches);

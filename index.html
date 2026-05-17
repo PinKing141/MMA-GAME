@@ -19,8 +19,15 @@
                 <div class="brand-logo">CAGE<span class="accent">.</span></div>
                 <div class="brand-tag">MMA Career · Build 0.3</div>
             </div>
-            <div class="brand-meta">
-                <strong id="phase-label">Phase 1</strong> · Fighter Genesis
+            <div class="brand-tools">
+                <div class="brand-meta">
+                    <strong id="phase-label">Phase 1</strong> · <span id="phase-name">Create Fighter</span>
+                </div>
+                <div class="brand-actions">
+                    <div class="save-status" id="save-status">No save yet</div>
+                    <button class="btn ghost small" id="btn-save-game">Save</button>
+                    <button class="btn ghost small" id="btn-load-game">Load</button>
+                </div>
             </div>
         </header>
 
@@ -199,8 +206,8 @@
 
                     <div class="frame-summary-box">
                         <div class="path-title">Why this page exists</div>
-                        <p>Reach now reads in feet and inches, and the physical frame is isolated from the stat build so
-                            you can judge size before style.</p>
+                        <p>Lock in height, reach, and weight here first so the fighter feels right before you spend
+                            points on skills.</p>
                     </div>
                 </aside>
             </div>
@@ -210,7 +217,7 @@
             <div class="eyebrow">Step 03 · Build Board</div>
             <h1 class="scene-title">Tune the sheet.<br>Define the style.</h1>
             <p class="scene-subtitle">Each fighter starts at 10 in every attribute. You have <strong
-                    class="accent-text">1000 points</strong> to shape a boxer, kick boxer, wrestler, grappler, or a true
+                    class="accent-text">1000 points</strong> to shape a boxer, kickboxer, wrestler, grappler, or a true
                 all-rounder. Every preset carries clear strengths and clear trade-offs.</p>
 
             <div class="alloc-header">
@@ -235,14 +242,14 @@
                     <div class="build-card">
                         <div class="title">Build Board</div>
                         <div class="build-stage-copy">
-                            <span>Attribute chassis</span>
+                            <span>Skill mix</span>
                             <strong>Standup · Grappling · Health · Mind</strong>
                         </div>
                         <div class="build-stage">
                             <div class="build-visual-panel">
                                 <div class="build-visual-copy">
-                                    <span>Style footprint</span>
-                                    <p>The radar updates live so the shape of the build stays readable while you spend
+                                    <span>Build shape</span>
+                                    <p>The chart updates live so you can see where the fighter is strong while you spend
                                         points.</p>
                                 </div>
                                 <svg viewBox="-150 -150 300 300" class="hex-svg" id="hex-svg"></svg>
@@ -298,13 +305,13 @@
         </section>
 
         <section class="scene" id="scene-profile">
-            <div class="eyebrow">Fighter Profile · Pro Debut Pending</div>
+            <div class="eyebrow">Career Hub · First Fight Ahead</div>
 
             <div class="profile-header">
                 <div class="profile-id">
                     <div class="profile-class-pill" id="pr-class">Welterweight</div>
                     <div class="name" id="pr-name">Unnamed Fighter</div>
-                    <div class="nickname-slot" id="pr-nickname">Nickname unearned · win it in the cage</div>
+                    <div class="nickname-slot" id="pr-nickname">No nickname yet · earn it in the cage</div>
                     <div class="profile-discipline-tag" id="pr-discipline">All-Rounder</div>
                     <p class="profile-style-note" id="pr-style-note"></p>
                     <div class="meta">
@@ -390,32 +397,31 @@
                             <div class="value" id="career-reputation">0</div>
                         </div>
                     </div>
-                    <div class="nick-info" id="career-story">Nicknames are earned through cage performance. The archetype only sets the
-                        foundation. The finishes decide what the sport remembers.</div>
+                    <div class="nick-info" id="career-story">Your first real run starts with the deal you sign and the way you win.</div>
                 </div>
             </div>
 
             <div class="continue-bar">
                 <div class="text">
-                    <div class="head" id="profile-next-head">Next: Pick an Opponent · Then Build Camp</div>
-                    <p id="profile-next-copy">Pick a head coach, stack training blocks, and tune your first game plan around the style you just
+                    <div class="head" id="profile-next-head">Next: Pick A Card And Opponent</div>
+                    <p id="profile-next-copy">Pick the show, choose the matchup, then build camp around the style you just
                         built.</p>
                 </div>
-                <button class="btn" id="btn-profile-progress">Select Opponent</button>
+                <button class="btn" id="btn-profile-progress">Fight Offers</button>
                 <button class="btn ghost small" id="btn-restart">Start Over</button>
             </div>
         </section>
 
         <section class="scene" id="scene-opponent">
             <div class="eyebrow">Step 05 · Matchmaking</div>
-            <h1 class="scene-title">Book the debut.<br>Choose the problem first.</h1>
-            <p class="scene-subtitle">Camp should answer a matchup, not a guess. Pick the opponent before the gym opens.</p>
+            <h1 class="scene-title">Book the fight.<br>Pick the matchup.</h1>
+            <p class="scene-subtitle">Choose the card, then choose the opponent. Once the deal is signed, camp can start.</p>
 
             <div class="opponent-grid">
                 <div class="opponent-main-card">
                     <div class="stat-card-header">
                         <span class="title">Available Opponents</span>
-                        <span class="avg">Debut Board</span>
+                        <span class="avg">Fight Board</span>
                     </div>
                     <div class="opponent-list" id="opponent-cards"></div>
                 </div>
@@ -423,13 +429,21 @@
                 <aside class="opponent-side">
                     <div class="identity-card opponent-side-card">
                         <div class="stat-card-header">
-                            <span class="title">Your Booking</span>
+                            <span class="title">Event Offers</span>
+                            <span class="avg">Show Money</span>
+                        </div>
+                        <div class="opponent-list" id="opponent-event-cards"></div>
+                    </div>
+
+                    <div class="identity-card opponent-side-card">
+                        <div class="stat-card-header">
+                            <span class="title">Fight Deal</span>
                             <span class="avg">OVR <strong id="opponent-player-ovr">10</strong></span>
                         </div>
                         <div class="preview-class-pill" id="opponent-player-class">Welterweight</div>
                         <div class="career-row opponent-player-meta">
                             <div class="career-stat">
-                                <div class="label">Player Rank</div>
+                                <div class="label">Rank</div>
                                 <div class="value" id="opponent-player-rank">NR</div>
                             </div>
                             <div class="career-stat">
@@ -439,9 +453,11 @@
                         </div>
                         <div class="opponent-summary" id="opponent-summary"></div>
                         <p class="gym-complete-note" id="opponent-cut-note"></p>
+                        <div class="opponent-summary" id="opponent-contract-summary"></div>
+                        <p class="gym-complete-note" id="opponent-contract-note"></p>
                         <div class="stat-card-header split-top">
                             <span class="title">Division Rankings</span>
-                            <span class="avg">Live Board</span>
+                            <span class="avg">Top 30</span>
                         </div>
                         <div class="ranking-board" id="opponent-rankings"></div>
                     </div>
@@ -450,18 +466,18 @@
 
             <div class="continue-bar">
                 <div class="text">
-                    <div class="head">The opponent now drives the camp</div>
-                    <p>Once the fight is booked, coach selection, injury risk, and the weight cut all matter inside training camp.</p>
+                    <div class="head">The deal sets up camp</div>
+                    <p>Once the fight is signed, the coach, the weight cut, and the full camp all matter.</p>
                 </div>
-                <button class="btn" id="btn-begin-camp" disabled>Take Fight To Camp</button>
+                <button class="btn" id="btn-begin-camp" disabled>Sign Deal &amp; Start Camp</button>
                 <button class="btn ghost" id="btn-back-profile-from-opponent">Back to Profile</button>
             </div>
         </section>
 
         <section class="scene" id="scene-gym">
             <div class="eyebrow">Step 06 · Gym Camp</div>
-            <h1 class="scene-title">Train the prospect.<br>Build the first camp.</h1>
-            <p class="scene-subtitle">Each week is a choice. Raise the right skills, manage fatigue, and leave camp sharper than you entered.</p>
+            <h1 class="scene-title">Get ready for the fight.<br>Build the camp.</h1>
+            <p class="scene-subtitle">Each week is a choice. Raise the right skills, manage fatigue, and show up ready on fight night.</p>
 
             <div class="gym-grid">
                 <div class="gym-main-card">
@@ -475,7 +491,7 @@
 
                     <div class="gym-brief-grid">
                         <div class="gym-brief-card">
-                            <div class="modifier-title">Booked Opponent</div>
+                            <div class="modifier-title">Opponent</div>
                             <div id="gym-opponent-summary"></div>
                         </div>
                         <div class="gym-brief-card">
@@ -519,8 +535,8 @@
 
             <div class="continue-bar">
                 <div class="text">
-                    <div class="head">Camp changes now feed fight night directly</div>
-                    <p>Coach bonuses, injuries, the cut, and overtraining now follow the fighter into the booked fight.</p>
+                    <div class="head">Everything in camp carries into fight night</div>
+                    <p>Coach bonuses, injuries, the cut, and overtraining all follow the fighter into the cage.</p>
                 </div>
                 <button class="btn" id="btn-fight-night" disabled>Fight Night</button>
                 <button class="btn ghost" id="btn-back-profile-from-gym">Back to Profile</button>
@@ -530,39 +546,24 @@
         <section class="scene" id="scene-fight">
             <div class="eyebrow">Step 07 · Fight Night</div>
             <h1 class="scene-title">Walk to the cage.<br>See if camp held up.</h1>
-            <p class="scene-subtitle">The fight result now reads from your build, your booked opponent, and everything that happened through camp.</p>
+            <p class="scene-subtitle">The result uses your build, your opponent, and everything that happened through camp.</p>
 
             <div class="fight-grid">
-                <div class="fight-main-card">
-                    <div class="fight-matchup-grid">
-                        <div class="fight-fighter-card">
-                            <div class="modifier-title">Player</div>
-                            <div class="fight-fighter-name" id="fight-player-name">Unnamed Fighter</div>
-                            <p class="fight-fighter-meta" id="fight-player-meta"></p>
-                        </div>
-                        <div class="fight-fighter-card">
-                            <div class="modifier-title">Opponent</div>
-                            <div class="fight-fighter-name" id="fight-opponent-name">Booked Opponent</div>
-                            <p class="fight-fighter-meta" id="fight-opponent-meta"></p>
-                        </div>
+                <div class="identity-card fight-main-card fight-result-card">
+                    <div class="stat-card-header">
+                        <span class="title">Fight Result</span>
+                        <span class="avg">Result</span>
                     </div>
-
-                    <div class="identity-card fight-result-card">
-                        <div class="stat-card-header">
-                            <span class="title">Fight Result</span>
-                            <span class="avg">Sim Readout</span>
-                        </div>
-                        <div class="fight-result-headline" id="fight-result-headline">No fight booked</div>
-                        <p class="fight-result-copy" id="fight-result-copy">Select an opponent and finish camp before running the fight.</p>
-                        <div class="fight-note-list" id="fight-result-notes"></div>
-                    </div>
+                    <div class="fight-result-headline" id="fight-result-headline">No fight booked</div>
+                    <p class="fight-result-copy" id="fight-result-copy">Pick a card, sign the deal, and finish camp before running the fight.</p>
+                    <div class="fight-note-list" id="fight-result-notes"></div>
                 </div>
 
-                <aside class="fight-side">
+                <aside class="fight-side fight-summary-stack">
                     <div class="identity-card fight-side-card">
                         <div class="stat-card-header">
-                            <span class="title">Camp Readout</span>
-                            <span class="avg">Fight Inputs</span>
+                            <span class="title">Fight Details</span>
+                            <span class="avg">Camp &amp; Contract</span>
                         </div>
                         <div id="fight-camp-readout"></div>
                     </div>
@@ -571,14 +572,29 @@
 
             <div class="continue-bar">
                 <div class="text">
-                    <div class="head">A complete camp is now routed into the fight</div>
-                    <p>The result uses the final build, the booked opponent, and the condition you carried into the cage.</p>
+                    <div class="head">The full camp shows up on fight night</div>
+                    <p>The fight resolves in career mode first, then the live fight window opens with the round by round sequence for that event tier.</p>
                 </div>
-                <button class="btn" id="btn-simulate-fight">Simulate Fight</button>
+                <button class="btn" id="btn-simulate-fight">Run Career Fight</button>
+                <button class="btn ghost" id="btn-open-fight-replay" hidden>Open Live Fight</button>
                 <button class="btn ghost small" id="btn-back-gym">Back to Camp</button>
                 <button class="btn ghost" id="btn-fight-back-profile">Back to Profile</button>
             </div>
         </section>
+    </div>
+
+    <div class="fight-replay-modal" id="fight-replay-modal" hidden>
+        <div class="fight-replay-backdrop" data-close-fight-replay></div>
+        <div class="fight-replay-window" role="dialog" aria-modal="true" aria-label="Live fight window">
+            <div class="fight-replay-topbar">
+                <div>
+                    <div class="eyebrow">Live Fight</div>
+                    <div class="fight-replay-title">Round By Round Live Fight</div>
+                </div>
+                <button class="btn ghost small" id="btn-close-fight-replay">Close</button>
+            </div>
+            <iframe id="fight-engine-frame" class="fight-replay-frame" src="/fight-engine/index.html" title="Octagon live fight" loading="lazy"></iframe>
+        </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

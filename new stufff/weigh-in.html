@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OCTAGON · Weigh-In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-grad-top: #0a0a0e;
+  --surface: #14141a;
+  --surface-2: #1c1c24;
+  --surface-3: #25252e;
+  --surface-4: #2f2f3a;
+  --border: #2a2a34;
+  --border-strong: #3a3a46;
+  --text: #f1ede6;
+  --text-muted: #8a8a94;
+  --text-dim: #54545e;
+
+  --red: #c8102e;
+  --red-bright: #e21d36;
+  --red-glow: rgba(225, 29, 54, 0.6);
+  --blue-bright: #2563eb;
+  --blue-glow: rgba(37, 99, 235, 0.6);
+  --gold: #d4af37;
+  --gold-bright: #f0c850;
+
+  --lcd-green: #00ff88;
+  --lcd-red: #ff3030;
+
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-lcd: 'DM Mono', 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: radial-gradient(ellipse at top, var(--bg-grad-top), #000);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 3px);
+  pointer-events: none; z-index: 1;
+}
+
+.app {
+  position: relative; z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 22px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HEADER */
+.broadcast-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  position: relative;
+}
+.broadcast-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--red-bright) 0%, var(--gold) 50%, var(--blue-bright) 100%);
+}
+
+.brand-block { display: flex; align-items: baseline; gap: 12px; }
+.brand-logo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.brand-logo .accent { color: var(--red-bright); }
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.event-title-block { text-align: center; }
+.event-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.event-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.event-title .vs {
+  color: var(--text-dim);
+  margin: 0 12px;
+  font-size: 14px;
+}
+
+.phase-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  font-weight: 700;
+}
+
+/* STAGE */
+.stage-frame {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+}
+.stage-frame::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  background: var(--gold);
+  z-index: 5;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  transition: background 0.6s ease;
+  padding: 28px 24px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage.tier-local {
+  background:
+    radial-gradient(ellipse at top, rgba(212, 175, 55, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #1a1a20 0%, #15151a 60%, #0e0e12 100%);
+}
+.stage.tier-local::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 28px, rgba(0,0,0,0.12) 28px 29px),
+    repeating-linear-gradient(90deg, transparent 0 56px, rgba(0,0,0,0.15) 56px 58px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.stage.tier-regional {
+  background:
+    radial-gradient(ellipse at center top, rgba(212, 175, 55, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 20% 30%, rgba(225, 29, 54, 0.08) 0%, transparent 35%),
+    radial-gradient(ellipse at 80% 30%, rgba(37, 99, 235, 0.08) 0%, transparent 35%),
+    linear-gradient(180deg, #1d1a26 0%, #14141a 100%);
+}
+.stage.tier-regional::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(135deg, transparent 0 40px, rgba(212, 175, 55, 0.025) 40px 42px);
+  pointer-events: none;
+}
+
+.stage.tier-stadium {
+  background:
+    radial-gradient(ellipse at center top, rgba(212, 175, 55, 0.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 25%, rgba(225, 29, 54, 0.15) 0%, transparent 30%),
+    radial-gradient(ellipse at 90% 25%, rgba(37, 99, 235, 0.15) 0%, transparent 30%),
+    linear-gradient(180deg, #181828 0%, #0e0e16 100%);
+}
+.stage.tier-stadium::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(35deg, transparent 30%, rgba(255, 255, 255, 0.04) 50%, transparent 70%),
+    linear-gradient(-35deg, transparent 30%, rgba(255, 255, 255, 0.04) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.spotlight {
+  position: absolute;
+  width: 4px;
+  height: 50%;
+  top: -5%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 40%, transparent 100%);
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 1;
+}
+.spotlight.s1 { left: 22%; transform: rotate(8deg); }
+.spotlight.s2 { left: 50%; transform: translateX(-50%); width: 6px; }
+.spotlight.s3 { right: 22%; transform: rotate(-8deg); }
+.stage.tier-local .spotlight { opacity: 0.4; }
+.stage.tier-regional .spotlight { opacity: 0.7; }
+.stage.tier-stadium .spotlight { opacity: 1; }
+
+.banner-backdrop {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+  pointer-events: none;
+}
+.banner-logo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 3px;
+  color: rgba(241, 237, 230, 0.16);
+  line-height: 1;
+}
+.banner-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(212, 175, 55, 0.3);
+}
+.banner-event {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(212, 175, 55, 0.45);
+  text-transform: uppercase;
+}
+
+/* LAYOUT */
+.weigh-layout {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 22px;
+  align-items: center;
+  padding: 0 12px;
+  flex: 1;
+}
+@media (max-width: 760px) {
+  .weigh-layout { grid-template-columns: 1fr; gap: 14px; }
+}
+
+/* Fighter card */
+.fighter-card {
+  background: rgba(20, 20, 26, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  padding: 18px 18px 16px;
+  position: relative;
+  transition: all 0.5s ease;
+}
+.fighter-card.red { border-left: 3px solid var(--red-bright); }
+.fighter-card.blue { border-right: 3px solid var(--blue-bright); }
+.fighter-card.blue { text-align: right; }
+
+.fighter-card.active.red { box-shadow: 0 0 0 1px var(--red-bright), 0 0 28px -4px var(--red-glow); }
+.fighter-card.active.blue { box-shadow: 0 0 0 1px var(--blue-bright), 0 0 28px -4px var(--blue-glow); }
+
+.fc-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.fighter-card.red .fc-tag { color: var(--red-bright); }
+.fighter-card.blue .fc-tag { color: var(--blue-bright); }
+
+.fc-name {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.fc-nick {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-style: italic;
+  color: var(--gold);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  min-height: 12px;
+}
+.fc-flag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.fc-weight-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0 8px;
+  border-top: 1px solid var(--border);
+}
+.fighter-card.blue .fc-weight-row { flex-direction: row-reverse; }
+
+.fc-weight-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.fc-weight-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  color: var(--text);
+  transition: color 0.4s;
+}
+.fc-weight-value.on-weight { color: var(--lcd-green); }
+.fc-weight-value.over-weight { color: var(--lcd-red); }
+
+.fc-status {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-dim);
+  transition: all 0.4s;
+}
+.fc-status.weighing {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  animation: pulse 1s ease-in-out infinite;
+}
+.fc-status.on-weight {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: var(--lcd-green);
+  color: var(--lcd-green);
+}
+.fc-status.over-weight {
+  background: rgba(255, 48, 48, 0.12);
+  border-color: var(--lcd-red);
+  color: var(--lcd-red);
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* SCALE */
+.scale-platform {
+  text-align: center;
+  width: 340px;
+  max-width: 100%;
+}
+
+.scale-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  min-height: 14px;
+}
+
+.scale-frame {
+  background: linear-gradient(180deg, #0a0a0c 0%, #14141a 100%);
+  border: 2px solid var(--surface-4);
+  padding: 22px 18px 16px;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.3),
+    0 24px 60px -12px rgba(0, 0, 0, 0.8),
+    0 0 40px -8px rgba(212, 175, 55, 0.18);
+}
+.scale-frame::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(135deg, var(--gold) 0%, transparent 30%, transparent 70%, var(--gold) 100%);
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.lcd-display {
+  background: #0a0d0a;
+  border: 1px solid #1a221a;
+  padding: 14px 8px 8px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.lcd-display::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.3) 2px 3px);
+  pointer-events: none;
+}
+.lcd-display::after {
+  content: '888.8';
+  position: absolute;
+  top: 14px;
+  left: 0; right: 0;
+  font-family: var(--font-lcd);
+  font-size: 72px;
+  font-weight: 500;
+  letter-spacing: 6px;
+  color: rgba(0, 255, 136, 0.08);
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.lcd-value {
+  font-family: var(--font-lcd);
+  font-size: 72px;
+  font-weight: 500;
+  letter-spacing: 6px;
+  color: var(--lcd-green);
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(0, 255, 136, 0.65), 0 0 24px rgba(0, 255, 136, 0.35);
+  position: relative;
+  z-index: 1;
+  transition: color 0.4s, text-shadow 0.4s;
+}
+.lcd-value.over {
+  color: var(--lcd-red);
+  text-shadow: 0 0 12px rgba(255, 48, 48, 0.7), 0 0 24px rgba(255, 48, 48, 0.4);
+  animation: lcdFlash 1.4s ease-in-out infinite;
+}
+@keyframes lcdFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.lcd-unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--lcd-green);
+  text-transform: uppercase;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+}
+.lcd-value.over + .lcd-unit { color: var(--lcd-red); }
+
+.scale-class-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.scale-class-line .v { color: var(--gold-bright); font-weight: 700; }
+
+.scale-base {
+  width: 100%;
+  height: 12px;
+  margin-top: 10px;
+  background: linear-gradient(180deg, #2f2f3a 0%, #1c1c24 100%);
+  border: 1px solid var(--surface-4);
+  position: relative;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+}
+.scale-base::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 12px, rgba(255, 255, 255, 0.04) 12px 14px);
+}
+
+/* FACE-OFF */
+.faceoff-banner {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 8;
+  pointer-events: none;
+}
+.faceoff-banner.show { display: flex; }
+.faceoff-banner .content {
+  text-align: center;
+  padding: 30px 50px;
+  border: 2px solid var(--gold);
+  background: rgba(20, 20, 26, 0.95);
+}
+.faceoff-banner .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.faceoff-banner .title {
+  font-family: var(--font-display);
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.faceoff-banner .desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-muted);
+  font-style: italic;
+  max-width: 380px;
+  line-height: 1.4;
+}
+
+/* FLASHES */
+.flash-burst {
+  position: absolute;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 6;
+  animation: flashPop 0.4s ease-out forwards;
+}
+@keyframes flashPop {
+  0% { transform: scale(0.2); opacity: 1; }
+  60% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* LOG STRIP */
+.log-strip {
+  position: relative;
+  z-index: 4;
+  background: rgba(20, 20, 26, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+}
+.log-strip .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.log-strip .text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+  flex: 1;
+}
+.log-strip .text strong { color: var(--gold-bright); }
+.log-strip .text .red { color: var(--red-bright); font-weight: 700; }
+.log-strip .text .blue { color: var(--blue-bright); font-weight: 700; }
+.log-strip .text .on { color: var(--lcd-green); font-weight: 700; }
+.log-strip .text .over { color: var(--lcd-red); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="broadcast-bar">
+    <div class="brand-block">
+      <div class="brand-logo">OCTA<span class="accent">GON</span></div>
+      <div class="brand-tag">Weigh-In</div>
+    </div>
+
+    <div class="event-title-block">
+      <div class="event-eyebrow" id="bc-eyebrow">CEREMONIAL WEIGH-IN · 24H TO BELL</div>
+      <div class="event-title">
+        <span id="bc-red-name">RED</span>
+        <span class="vs">VS</span>
+        <span id="bc-blue-name">BLUE</span>
+      </div>
+    </div>
+
+    <div class="phase-pill" id="phase-pill">FIGHT WEEK</div>
+  </header>
+
+  <div class="stage-frame">
+    <div class="stage tier-local" id="stage">
+
+      <div class="spotlight s1"></div>
+      <div class="spotlight s2"></div>
+      <div class="spotlight s3"></div>
+
+      <div class="banner-backdrop">
+        <div class="banner-logo">OCTA<span style="color: rgba(225, 29, 54, 0.4);">GON</span></div>
+        <div class="banner-divider"></div>
+        <div class="banner-event" id="banner-event">Fight Night · Ceremonial</div>
+      </div>
+
+      <div class="weigh-layout">
+        <div class="fighter-card red" id="card-red">
+          <div class="fc-tag">Red Corner</div>
+          <div class="fc-name" id="red-name">— —</div>
+          <div class="fc-nick" id="red-nick"></div>
+          <div class="fc-flag" id="red-flag">— · — · Orthodox</div>
+          <div class="fc-weight-row">
+            <span class="fc-weight-label">Scale</span>
+            <span class="fc-weight-value" id="red-weight">—</span>
+          </div>
+          <div class="fc-status" id="red-status">Awaiting</div>
+        </div>
+
+        <div class="scale-platform">
+          <div class="scale-eyebrow" id="scale-label">On the scale</div>
+          <div class="scale-frame">
+            <div class="lcd-display">
+              <span class="lcd-value" id="lcd-value">0.0</span>
+              <div class="lcd-unit" id="lcd-unit">LBS</div>
+            </div>
+            <div class="scale-class-line">
+              <span>Weight Class</span>
+              <span class="v" id="class-line">— · — lbs</span>
+            </div>
+          </div>
+          <div class="scale-base"></div>
+        </div>
+
+        <div class="fighter-card blue" id="card-blue">
+          <div class="fc-tag">Blue Corner</div>
+          <div class="fc-name" id="blue-name">— —</div>
+          <div class="fc-nick" id="blue-nick"></div>
+          <div class="fc-flag" id="blue-flag">— · — · Orthodox</div>
+          <div class="fc-weight-row">
+            <span class="fc-weight-label">Scale</span>
+            <span class="fc-weight-value" id="blue-weight">—</span>
+          </div>
+          <div class="fc-status" id="blue-status">Awaiting</div>
+        </div>
+      </div>
+
+      <div class="faceoff-banner" id="faceoff-banner">
+        <div class="content">
+          <div class="eyebrow">Face-Off</div>
+          <div class="title" id="faceoff-title">EYE TO EYE</div>
+          <div class="desc" id="faceoff-desc">Cold stare. No words.</div>
+        </div>
+      </div>
+
+      <div class="log-strip">
+        <div class="label">Latest</div>
+        <div class="text" id="log-line">Awaiting ceremony…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   OCTAGON · WEIGH-IN (CAREER MODE)
+   Driven externally by the career game. No manual controls.
+   ============================================================ */
+
+const VENUES = {
+  local:    { label: 'Local Card · Weigh-Ins',         flashIntensity: 0.15 },
+  regional: { label: 'Regional Showcase · Ceremonial', flashIntensity: 0.4 },
+  stadium:  { label: 'Championship Card · Official',   flashIntensity: 0.85 }
+};
+
+const DEFAULT_RED = {
+  name: 'MARCUS ADESINA', nickname: 'The Reaper',
+  flag: '🇳🇬', country: 'Nigeria', stance: 'Orthodox',
+  weightClass: 'Welterweight', classLimit: 170, weight: 169.5
+};
+const DEFAULT_BLUE = {
+  name: 'KENJI TANAKA', nickname: 'Bullet',
+  flag: '🇯🇵', country: 'Japan', stance: 'Southpaw',
+  weightClass: 'Welterweight', classLimit: 170, weight: 170.8
+};
+
+const state = {
+  venue: 'local',
+  red: { ...DEFAULT_RED },
+  blue: { ...DEFAULT_BLUE },
+  redStatus: 'pending',
+  blueStatus: 'pending',
+  flashTimer: null
+};
+
+function rng(min, max) { return min + Math.random() * (max - min); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function fmtWeight(w) { return w.toFixed(1); }
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderVenue() {
+  const stage = document.getElementById('stage');
+  stage.classList.remove('tier-local', 'tier-regional', 'tier-stadium');
+  stage.classList.add(`tier-${state.venue}`);
+  document.getElementById('banner-event').textContent = VENUES[state.venue].label;
+  startFlashCadence();
+}
+
+function renderFighters() {
+  document.getElementById('red-name').textContent = state.red.name;
+  document.getElementById('red-nick').textContent = state.red.nickname ? `"${state.red.nickname}"` : '';
+  document.getElementById('red-flag').innerHTML = `${state.red.flag} ${state.red.country} · ${state.red.weightClass} · ${state.red.stance}`;
+  document.getElementById('blue-name').textContent = state.blue.name;
+  document.getElementById('blue-nick').textContent = state.blue.nickname ? `"${state.blue.nickname}"` : '';
+  document.getElementById('blue-flag').innerHTML = `${state.blue.flag} ${state.blue.country} · ${state.blue.weightClass} · ${state.blue.stance}`;
+  document.getElementById('bc-red-name').textContent = state.red.name;
+  document.getElementById('bc-blue-name').textContent = state.blue.name;
+  document.getElementById('class-line').textContent = `${state.red.weightClass} · ${state.red.classLimit} lbs`;
+}
+
+function setActive(corner) {
+  ['red', 'blue'].forEach(c => {
+    document.getElementById(`card-${c}`).classList.toggle('active', c === corner);
+  });
+}
+
+function clearActive() {
+  document.getElementById('card-red').classList.remove('active');
+  document.getElementById('card-blue').classList.remove('active');
+}
+
+function setStatus(corner, status, weight) {
+  const statusEl = document.getElementById(`${corner}-status`);
+  const weightEl = document.getElementById(`${corner}-weight`);
+
+  statusEl.classList.remove('weighing', 'on-weight', 'over-weight');
+  weightEl.classList.remove('on-weight', 'over-weight');
+
+  if (status === 'pending') {
+    statusEl.textContent = 'Awaiting';
+    weightEl.textContent = '—';
+  } else if (status === 'weighing') {
+    statusEl.textContent = 'On Scale';
+    statusEl.classList.add('weighing');
+    weightEl.textContent = '...';
+  } else if (status === 'on_weight') {
+    statusEl.textContent = 'On Weight';
+    statusEl.classList.add('on-weight');
+    weightEl.textContent = fmtWeight(weight);
+    weightEl.classList.add('on-weight');
+  } else if (status === 'over_weight') {
+    const diff = (weight - state[corner].classLimit).toFixed(1);
+    statusEl.textContent = `+${diff} Over`;
+    statusEl.classList.add('over-weight');
+    weightEl.textContent = fmtWeight(weight);
+    weightEl.classList.add('over-weight');
+  }
+  state[`${corner}Status`] = status;
+}
+
+function setLcd(value, mode) {
+  const lcd = document.getElementById('lcd-value');
+  lcd.textContent = fmtWeight(value);
+  lcd.classList.remove('over');
+  if (mode === 'over') lcd.classList.add('over');
+}
+
+function setScaleLabel(text) {
+  document.getElementById('scale-label').textContent = text;
+}
+
+function setLog(html) {
+  document.getElementById('log-line').innerHTML = html;
+}
+
+function setPhasePill(text) {
+  document.getElementById('phase-pill').textContent = text;
+}
+
+function startFlashCadence() {
+  if (state.flashTimer) clearInterval(state.flashTimer);
+  const intensity = VENUES[state.venue].flashIntensity;
+  state.flashTimer = setInterval(() => {
+    if (Math.random() < intensity) spawnFlash();
+  }, 800);
+}
+
+function spawnFlash() {
+  const stage = document.getElementById('stage');
+  const flash = document.createElement('div');
+  flash.className = 'flash-burst';
+  flash.style.left = `${rng(8, 92)}%`;
+  flash.style.top = `${rng(40, 85)}%`;
+  stage.appendChild(flash);
+  setTimeout(() => flash.remove(), 400);
+}
+
+function burstFlashes(count) {
+  for (let i = 0; i < count; i++) setTimeout(spawnFlash, i * 110);
+}
+
+function animateWeighIn(corner) {
+  return new Promise(resolve => {
+    const fighter = state[corner];
+    const target = fighter.weight;
+    setActive(corner);
+    setStatus(corner, 'weighing');
+    setScaleLabel(`${fighter.name} on the scale`);
+    setLog(`<span class="${corner}">${fighter.name.split(' ').slice(-1)[0]}</span> steps onto the scale…`);
+    burstFlashes(6);
+
+    setLcd(0);
+    const totalMs = 1600;
+    const startTime = performance.now();
+    const overshoot = target + rng(2, 5);
+    const overshootTime = totalMs * 0.55;
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      let value;
+      if (elapsed < overshootTime) {
+        const t = elapsed / overshootTime;
+        value = overshoot * (t * t * (3 - 2 * t));
+      } else if (elapsed < totalMs) {
+        const t = (elapsed - overshootTime) / (totalMs - overshootTime);
+        value = overshoot - (overshoot - target) * t;
+      } else {
+        value = target;
+      }
+      if (elapsed < totalMs * 0.9) value += rng(-0.2, 0.2);
+      setLcd(value);
+
+      if (elapsed < totalMs) {
+        requestAnimationFrame(frame);
+      } else {
+        const onWeight = target <= fighter.classLimit;
+        setLcd(target, onWeight ? null : 'over');
+        setStatus(corner, onWeight ? 'on_weight' : 'over_weight', target);
+
+        if (onWeight) {
+          setLog(`<span class="${corner}">${fighter.name.split(' ').slice(-1)[0]}</span> weighs in at <strong>${fmtWeight(target)} lbs</strong> — <span class="on">ON WEIGHT</span>`);
+        } else {
+          const over = (target - fighter.classLimit).toFixed(1);
+          setLog(`<span class="${corner}">${fighter.name.split(' ').slice(-1)[0]}</span> tips the scale at <strong>${fmtWeight(target)} lbs</strong> — <span class="over">MISSED BY ${over} LBS</span>`);
+        }
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+function showFaceoff() {
+  return new Promise(resolve => {
+    clearActive();
+    setScaleLabel('Face-off');
+    burstFlashes(15);
+
+    const outcomes = [
+      { title: 'EYE TO EYE', desc: 'Cold stare. No words. The crowd holds its breath.' },
+      { title: 'TENSION', desc: 'Neither blinks. The promoter steps between them. The room goes quiet.' },
+      { title: 'WORDS', desc: 'Whispers exchanged. Security inches forward. Something was said.' },
+      { title: 'SHOVE!', desc: 'Fighters separated. Crowd erupts. Bad blood is real.' },
+      { title: 'STARE-DOWN', desc: 'Forty-five seconds of silent intensity. Cameras snap furiously.' }
+    ];
+    const outcome = pick(outcomes);
+
+    document.getElementById('faceoff-title').textContent = outcome.title;
+    document.getElementById('faceoff-desc').textContent = outcome.desc;
+    document.getElementById('faceoff-banner').classList.add('show');
+
+    setLog(`<strong>Face-off:</strong> ${outcome.desc}`);
+
+    setTimeout(() => {
+      document.getElementById('faceoff-banner').classList.remove('show');
+      resolve(outcome);
+    }, 4200);
+  });
+}
+
+async function autoRun(opts = {}) {
+  const order = opts.order || ['red', 'blue'];
+  setPhasePill('Weigh-In');
+
+  setLog(`<strong>Ceremony begins.</strong> ${state[order[0]].name.split(' ').slice(-1)[0]} steps up first.`);
+  await wait(opts.startDelay || 800);
+
+  await animateWeighIn(order[0]);
+  await wait(opts.betweenDelay || 1400);
+
+  await animateWeighIn(order[1]);
+  await wait(opts.betweenDelay || 1400);
+
+  setScaleLabel('Both weighed in');
+  setLcd(0);
+  clearActive();
+  await wait(700);
+
+  const faceoffOutcome = await showFaceoff();
+
+  await wait(opts.endDelay || 800);
+  setPhasePill('Complete');
+  setLog(`<strong>Ceremony complete.</strong> 24 hours to fight night.`);
+
+  return {
+    red: { status: state.redStatus, weight: state.red.weight },
+    blue: { status: state.blueStatus, weight: state.blue.weight },
+    faceoff: faceoffOutcome
+  };
+}
+
+/* ============================================================
+   PUBLIC API — career game drives everything from here
+   ============================================================ */
+window.WeighIn = {
+  /** Switch venue tier ('local' | 'regional' | 'stadium'). */
+  setVenue(tier) {
+    if (VENUES[tier]) { state.venue = tier; renderVenue(); }
+  },
+  /** Set both fighters before running. */
+  setFighters(red, blue) {
+    state.red = { ...DEFAULT_RED, ...red };
+    state.blue = { ...DEFAULT_BLUE, ...blue };
+    renderFighters();
+    setStatus('red', 'pending');
+    setStatus('blue', 'pending');
+  },
+  /** Step-by-step (if game wants finer control). */
+  async weighIn(corner) { await animateWeighIn(corner); },
+  /** Trigger just the face-off moment. */
+  async faceOff() { return await showFaceoff(); },
+  /** Run the entire ceremony auto. Resolves with outcome. */
+  async autoRun(opts) { return await autoRun(opts); },
+  /** Read-only state for debugging. */
+  getState() { return JSON.parse(JSON.stringify(state)); }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderVenue();
+  renderFighters();
+  setStatus('red', 'pending');
+  setStatus('blue', 'pending');
+  setLog('Awaiting ceremony…');
+
+  // Auto-start the ceremony shortly after load — game can override via setFighters first.
+  setTimeout(() => {
+    window.WeighIn.autoRun();
+  }, 600);
+});
+</script>
+
+</body>
+</html>

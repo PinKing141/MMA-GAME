@@ -137,6 +137,27 @@ select {
     font-weight: 600;
 }
 
+.brand-tools {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.brand-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.save-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
 .scene {
     display: none;
     animation: fadeIn 0.35s ease;
@@ -219,10 +240,14 @@ select {
 .identity-card,
 .path-card,
 .continue-bar {
-    background: var(--surface);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 32%),
+        var(--surface);
     border: 1px solid var(--border);
     backdrop-filter: blur(14px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .form-card,
@@ -1325,13 +1350,12 @@ select {
 }
 
 .profile-header {
-    overflow: hidden;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 22px;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 24px;
     align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
 }
 
 .sep {
@@ -1524,6 +1548,11 @@ select {
     cursor: not-allowed;
 }
 
+.opponent-card:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
 .opponent-card:hover,
 .opponent-card.selected,
 .coach-card:hover,
@@ -1708,6 +1737,87 @@ select {
     margin-top: 8px;
 }
 
+.fight-engine-card {
+    padding: 0;
+    overflow: hidden;
+    min-height: 920px;
+}
+
+.fight-engine-frame {
+    width: 100%;
+    min-height: 920px;
+    border: 0;
+    display: block;
+    background: #05070d;
+}
+
+.fight-summary-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fight-replay-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+.fight-replay-modal.open {
+    display: flex;
+}
+
+.fight-replay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 6, 12, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.fight-replay-window {
+    position: relative;
+    width: min(1320px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(11, 15, 27, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.fight-replay-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.fight-replay-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.fight-replay-frame {
+    width: 100%;
+    height: calc(100vh - 92px);
+    border: 0;
+    border-radius: 12px;
+    background: #05070d;
+}
+
+body.fight-replay-open {
+    overflow: hidden;
+}
+
 .fight-result-headline {
     font-size: 42px;
     margin-bottom: 10px;
@@ -1879,6 +1989,30 @@ select {
         grid-template-columns: 1fr;
     }
 
+    .fight-engine-card,
+    .fight-engine-frame {
+        min-height: 760px;
+    }
+
+    .fight-replay-modal {
+        padding: 6px;
+    }
+
+    .fight-replay-window {
+        width: calc(100vw - 12px);
+        max-height: calc(100vh - 12px);
+        padding: 8px;
+    }
+
+    .fight-replay-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .fight-replay-frame {
+        height: calc(100vh - 86px);
+    }
+
     .brand {
         align-items: flex-start;
         flex-direction: column;
@@ -1944,5 +2078,836 @@ select {
 
     .substat-controls {
         justify-content: flex-end;
+    }
+}
+
+/* ---- Polish pass: profile dashboard ----
+   Tightens typography hierarchy, depth, and interactive states on the
+   profile scene. Keeps the existing dark sports-broadcast aesthetic. */
+
+.profile-id .name {
+    font-size: 48px;
+    line-height: 1.02;
+    letter-spacing: 0.015em;
+    margin: 6px 0 4px;
+    text-shadow: 0 2px 24px rgba(255, 30, 86, 0.18);
+}
+
+.profile-id .nickname-slot {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.profile-id .meta {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin-top: 12px;
+}
+
+.profile-style-note {
+    line-height: 1.55;
+    max-width: 56ch;
+}
+
+.profile-header {
+    padding: 28px 30px;
+}
+
+.profile-vital .label {
+    margin-bottom: 4px;
+}
+
+.profile-vital .value {
+    font-variant-numeric: tabular-nums;
+}
+
+.ovr-big {
+    text-shadow: 0 0 28px rgba(255, 77, 109, 0.45);
+}
+
+/* Sharper stat bars: subtle gradient + highlight line */
+.substat-bar,
+.stat-bar {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.substat-bar-fill,
+.stat-bar-fill {
+    position: relative;
+    box-shadow: 0 0 12px currentColor;
+    opacity: 0.95;
+}
+
+.substat-bar-fill::after,
+.stat-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.s-red { background: linear-gradient(90deg, #c93a55, #eb4d4b); color: #eb4d4b; }
+.s-orange { background: linear-gradient(90deg, #d77a1f, #f0932b); color: #f0932b; }
+.s-amber { background: linear-gradient(90deg, #d8a82e, #f6c343); color: #f6c343; }
+.s-purple { background: linear-gradient(90deg, #7050d8, #8f6bff); color: #8f6bff; }
+.s-blue { background: linear-gradient(90deg, #3a93d9, #4bb2ff); color: #4bb2ff; }
+.s-green { background: linear-gradient(90deg, #2eb567, #3fd37c); color: #3fd37c; }
+
+/* Stat pills get chip depth and a faint inset highlight */
+.stat-pill {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 2px 6px rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Stat row hover: subtle row highlight for scannability */
+.stat-row {
+    transition: background-color 0.15s ease;
+    border-radius: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin-left: -6px;
+    margin-right: -6px;
+}
+
+.stat-row:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+/* Career-state numbers get tabular nums for clean alignment */
+.career-stat .value,
+.preview-stat .value,
+.ovr-badge .value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Continue-bar reads as the primary action zone */
+.continue-bar {
+    position: relative;
+    overflow: hidden;
+}
+
+.continue-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 30, 86, 0.55) 30%,
+        rgba(75, 178, 255, 0.55) 70%,
+        transparent);
+}
+
+.continue-bar .text .head {
+    letter-spacing: 0.025em;
+}
+
+/* Accessible focus rings on buttons (the existing hover is fine; this adds keyboard polish) */
+.btn:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 2px var(--bg),
+        0 0 0 4px rgba(255, 30, 86, 0.55),
+        0 14px 28px rgba(255, 30, 86, 0.24);
+}
+
+.btn.ghost:focus-visible {
+    box-shadow:
+        0 0 0 2px var(--bg),
+        0 0 0 4px rgba(255, 255, 255, 0.22);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Profile groups grid: a hairline between cards rather than nothing */
+.profile-group-card .stat-card-header {
+    margin-bottom: 14px;
+}
+
+.profile-group-card .stat-row:last-child {
+    padding-bottom: 0;
+}
+
+/* Identity card hero gets a touch of breathing room */
+.identity-hero {
+    padding: 4px 0 2px;
+}
+
+.profile-modifiers {
+    margin-bottom: 18px;
+}
+
+.modifier-title {
+    margin-bottom: 8px;
+    color: var(--text-dim);
+}
+
+/* Class/discipline pill at the top of profile id */
+.profile-class-pill,
+.profile-discipline-tag {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================================
+   Polish pass: full flow (setup → frame → allocate → opponent → gym → fight)
+   Keeps the dark sports-broadcast aesthetic; tightens depth, hierarchy,
+   and interactive states. Reuses the chip/glow vocabulary from the
+   profile polish so the whole flow reads as one product.
+   ============================================================ */
+
+/* ---- Cross-scene primitives ---- */
+
+.scene-title {
+    text-shadow: 0 2px 36px rgba(255, 30, 86, 0.12);
+}
+
+.scene-subtitle {
+    max-width: 64ch;
+    line-height: 1.6;
+}
+
+.accent-text {
+    color: var(--accent-hot-2);
+    text-shadow: 0 0 18px rgba(255, 77, 109, 0.32);
+}
+
+/* Form inputs get a more confident focus state and a hover lift */
+.field input,
+.field select {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.field input::placeholder {
+    color: var(--text-dim);
+    opacity: 0.7;
+}
+
+.field input:hover,
+.field select:hover {
+    border-color: var(--border-strong);
+}
+
+.field input:focus,
+.field select:focus,
+.field input:focus-visible,
+.field select:focus-visible {
+    border-color: rgba(255, 30, 86, 0.7);
+    box-shadow:
+        0 0 0 3px rgba(255, 30, 86, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Radio group: visible hover + selected chip depth */
+.radio-group label {
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.radio-group label:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+}
+
+.radio-group input:checked + span {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 8px 22px rgba(255, 30, 86, 0.28);
+}
+
+/* ---- Setup + Frame scenes (forms + preview) ---- */
+
+.preview-name {
+    text-shadow: 0 1px 24px rgba(255, 30, 86, 0.18);
+}
+
+.preview-class-pill,
+.gym-week-pill {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-variant-numeric: tabular-nums;
+}
+
+.preview-stat .value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Slider polish: thumb hover lift, track fill highlight, focus glow */
+.frame-slider {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.frame-slider::-webkit-slider-thumb {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.frame-slider:hover::-webkit-slider-thumb,
+.frame-slider:focus::-webkit-slider-thumb {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(255, 30, 86, 0.22);
+}
+
+.frame-slider::-moz-range-thumb {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.frame-slider:hover::-moz-range-thumb,
+.frame-slider:focus::-moz-range-thumb {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(255, 30, 86, 0.22);
+}
+
+.slider-value {
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-hot-2);
+    text-shadow: 0 0 14px rgba(255, 77, 109, 0.28);
+}
+
+.slider-range-hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.frame-summary-box {
+    position: relative;
+}
+
+.frame-summary-box::before {
+    content: '';
+    position: absolute;
+    inset: -1px 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 30, 86, 0.4),
+        transparent);
+}
+
+/* ---- Allocate scene (build board) ---- */
+
+.alloc-title {
+    text-shadow: 0 1px 24px rgba(255, 30, 86, 0.15);
+}
+
+.alloc-title small {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.points-counter .value,
+.ovr-badge .value {
+    text-shadow: 0 0 18px rgba(255, 77, 109, 0.32);
+}
+
+#points-left.empty {
+    color: var(--accent-hot);
+    animation: pulseEmpty 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseEmpty {
+    0%, 100% { text-shadow: 0 0 18px rgba(255, 30, 86, 0.5); }
+    50% { text-shadow: 0 0 28px rgba(255, 30, 86, 0.85); }
+}
+
+/* Category cards on the allocation board */
+.cat-card {
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.cat-card:hover {
+    border-color: var(--border-strong);
+}
+
+.cat-card-header {
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.cat-card-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.cat-tag {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-variant-numeric: tabular-nums;
+}
+
+.cat-avg strong {
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+
+/* Substat rows in allocation */
+.substat {
+    transition: background 0.15s ease;
+    border-radius: 10px;
+}
+
+.substat:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.substat.active {
+    background: rgba(255, 30, 86, 0.07);
+    box-shadow: inset 0 0 0 1px rgba(255, 30, 86, 0.22);
+}
+
+.substat-value {
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-tick {
+    transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.btn-tick:hover {
+    transform: scale(1.08);
+    color: var(--text);
+}
+
+.btn-tick:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(255, 30, 86, 0.4);
+}
+
+/* Build visual / hex chart panel */
+.build-visual-panel {
+    position: relative;
+}
+
+.hex-svg {
+    filter: drop-shadow(0 0 18px rgba(255, 30, 86, 0.18));
+}
+
+.hex-svg .data {
+    fill: rgba(255, 30, 86, 0.18);
+    stroke: var(--accent-hot-2);
+    stroke-width: 2;
+}
+
+.hex-svg .ring {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 1;
+}
+
+.hex-svg .axis {
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 1;
+}
+
+.hex-svg .label {
+    fill: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.hex-svg .label-val {
+    fill: var(--text);
+    font-family: var(--font-display);
+    font-size: 16px;
+}
+
+/* Preset card */
+.preset-focus-name {
+    font-size: 26px;
+    letter-spacing: 0.025em;
+}
+
+.preset-focus-icon {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.preset-buttons button {
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.preset-buttons button:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
+}
+
+/* ---- Opponent scene (booking) ---- */
+
+.opponent-list > * {
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.opponent-list > *:hover:not([disabled]) {
+    transform: translateY(-1px);
+    border-color: rgba(255, 77, 109, 0.4);
+}
+
+.opponent-list .selected,
+.opponent-list [aria-selected='true'] {
+    border-color: rgba(255, 30, 86, 0.55);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 0 1px rgba(255, 30, 86, 0.35),
+        0 12px 28px rgba(255, 30, 86, 0.18);
+}
+
+.opponent-money {
+    color: var(--accent-gold);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 16px rgba(242, 194, 91, 0.32);
+}
+
+.opponent-summary {
+    line-height: 1.55;
+}
+
+/* Ranking board */
+.ranking-board {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ranking-board > * {
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+    font-variant-numeric: tabular-nums;
+}
+
+.ranking-board > *:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+/* ---- Gym scene (camp) ---- */
+
+.gym-week-pill {
+    background: linear-gradient(135deg,
+        rgba(255, 30, 86, 0.14),
+        rgba(255, 77, 109, 0.06));
+    border: 1px solid rgba(255, 77, 109, 0.28);
+    color: var(--accent-hot-2);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.gym-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.gym-status {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(75, 178, 255, 0.06);
+    border: 1px solid rgba(75, 178, 255, 0.18);
+    color: var(--text);
+    margin: 14px 0;
+    line-height: 1.55;
+}
+
+/* Coach cards + action cards: shared hover/selected vocabulary */
+.coach-card,
+.gym-action-card {
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.coach-card:hover:not([disabled]),
+.gym-action-card:hover:not([disabled]) {
+    transform: translateY(-1px);
+    border-color: rgba(255, 77, 109, 0.38);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.coach-card[disabled],
+.gym-action-card[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.coach-card.selected {
+    border-color: rgba(255, 30, 86, 0.55);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 0 1px rgba(255, 30, 86, 0.35),
+        0 12px 28px rgba(255, 30, 86, 0.18);
+}
+
+.coach-card-name,
+.gym-action-label {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+}
+
+.coach-card-meta-row {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.coach-card-trait {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.coach-card-trait strong {
+    display: block;
+    color: var(--accent-gold);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.gym-action-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.gym-action-week {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.gym-action-copy {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+/* Gym metrics row uses .career-row from profile polish — inherits cleanly. */
+.gym-metric .value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Injury pills */
+.injury-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(216, 58, 88, 0.12);
+    border: 1px solid rgba(216, 58, 88, 0.32);
+    color: #ff8da0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    margin: 4px 4px 0 0;
+}
+
+.injury-pill strong {
+    color: var(--accent-hot-2);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Training log entries */
+.gym-log {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gym-log-row {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.018);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s ease;
+}
+
+.gym-log-row:hover {
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.gym-log-week {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-hot-2);
+    align-self: center;
+}
+
+.gym-log-title {
+    font-family: var(--font-display);
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+}
+
+.gym-log-note {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.gym-log-empty {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.gym-complete-note {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.55;
+    margin-top: 12px;
+}
+
+.opponent-summary-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.03em;
+}
+
+.opponent-summary-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.opponent-summary-copy {
+    margin-top: 10px;
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+
+/* ---- Fight scene (career-page only — replay iframe is intentionally skipped) ---- */
+
+.fight-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.fight-result-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.fight-result-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 30, 86, 0.65) 25%,
+        rgba(242, 194, 91, 0.6) 50%,
+        rgba(75, 178, 255, 0.65) 75%,
+        transparent);
+}
+
+.fight-result-headline {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    line-height: 1.02;
+    letter-spacing: 0.025em;
+    margin: 6px 0 14px;
+    text-shadow: 0 2px 36px rgba(255, 30, 86, 0.22);
+}
+
+.fight-result-copy {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 60ch;
+    margin-bottom: 18px;
+}
+
+.fight-note-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.fight-note {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.022);
+    border-left: 2px solid rgba(255, 77, 109, 0.45);
+    color: var(--text-muted);
+    line-height: 1.55;
+    font-size: 14px;
+}
+
+/* Camp readout grid (fight details panel) */
+#fight-camp-readout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin-top: 12px;
+}
+
+#fight-camp-readout > * {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.022);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+#fight-camp-readout > *:nth-child(odd) {
+    /* nothing extra — kept for future asymmetry */
+}
+
+@media (max-width: 720px) {
+    .fight-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #fight-camp-readout {
+        grid-template-columns: 1fr;
     }
 }

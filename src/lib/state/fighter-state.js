@@ -3,10 +3,15 @@ import { ARCHETYPE_LOOKUP } from '../data/archetypes.js';
 import { ALL_ATTRIBUTES, MIN_ATTRIBUTE, POINTS_BUDGET } from '../data/attributes.js';
 import { COACHES } from '../data/coaches.js';
 import { ROSTER } from '../data/roster.js';
-import { buildPresetStats, getOverallAverage } from '../utils/calculations.js';
+import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculations.js';
 
-export const state = {
-    setup: {
+const MIN_AGE = 18;
+const MAX_AGE = 60;
+
+export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'gym', 'fight'];
+
+function createDefaultSetupState() {
+    return {
         firstName: '',
         lastName: '',
         country: COUNTRIES.find(country => country.code === 'US') || COUNTRIES[0],
@@ -16,7 +21,12 @@ export const state = {
         weight: 170,
         reach: 71,
         hand: 'right'
-    },
+    };
+}
+
+export const state = {
+    currentScene: 'setup',
+    setup: createDefaultSetupState(),
     stats: {},
     archetype: null,
     pointsTotal: POINTS_BUDGET,
@@ -25,10 +35,6 @@ export const state = {
     selectedPreset: 'all-rounder',
     career: createDefaultCareerState()
 };
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
 
 function createCountryLookup() {
     return Object.fromEntries(COUNTRIES.map(country => [country.code, country]));
@@ -101,6 +107,10 @@ function createDefaultCareerState() {
         overtrainingWarnings: 0,
         injuries: [],
         trainingHistory: [],
+        availableEvents: [],
+        selectedEvent: null,
+        contract: null,
+        eventHistory: [],
         selectedCoach: null,
         selectedOpponent: null,
         availableOpponents: [],
@@ -115,6 +125,10 @@ function createDefaultCareerState() {
         },
         lastFightResult: null
     };
+}
+
+export function resetSetup() {
+    state.setup = createDefaultSetupState();
 }
 
 export function resetCareer() {
@@ -138,9 +152,88 @@ export function resetStats() {
     ALL_ATTRIBUTES.forEach(attribute => {
         state.stats[attribute.key] = MIN_ATTRIBUTE;
     });
+    state.archetype = null;
     state.pointsRemaining = state.pointsTotal;
     state.selectedStat = ALL_ATTRIBUTES[0]?.key || null;
+    state.selectedPreset = 'all-rounder';
+}
+
+export function resetGame() {
+    state.currentScene = 'setup';
+    resetSetup();
+    resetStats();
     resetCareer();
 }
 
-resetStats();
+export function hydrateState(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') {
+        return false;
+    }
+
+    const defaultSetup = createDefaultSetupState();
+    const setupSnapshot = snapshot.setup || {};
+    const countryCode = setupSnapshot.country?.code || setupSnapshot.countryCode || defaultSetup.country.code;
+
+    state.currentScene = SCENE_NAMES.includes(snapshot.currentScene) ? snapshot.currentScene : 'setup';
+    state.setup = {
+        ...defaultSetup,
+        ...setupSnapshot,
+        country: COUNTRIES.find(country => country.code === countryCode) || defaultSetup.country,
+        age: clamp(parseInt(setupSnapshot.age, 10) || defaultSetup.age, MIN_AGE, MAX_AGE)
+    };
+
+    const statsSnapshot = snapshot.stats || {};
+    state.stats = {};
+    ALL_ATTRIBUTES.forEach(attribute => {
+        state.stats[attribute.key] = clamp(Number(statsSnapshot[attribute.key] ?? MIN_ATTRIBUTE), MIN_ATTRIBUTE, 99);
+    });
+
+    const spentPoints = ALL_ATTRIBUTES.reduce((sum, attribute) => sum + (state.stats[attribute.key] - MIN_ATTRIBUTE), 0);
+    state.pointsTotal = POINTS_BUDGET;
+    state.pointsRemaining = clamp(
+        Number.isFinite(snapshot.pointsRemaining)
+            ? Number(snapshot.pointsRemaining)
+            : POINTS_BUDGET - spentPoints,
+        0,
+        POINTS_BUDGET
+    );
+    state.selectedStat = ALL_ATTRIBUTES.some(attribute => attribute.key === snapshot.selectedStat)
+        ? snapshot.selectedStat
+        : ALL_ATTRIBUTES[0]?.key || null;
+    state.selectedPreset = typeof snapshot.selectedPreset === 'string' ? snapshot.selectedPreset : 'all-rounder';
+    state.archetype = snapshot.archetype || null;
+
+    const defaultCareer = createDefaultCareerState();
+    const careerSnapshot = snapshot.career || {};
+    state.career = {
+        ...defaultCareer,
+        ...careerSnapshot,
+        injuries: Array.isArray(careerSnapshot.injuries) ? careerSnapshot.injuries : [],
+        trainingHistory: Array.isArray(careerSnapshot.trainingHistory) ? careerSnapshot.trainingHistory : [],
+        availableEvents: Array.isArray(careerSnapshot.availableEvents) ? careerSnapshot.availableEvents : [],
+        eventHistory: Array.isArray(careerSnapshot.eventHistory) ? careerSnapshot.eventHistory : [],
+        availableOpponents: Array.isArray(careerSnapshot.availableOpponents) ? careerSnapshot.availableOpponents : [],
+        roster: Array.isArray(careerSnapshot.roster) ? careerSnapshot.roster : defaultCareer.roster,
+        playerRankings: {
+            ...defaultCareer.playerRankings,
+            ...(careerSnapshot.playerRankings || {})
+        },
+        coachRelationships: {
+            ...defaultCareer.coachRelationships,
+            ...(careerSnapshot.coachRelationships || {})
+        },
+        record: {
+            ...defaultCareer.record,
+            ...(careerSnapshot.record || {})
+        },
+        selectedEvent: careerSnapshot.selectedEvent || null,
+        contract: careerSnapshot.contract || null,
+        selectedCoach: careerSnapshot.selectedCoach || null,
+        selectedOpponent: careerSnapshot.selectedOpponent || null,
+        lastFightResult: careerSnapshot.lastFightResult || null
+    };
+
+    return true;
+}
+
+resetGame();

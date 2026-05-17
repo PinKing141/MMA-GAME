@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OCTAGON · Press Conference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-grad-top: #0a0a0e;
+  --surface: #14141a;
+  --surface-2: #1c1c24;
+  --surface-3: #25252e;
+  --surface-4: #2f2f3a;
+  --border: #2a2a34;
+  --border-strong: #3a3a46;
+  --text: #f1ede6;
+  --text-muted: #8a8a94;
+  --text-dim: #54545e;
+
+  --red: #c8102e;
+  --red-bright: #e21d36;
+  --red-deep: #7a0a1c;
+  --red-glow: rgba(225, 29, 54, 0.6);
+  --blue-bright: #2563eb;
+  --blue-glow: rgba(37, 99, 235, 0.6);
+  --gold: #d4af37;
+  --gold-bright: #f0c850;
+
+  --mood-confident: #f0c850;
+  --mood-humble: #06b6d4;
+  --mood-hostile: #e21d36;
+  --mood-trash: #f59e0b;
+  --mood-composed: #14b8a6;
+  --mood-respectful: #8b5cf6;
+  --mood-defensive: #94a3b8;
+
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-quote: 'Playfair Display', Georgia, serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: radial-gradient(ellipse at top, var(--bg-grad-top), #000);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 3px);
+  pointer-events: none; z-index: 1;
+}
+
+.app {
+  position: relative; z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 22px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HEADER */
+.broadcast-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  position: relative;
+}
+.broadcast-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--red-bright) 0%, var(--gold) 50%, var(--blue-bright) 100%);
+}
+
+.brand-block { display: flex; align-items: baseline; gap: 12px; }
+.brand-logo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.brand-logo .accent { color: var(--red-bright); }
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.event-title-block { text-align: center; }
+.event-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--red-bright);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.event-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.event-title .vs {
+  color: var(--text-dim);
+  margin: 0 12px;
+  font-size: 14px;
+}
+
+.phase-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  font-weight: 700;
+}
+
+/* STAGE */
+.media-frame {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 580px;
+}
+.media-frame::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  background: var(--red-bright);
+  z-index: 5;
+}
+
+.media-stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.media-stage.tier-local {
+  background:
+    radial-gradient(ellipse at center top, rgba(225, 29, 54, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #1a1a20 0%, #15151a 60%, #0e0e12 100%);
+}
+.media-stage.tier-regional {
+  background:
+    radial-gradient(ellipse at center top, rgba(225, 29, 54, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 40%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    linear-gradient(180deg, #1d1a22 0%, #14141a 100%);
+}
+.media-stage.tier-stadium {
+  background:
+    radial-gradient(ellipse at center top, rgba(225, 29, 54, 0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 15% 40%, rgba(212, 175, 55, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 40%, rgba(212, 175, 55, 0.12) 0%, transparent 45%),
+    linear-gradient(180deg, #1a1822 0%, #0c0c14 100%);
+}
+
+.stage-bg-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.media-stage.tier-local .stage-bg-overlay {
+  background-image: repeating-linear-gradient(90deg, transparent 0 80px, rgba(0,0,0,0.2) 80px 82px);
+  opacity: 0.5;
+}
+.media-stage.tier-regional .stage-bg-overlay {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 60px, rgba(212, 175, 55, 0.025) 60px 61px),
+    repeating-linear-gradient(90deg, transparent 0 60px, rgba(212, 175, 55, 0.025) 60px 61px);
+}
+.media-stage.tier-stadium .stage-bg-overlay {
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 30%),
+    radial-gradient(circle at 25% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 8%),
+    radial-gradient(circle at 75% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 8%);
+}
+
+/* Backdrop banner */
+.media-backdrop {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  pointer-events: none;
+  z-index: 2;
+}
+.media-backdrop-logo {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 3px;
+  color: rgba(241, 237, 230, 0.14);
+  line-height: 1;
+}
+.media-backdrop-event {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(225, 29, 54, 0.4);
+  text-transform: uppercase;
+  padding-left: 22px;
+  border-left: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* HERO QUOTE STAGE */
+.quote-stage {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  gap: 24px;
+  padding: 64px 28px 22px;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+}
+@media (max-width: 900px) {
+  .quote-stage { grid-template-columns: 1fr; padding-top: 80px; gap: 16px; }
+}
+
+.fighter-podium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.podium-portrait {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.podium-portrait::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  background: radial-gradient(circle, currentColor 0%, transparent 65%);
+  opacity: 0.35;
+  filter: blur(10px);
+}
+.fighter-podium.red .podium-portrait { color: var(--red-bright); }
+.fighter-podium.blue .podium-portrait { color: var(--blue-bright); }
+
+.podium-svg {
+  width: 84px;
+  height: 84px;
+  position: relative;
+  z-index: 1;
+}
+
+.podium-id {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.podium-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.fighter-podium.red .podium-tag { color: var(--red-bright); }
+.fighter-podium.blue .podium-tag { color: var(--blue-bright); }
+.fighter-podium.player .podium-tag::after {
+  content: ' · YOU';
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.podium-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.podium-flag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.podium-mood {
+  margin-top: 6px;
+  padding: 5px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: all 0.4s ease;
+  text-align: center;
+  min-width: 100px;
+}
+.podium-mood.confident { background: rgba(240, 200, 80, 0.16); border-color: var(--mood-confident); color: var(--mood-confident); }
+.podium-mood.humble { background: rgba(6, 182, 212, 0.16); border-color: var(--mood-humble); color: var(--mood-humble); }
+.podium-mood.hostile { background: rgba(225, 29, 54, 0.16); border-color: var(--mood-hostile); color: var(--mood-hostile); }
+.podium-mood.trash { background: rgba(245, 158, 11, 0.16); border-color: var(--mood-trash); color: var(--mood-trash); }
+.podium-mood.composed { background: rgba(20, 184, 166, 0.16); border-color: var(--mood-composed); color: var(--mood-composed); }
+.podium-mood.respectful { background: rgba(139, 92, 246, 0.16); border-color: var(--mood-respectful); color: var(--mood-respectful); }
+.podium-mood.defensive { background: rgba(148, 163, 184, 0.16); border-color: var(--mood-defensive); color: var(--mood-defensive); }
+.podium-mood.silent { opacity: 0.5; }
+.podium-mood.thinking {
+  background: rgba(212, 175, 55, 0.16);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  animation: thinkingPulse 1s ease-in-out infinite;
+}
+@keyframes thinkingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* CENTER QUOTE */
+.quote-block {
+  text-align: center;
+  position: relative;
+}
+
+.quote-quotemark {
+  font-family: var(--font-quote);
+  font-size: 100px;
+  line-height: 1;
+  color: rgba(212, 175, 55, 0.18);
+  margin-bottom: -40px;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.quote-text {
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(20px, 2.5vw, 30px);
+  line-height: 1.25;
+  color: var(--text);
+  letter-spacing: 0.2px;
+  margin-bottom: 18px;
+  text-wrap: balance;
+  min-height: 100px;
+  position: relative;
+  z-index: 1;
+}
+.quote-text .typewriter::after {
+  content: '|';
+  color: var(--red-bright);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.quote-attribution {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.quote-attribution .dash {
+  width: 20px;
+  height: 1px;
+  background: var(--text-dim);
+}
+.quote-attribution .name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text);
+  letter-spacing: 1.5px;
+}
+.quote-attribution.red .name { color: var(--red-bright); }
+.quote-attribution.blue .name { color: var(--blue-bright); }
+
+/* CURRENT QUESTION strip */
+.question-strip {
+  position: relative;
+  z-index: 4;
+  background: rgba(20, 20, 26, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.question-strip .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.question-strip .question {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+  flex: 1;
+}
+.question-strip .reporter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.question-strip .reporter .outlet {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+/* TENSION + REP strip */
+.meters-strip {
+  position: relative;
+  z-index: 4;
+  background: rgba(20, 20, 26, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 10px 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.meter-block { display: flex; align-items: center; gap: 14px; }
+.meter-block .label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  width: 60px;
+}
+.meter-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-3);
+  position: relative;
+  overflow: hidden;
+}
+.meter-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s;
+}
+.meter-bar.tension .meter-bar-fill {
+  background: linear-gradient(90deg, var(--mood-humble) 0%, var(--gold) 50%, var(--mood-hostile) 100%);
+}
+.meter-bar.rep .meter-bar-fill {
+  background: linear-gradient(90deg, var(--mood-defensive) 0%, var(--gold) 50%, var(--gold-bright) 100%);
+}
+.meter-readout {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 1px;
+  min-width: 80px;
+  text-align: right;
+}
+.meter-readout.low { color: var(--mood-composed); }
+.meter-readout.mid { color: var(--gold-bright); }
+.meter-readout.high { color: var(--mood-hostile); }
+.meter-readout.boil { color: var(--mood-hostile); animation: tensionPulse 1.2s ease-in-out infinite; }
+.meter-readout.rep-good { color: var(--gold-bright); }
+.meter-readout.rep-neutral { color: var(--text-muted); }
+.meter-readout.rep-bad { color: var(--mood-hostile); }
+@keyframes tensionPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ANSWER CHOICES PANEL */
+.answer-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.answer-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 2px;
+  background: var(--gold-bright);
+}
+
+.answer-panel-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.answer-panel-eyebrow .timer {
+  color: var(--text-dim);
+  margin-left: 12px;
+}
+.answer-panel-eyebrow.waiting { color: var(--text-dim); }
+
+.answer-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .answer-choices { grid-template-columns: 1fr; }
+}
+
+.answer-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.answer-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.answer-btn:active { transform: translateY(0); }
+.answer-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.answer-btn-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.answer-btn-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.answer-btn[data-mood="confident"] .answer-btn-tag { color: var(--mood-confident); }
+.answer-btn[data-mood="humble"] .answer-btn-tag { color: var(--mood-humble); }
+.answer-btn[data-mood="hostile"] .answer-btn-tag { color: var(--mood-hostile); }
+.answer-btn[data-mood="trash"] .answer-btn-tag { color: var(--mood-trash); }
+.answer-btn[data-mood="composed"] .answer-btn-tag { color: var(--mood-composed); }
+.answer-btn[data-mood="respectful"] .answer-btn-tag { color: var(--mood-respectful); }
+.answer-btn[data-mood="defensive"] .answer-btn-tag { color: var(--mood-defensive); }
+
+.answer-btn-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.answer-btn-effects {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+.answer-btn-effects .pos { color: var(--gold-bright); }
+.answer-btn-effects .neg { color: var(--mood-hostile); }
+
+.answer-empty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 14px;
+  text-transform: uppercase;
+  font-style: italic;
+}
+
+/* Camera flashes */
+.flash-burst {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 6;
+  animation: flashPop 0.45s ease-out forwards;
+}
+@keyframes flashPop {
+  0% { transform: scale(0.2); opacity: 1; }
+  60% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="broadcast-bar">
+    <div class="brand-block">
+      <div class="brand-logo">OCTA<span class="accent">GON</span></div>
+      <div class="brand-tag">Press Conference</div>
+    </div>
+
+    <div class="event-title-block">
+      <div class="event-eyebrow" id="bc-eyebrow">PRE-FIGHT PRESS CONFERENCE</div>
+      <div class="event-title">
+        <span id="bc-red-name">YOU</span>
+        <span class="vs">VS</span>
+        <span id="bc-blue-name">OPPONENT</span>
+      </div>
+    </div>
+
+    <div class="phase-pill" id="phase-pill">FIGHT WEEK</div>
+  </header>
+
+  <div class="media-frame">
+    <div class="media-stage tier-local" id="stage">
+      <div class="stage-bg-overlay"></div>
+
+      <div class="media-backdrop">
+        <div class="media-backdrop-logo">OCTA<span style="color: rgba(225, 29, 54, 0.4);">GON</span></div>
+        <div class="media-backdrop-event" id="backdrop-event">Press Conference</div>
+      </div>
+
+      <!-- HERO QUOTE STAGE -->
+      <div class="quote-stage">
+        <!-- Red podium (player) -->
+        <div class="fighter-podium red player" id="podium-red">
+          <div class="podium-portrait">
+            <svg class="podium-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#e21d36" stroke-width="2" stroke-dasharray="3 4" opacity="0.5"/>
+              <path d="M 30 70 Q 50 50 70 70" fill="none" stroke="#e21d36" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="50" cy="42" r="16" fill="#1c1c24" stroke="#e21d36" stroke-width="3"/>
+              <path d="M 50 18 L 44 26 L 56 26 Z" fill="#ff5d72"/>
+            </svg>
+          </div>
+          <div class="podium-id">
+            <div class="podium-tag">Red Corner</div>
+            <div class="podium-name" id="red-name">— —</div>
+            <div class="podium-flag" id="red-flag">— · —</div>
+          </div>
+          <div class="podium-mood silent" id="red-mood">Silent</div>
+        </div>
+
+        <!-- Center quote -->
+        <div class="quote-block">
+          <div class="quote-quotemark">"</div>
+          <div class="quote-text" id="quote-text">
+            <span style="color: var(--text-muted); font-style: italic; font-size: 16px;">Press conference begins…</span>
+          </div>
+          <div class="quote-attribution" id="quote-attribution" style="visibility: hidden;">
+            <span class="dash"></span>
+            <span class="name" id="quote-name">—</span>
+            <span class="dash"></span>
+          </div>
+        </div>
+
+        <!-- Blue podium (opponent) -->
+        <div class="fighter-podium blue" id="podium-blue">
+          <div class="podium-portrait">
+            <svg class="podium-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 4" opacity="0.5"/>
+              <path d="M 30 70 Q 50 50 70 70" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="50" cy="42" r="16" fill="#1c1c24" stroke="#2563eb" stroke-width="3"/>
+              <path d="M 50 18 L 44 26 L 56 26 Z" fill="#5a8aff"/>
+            </svg>
+          </div>
+          <div class="podium-id">
+            <div class="podium-tag">Blue Corner</div>
+            <div class="podium-name" id="blue-name">— —</div>
+            <div class="podium-flag" id="blue-flag">— · —</div>
+          </div>
+          <div class="podium-mood silent" id="blue-mood">Silent</div>
+        </div>
+      </div>
+
+      <!-- CURRENT QUESTION -->
+      <div class="question-strip">
+        <div class="label">Question</div>
+        <div class="question" id="current-question">Awaiting first question…</div>
+        <div class="reporter" id="current-reporter">— · <span class="outlet">—</span></div>
+      </div>
+
+      <!-- METERS -->
+      <div class="meters-strip">
+        <div class="meter-block">
+          <div class="label">Tension</div>
+          <div class="meter-bar tension">
+            <div class="meter-bar-fill" id="tension-fill"></div>
+          </div>
+          <div class="meter-readout low" id="tension-readout">0% · Cordial</div>
+        </div>
+        <div class="meter-block">
+          <div class="label">Hype</div>
+          <div class="meter-bar rep">
+            <div class="meter-bar-fill" id="rep-fill"></div>
+          </div>
+          <div class="meter-readout rep-neutral" id="rep-readout">0 · Unknown</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANSWER CHOICES — what the PLAYER does -->
+  <div class="answer-panel">
+    <div class="answer-panel-eyebrow waiting" id="panel-eyebrow">
+      Choose your response
+    </div>
+    <div class="answer-choices" id="answer-choices">
+      <div class="answer-empty">Waiting for press to address you…</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   OCTAGON · PRESS CONFERENCE (CAREER MODE)
+   - Player picks answers (mood-tagged choices)
+   - Opponent answers automatically based on personality
+   - Career game drives the flow externally; auto-cycles on load
+   ============================================================ */
+
+const VENUES = {
+  local:    { label: 'Local Card · Media Day',          flashIntensity: 0.15 },
+  regional: { label: 'Regional · Open Workouts',         flashIntensity: 0.4 },
+  stadium:  { label: 'Championship · Official Presser',  flashIntensity: 0.78 }
+};
+
+const FORMATS = {
+  pre_fight:  'PRE-FIGHT PRESS CONFERENCE',
+  post_fight: 'POST-FIGHT PRESS CONFERENCE'
+};
+
+const DEFAULT_RED = {
+  name: 'YOUR FIGHTER',
+  nickname: '',
+  flag: '🇳🇬',
+  country: 'Nigeria',
+  weightClass: 'Welterweight'
+};
+const DEFAULT_BLUE = {
+  name: 'KENJI TANAKA',
+  nickname: 'Bullet',
+  flag: '🇯🇵',
+  country: 'Japan',
+  weightClass: 'Welterweight',
+  personality: { confidence: 70, trashTalk: 20, humility: 75, respect: 80 }
+};
+
+/* ============================================================
+   QUESTION BANKS
+   Each question is targeted: 'player' = only you answer,
+   'opponent' = only they answer, 'both' = both, 'react' = opponent reacts to you
+   ============================================================ */
+const PRE_FIGHT_QUESTIONS = [
+  { q: 'How do you see this fight playing out?', target: 'both', topic: 'gameplan' },
+  { q: 'What\'s the biggest threat your opponent brings?', target: 'both', topic: 'opponent_threat' },
+  { q: 'Your opponent has been very vocal in the lead-up. Response?', target: 'react', topic: 'callout' },
+  { q: 'What does a win do for your career?', target: 'player', topic: 'stakes' },
+  { q: 'Any disrespect between you two that you want to address?', target: 'both', topic: 'beef' },
+  { q: 'Word on the cut and weigh-in?', target: 'both', topic: 'weight' },
+  { q: 'Final prediction — how does this end?', target: 'both', topic: 'prediction' },
+  { q: 'Final words for the fans before fight night?', target: 'both', topic: 'closing' }
+];
+
+const POST_FIGHT_QUESTIONS = [
+  { q: 'Walk us through the moment the fight changed.', target: 'player', topic: 'finish' },
+  { q: 'Your respect for your opponent tonight?', target: 'both', topic: 'opponent_respect' },
+  { q: 'What\'s next? Who do you want?', target: 'player', topic: 'callout_next' },
+  { q: 'How does this win change your trajectory?', target: 'player', topic: 'career' },
+  { q: 'Where do you go from here?', target: 'opponent', topic: 'future' },
+  { q: 'Final words for the fans and your team?', target: 'both', topic: 'closing' }
+];
+
+const REPORTERS = [
+  { name: 'Marc Reilly', outlet: 'ESPN' },
+  { name: 'Sarah Chen', outlet: 'MMA Junkie' },
+  { name: 'Jamal Foster', outlet: 'Combate Press' },
+  { name: 'Hiroko Tanaka', outlet: 'Sherdog' },
+  { name: 'Liam O\'Donnell', outlet: 'MMA Fighting' },
+  { name: 'Carlos Mendez', outlet: 'Bloody Elbow' },
+  { name: 'Anya Petrov', outlet: 'Cageside' },
+  { name: 'David Park', outlet: 'BJJ Hub' }
+];
+
+/* ============================================================
+   PLAYER ANSWER CHOICES — by topic + mood
+   Each entry: { mood, preview (short label in button), quote (the full line),
+                 tension (delta), hype (delta) }
+   {opp} → replaced with opponent's last name
+   ============================================================ */
+const ANSWER_CHOICES = {
+  gameplan: [
+    { mood: 'confident', preview: 'Promise a finish', quote: 'I see a clean performance. I take this on my terms. {opp} has answers for nothing I bring.', tension: 6, hype: 4 },
+    { mood: 'composed', preview: 'Stay technical', quote: 'I prepare for everywhere the fight goes. Standing, ground, scrambles. I trust my training. We\'ll see what happens.', tension: -2, hype: 2 },
+    { mood: 'humble', preview: 'Show respect', quote: '{opp} is dangerous. I\'ve trained hard. Whatever happens out there, I gave it everything I had.', tension: -4, hype: 1 },
+    { mood: 'trash', preview: 'Talk smack', quote: 'I\'ve seen the tape. {opp} is overrated. I\'m gonna expose him for everyone to see.', tension: 12, hype: 6 }
+  ],
+  opponent_threat: [
+    { mood: 'respectful', preview: 'Praise their game', quote: '{opp} has legitimate skills. He\'s earned his spot. I have to be at my absolute best.', tension: -5, hype: 1 },
+    { mood: 'confident', preview: 'Dismiss the threat', quote: 'I\'ve studied {opp}. He brings nothing I haven\'t seen before. Nothing that scares me.', tension: 5, hype: 3 },
+    { mood: 'defensive', preview: 'Brush it off', quote: 'I don\'t focus on what he brings. I focus on what I do. That\'s always been my approach.', tension: 1, hype: 0 },
+    { mood: 'trash', preview: 'Mock them', quote: '{opp}\'s biggest threat? Maybe his cardio gives him a heart attack and saves him the embarrassment.', tension: 14, hype: 7 }
+  ],
+  callout: [
+    { mood: 'composed', preview: 'Refuse the bait', quote: 'He can talk all he wants. I do my talking when the door closes Saturday night.', tension: 0, hype: 2 },
+    { mood: 'hostile', preview: 'Fire back hard', quote: 'He said WHAT? Yeah, OK. Saturday night I\'m going to make him eat every single word. Personally.', tension: 18, hype: 8 },
+    { mood: 'humble', preview: 'De-escalate', quote: 'He\'s confident. He should be — he\'s a fighter. I respect his belief in himself. Words don\'t hurt me.', tension: -6, hype: -1 },
+    { mood: 'trash', preview: 'Mock them back', quote: 'He\'s selling pay-per-views with that mouth. Saturday I sell the fact he can\'t fight.', tension: 13, hype: 7 }
+  ],
+  stakes: [
+    { mood: 'confident', preview: 'I\'m climbing', quote: 'This is the next step. Win Saturday, I\'m a rank closer to the belt. Simple math.', tension: 3, hype: 5 },
+    { mood: 'humble', preview: 'Just grateful', quote: 'I\'m grateful for the opportunity. Win or lose, I\'m a better fighter for being here.', tension: -3, hype: 1 },
+    { mood: 'composed', preview: 'Stay focused', quote: 'It\'s another fight. I don\'t think about what it means until I get my hand raised.', tension: -1, hype: 2 },
+    { mood: 'trash', preview: 'I\'m the star', quote: 'This win makes me the next must-see name in the division. They\'re building me. Watch.', tension: 8, hype: 6 }
+  ],
+  beef: [
+    { mood: 'composed', preview: 'It\'s just business', quote: 'No beef. He\'s a guy I have to beat to move up. That\'s it. Pure business.', tension: -2, hype: 0 },
+    { mood: 'hostile', preview: 'There\'s real heat', quote: 'There\'s history. I don\'t want to get into it here. But it\'ll come out in the cage. Believe that.', tension: 15, hype: 7 },
+    { mood: 'respectful', preview: 'Genuine respect', quote: 'No issues between us. Two pros doing a job. I\'ll shake his hand after, win or lose.', tension: -7, hype: 0 },
+    { mood: 'defensive', preview: 'Won\'t engage', quote: 'I\'m not getting into media drama. Press the question to him if you want it answered.', tension: 2, hype: -1 }
+  ],
+  weight: [
+    { mood: 'composed', preview: 'Cut\'s on track', quote: 'Weight\'s right where it needs to be. Hydration is good. No problems.', tension: 0, hype: 1 },
+    { mood: 'confident', preview: 'Easy cut', quote: 'I cut weight in my sleep. I\'ll be on the scale, looking sharp, ready to fight.', tension: 1, hype: 2 }
+  ],
+  prediction: [
+    { mood: 'trash', preview: 'KO Round 1', quote: 'First round. I\'m putting {opp} to sleep. Mark it down. Bet on it. End of story.', tension: 15, hype: 9 },
+    { mood: 'confident', preview: 'Stoppage', quote: 'I see a stoppage. Maybe round two, maybe round three. But it doesn\'t see the cards.', tension: 7, hype: 6 },
+    { mood: 'composed', preview: 'Win, any method', quote: 'I get the W. Doesn\'t matter how. KO, sub, decision — I leave the cage with my hand up.', tension: 2, hype: 3 },
+    { mood: 'humble', preview: 'No predictions', quote: 'I don\'t predict fights. I just go in and execute. {opp} can be unpredictable. I respect that.', tension: -4, hype: 1 }
+  ],
+  closing: [
+    { mood: 'confident', preview: 'Bring popcorn', quote: 'Tune in Saturday. I\'m going to give you all something to remember. Bring popcorn.', tension: 4, hype: 6 },
+    { mood: 'humble', preview: 'Thank the fans', quote: 'Thank you to the fans. To my team, my family, my coaches. I fight my heart out for you.', tension: -2, hype: 4 },
+    { mood: 'trash', preview: 'Promise violence', quote: 'I\'m bringing violence Saturday. Pure violence. The fans deserve a show — they\'ll get one.', tension: 8, hype: 7 },
+    { mood: 'composed', preview: 'Keep it short', quote: 'See everybody Saturday. That\'s all I have to say.', tension: 0, hype: 1 }
+  ],
+  // POST-FIGHT
+  finish: [
+    { mood: 'confident', preview: 'I saw it coming', quote: 'I saw the opening early. My coach called it. I executed. That\'s what camp prepared us for.', tension: 0, hype: 6 },
+    { mood: 'humble', preview: 'Credit the team', quote: 'My coaches deserve all the credit. They drilled that exact sequence. I just delivered.', tension: -3, hype: 5 },
+    { mood: 'trash', preview: 'Told you so', quote: 'I called it. First round finish. Like I said all week. {opp} had nothing for me.', tension: 12, hype: 8 }
+  ],
+  opponent_respect: [
+    { mood: 'respectful', preview: 'Real warrior', quote: '{opp} is a warrior. Tough as they come. We both bled in there. Huge respect to him.', tension: -8, hype: 5 },
+    { mood: 'confident', preview: 'I was better', quote: '{opp} is a good fighter. But tonight I was better. That\'s what it came down to.', tension: 3, hype: 4 },
+    { mood: 'trash', preview: 'Stay disrespectful', quote: 'I told everyone he was overrated. I just proved it. Next.', tension: 14, hype: 6 }
+  ],
+  callout_next: [
+    { mood: 'confident', preview: 'Top 5 callout', quote: 'Give me a top-5 name. I don\'t care who. I\'m ready right now.', tension: 5, hype: 8 },
+    { mood: 'trash', preview: 'Call out the champ', quote: 'Champion. Belt. That\'s the only fight I want next. Stop running. Sign the contract.', tension: 12, hype: 10 },
+    { mood: 'humble', preview: 'Let them decide', quote: 'Whoever the matchmakers want. I\'ll fight anybody, anytime. My job is to show up.', tension: -2, hype: 4 }
+  ],
+  career: [
+    { mood: 'confident', preview: 'I\'m a contender', quote: 'This win puts me right in the title picture. Everyone\'s gotta take me seriously now.', tension: 3, hype: 7 },
+    { mood: 'humble', preview: 'One at a time', quote: 'One fight at a time. Tonight was tonight. Tomorrow I get back to work.', tension: -2, hype: 3 }
+  ]
+};
+
+/* ============================================================
+   OPPONENT QUOTE POOLS — by mood
+   ============================================================ */
+const OPPONENT_QUOTES = {
+  confident: [
+    'I\'m in the best shape of my life. {opp} has never seen pressure like this.',
+    'I know what I bring. Saturday night, the world finds out.',
+    'I respect {opp} as a fighter. But the better man wins. That\'s me.'
+  ],
+  humble: [
+    '{opp} is a tough guy. I\'ve trained as hard as I can. Whatever happens, happens.',
+    'I\'m grateful for the opportunity. We\'ll find out who wants it more.',
+    'I don\'t talk much. I just train. Fight night I\'ll show what I worked on.'
+  ],
+  trash: [
+    '{opp}? Hype job. Watch what happens when I get in there.',
+    'I\'ve watched the tape. {opp} has no answers for me. Nowhere.',
+    'I\'m gonna put {opp} to sleep. First round. He\'s done.'
+  ],
+  hostile: [
+    'I don\'t like {opp}. Saturday I make him answer for everything he\'s said.',
+    'He crossed a line. Now he gets to find out what that costs.',
+    'I want to hurt him. That\'s the truth. I want him to remember my name.'
+  ],
+  composed: [
+    'My approach is the same every fight. Prepare. Execute. Move on.',
+    'I focus on what I control. {opp} is a problem to solve. Nothing more.',
+    'I trust my preparation. The rest takes care of itself.'
+  ],
+  respectful: [
+    '{opp} is a warrior. Whatever happens Saturday, I\'ll shake his hand after.',
+    'I have huge respect for {opp}\'s career. Two pros. May the best man win.',
+    'We\'re both putting it on the line. That deserves respect.'
+  ],
+  defensive: [
+    'I don\'t need to prove anything. My record speaks for itself.',
+    'I\'m not gonna get into that. I\'m here to fight. That\'s all.',
+    'Doubters can stay doubting. I just keep working.'
+  ]
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  venue: 'local',
+  format: 'pre_fight',
+  red: { ...DEFAULT_RED },
+  blue: { ...DEFAULT_BLUE },
+  questions: [...PRE_FIGHT_QUESTIONS],
+  questionIdx: 0,
+  tension: 0,
+  hype: 0, // player's hype/reputation tracker
+  redMood: 'silent',
+  blueMood: 'silent',
+  flashTimer: null,
+  typewriterTimer: null,
+  waitingForAnswer: false,
+  pendingQuestion: null,
+  pendingReporter: null
+};
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rng(min, max) { return min + Math.random() * (max - min); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderVenue() {
+  const stage = document.getElementById('stage');
+  stage.classList.remove('tier-local', 'tier-regional', 'tier-stadium');
+  stage.classList.add(`tier-${state.venue}`);
+  document.getElementById('backdrop-event').textContent = VENUES[state.venue].label;
+  startFlashCadence();
+}
+
+function renderFormat() {
+  document.getElementById('bc-eyebrow').textContent = FORMATS[state.format];
+  state.questions = state.format === 'pre_fight' ? [...PRE_FIGHT_QUESTIONS] : [...POST_FIGHT_QUESTIONS];
+}
+
+function renderFighters() {
+  document.getElementById('red-name').textContent = state.red.name;
+  document.getElementById('red-flag').innerHTML = `${state.red.flag} ${state.red.country} · ${state.red.weightClass}`;
+  document.getElementById('blue-name').textContent = state.blue.name;
+  document.getElementById('blue-flag').innerHTML = `${state.blue.flag} ${state.blue.country} · ${state.blue.weightClass}`;
+  document.getElementById('bc-red-name').textContent = state.red.name;
+  document.getElementById('bc-blue-name').textContent = state.blue.name;
+}
+
+function setMoodPill(corner, mood) {
+  state[`${corner}Mood`] = mood;
+  const pill = document.getElementById(`${corner}-mood`);
+  pill.classList.remove('silent', 'confident', 'humble', 'hostile', 'trash', 'composed', 'respectful', 'defensive', 'thinking');
+  pill.classList.add(mood);
+  if (mood === 'thinking') pill.textContent = 'Thinking...';
+  else pill.textContent = mood.charAt(0).toUpperCase() + mood.slice(1);
+}
+
+function setCurrentQuestion(question, reporter) {
+  document.getElementById('current-question').textContent = `"${question}"`;
+  document.getElementById('current-reporter').innerHTML = `${reporter.name} · <span class="outlet">${reporter.outlet}</span>`;
+}
+
+/* TENSION + HYPE */
+function setTension(value) {
+  state.tension = clamp(value, 0, 100);
+  document.getElementById('tension-fill').style.width = state.tension + '%';
+  const readout = document.getElementById('tension-readout');
+  readout.classList.remove('low', 'mid', 'high', 'boil');
+  let label, cls;
+  if (state.tension < 25) { label = 'Cordial'; cls = 'low'; }
+  else if (state.tension < 55) { label = 'Heated'; cls = 'mid'; }
+  else if (state.tension < 85) { label = 'Hostile'; cls = 'high'; }
+  else { label = 'Boiling'; cls = 'boil'; }
+  readout.classList.add(cls);
+  readout.textContent = `${Math.round(state.tension)}% · ${label}`;
+}
+
+function setHype(value) {
+  state.hype = clamp(value, -50, 100);
+  // Map -50..100 to 0..100% for visual
+  const visualPct = ((state.hype + 50) / 150) * 100;
+  document.getElementById('rep-fill').style.width = visualPct + '%';
+  const readout = document.getElementById('rep-readout');
+  readout.classList.remove('rep-good', 'rep-neutral', 'rep-bad');
+  let label, cls;
+  if (state.hype < 0) { label = 'Forgotten'; cls = 'rep-bad'; }
+  else if (state.hype < 20) { label = 'Unknown'; cls = 'rep-neutral'; }
+  else if (state.hype < 50) { label = 'Prospect'; cls = 'rep-good'; }
+  else if (state.hype < 80) { label = 'Star'; cls = 'rep-good'; }
+  else { label = 'Headliner'; cls = 'rep-good'; }
+  readout.classList.add(cls);
+  readout.textContent = `${Math.round(state.hype)} · ${label}`;
+}
+
+/* TYPEWRITER QUOTE */
+function typeQuote(text, corner) {
+  return new Promise(resolve => {
+    const el = document.getElementById('quote-text');
+    const att = document.getElementById('quote-attribution');
+    att.style.visibility = 'hidden';
+
+    if (state.typewriterTimer) {
+      clearInterval(state.typewriterTimer);
+      state.typewriterTimer = null;
+    }
+
+    el.innerHTML = '<span class="typewriter"></span>';
+    const span = el.querySelector('.typewriter');
+
+    let i = 0;
+    const charsPerTick = Math.max(1, Math.floor(text.length / 70));
+
+    state.typewriterTimer = setInterval(() => {
+      i = Math.min(i + charsPerTick, text.length);
+      span.textContent = text.slice(0, i);
+      if (i >= text.length) {
+        clearInterval(state.typewriterTimer);
+        state.typewriterTimer = null;
+        span.classList.remove('typewriter');
+        span.textContent = text;
+        el.innerHTML = text;
+
+        att.classList.remove('red', 'blue');
+        att.classList.add(corner);
+        document.getElementById('quote-name').textContent = state[corner].name;
+        att.style.visibility = 'visible';
+        resolve();
+      }
+    }, 25);
+  });
+}
+
+/* CAMERA FLASHES */
+function startFlashCadence() {
+  if (state.flashTimer) clearInterval(state.flashTimer);
+  const intensity = VENUES[state.venue].flashIntensity;
+  state.flashTimer = setInterval(() => {
+    if (Math.random() < intensity) spawnFlash();
+  }, 900);
+}
+
+function spawnFlash() {
+  const stage = document.getElementById('stage');
+  const flash = document.createElement('div');
+  flash.className = 'flash-burst';
+  flash.style.left = `${rng(8, 92)}%`;
+  flash.style.top = `${rng(60, 90)}%`;
+  stage.appendChild(flash);
+  setTimeout(() => flash.remove(), 450);
+}
+
+function burstFlashes(count) {
+  for (let i = 0; i < count; i++) setTimeout(spawnFlash, i * 130);
+}
+
+/* ============================================================
+   OPPONENT AI — pick a mood + quote based on personality
+   ============================================================ */
+function opponentPickMood(topic) {
+  const p = state.blue.personality || { confidence: 60, trashTalk: 40, humility: 50, respect: 50 };
+  const playerMood = state.redMood;
+
+  if (topic === 'callout' || topic === 'beef') {
+    if (playerMood === 'trash' || playerMood === 'hostile') {
+      if (p.trashTalk > 60) return 'hostile';
+      if (p.respect > 70) return 'composed';
+    }
+    if (p.trashTalk > 65) return 'trash';
+    if (p.humility > 65) return 'humble';
+    return 'defensive';
+  }
+
+  if (topic === 'opponent_respect' || topic === 'opponent_threat') {
+    if (p.respect > 65) return 'respectful';
+    if (p.trashTalk > 65) return 'trash';
+    return 'composed';
+  }
+
+  if (topic === 'finish' || topic === 'callout_next') {
+    if (p.confidence > 65) return 'confident';
+    return 'composed';
+  }
+
+  if (topic === 'future') {
+    if (p.humility > 60) return 'humble';
+    return 'defensive';
+  }
+
+  // Weighted by personality
+  const r = Math.random() * 100;
+  const sum = p.confidence + p.humility + p.trashTalk + p.respect;
+  if (r < (p.trashTalk / sum) * 100) return 'trash';
+  if (r < ((p.trashTalk + p.confidence) / sum) * 100) return 'confident';
+  if (r < ((p.trashTalk + p.confidence + p.humility) / sum) * 100) return 'humble';
+  return 'respectful';
+}
+
+function opponentGenerateQuote(mood, topic) {
+  const oppLast = state.red.name.split(' ').slice(-1)[0];
+  const pool = OPPONENT_QUOTES[mood] || OPPONENT_QUOTES.composed;
+  return pick(pool).replace(/\{opp\}/g, oppLast);
+}
+
+function deltaTensionFromMood(mood, otherMood) {
+  let delta = 0;
+  if (mood === 'hostile') delta += 14;
+  else if (mood === 'trash') delta += 8;
+  else if (mood === 'confident') delta += 2;
+  else if (mood === 'defensive') delta += 1;
+  else if (mood === 'composed') delta -= 2;
+  else if (mood === 'humble') delta -= 5;
+  else if (mood === 'respectful') delta -= 7;
+  // Compound
+  if ((mood === 'hostile' || mood === 'trash') && (otherMood === 'hostile' || otherMood === 'trash')) delta += 6;
+  return delta;
+}
+
+/* ============================================================
+   ANSWER CHOICE RENDERING (player side)
+   ============================================================ */
+function showAnswerChoices(topic) {
+  const choices = ANSWER_CHOICES[topic];
+  const panel = document.getElementById('answer-choices');
+  const eyebrow = document.getElementById('panel-eyebrow');
+
+  if (!choices || choices.length === 0) {
+    panel.innerHTML = `<div class="answer-empty">No response options for this question</div>`;
+    eyebrow.textContent = 'Awaiting press...';
+    eyebrow.classList.add('waiting');
+    return;
+  }
+
+  eyebrow.textContent = 'Choose your response';
+  eyebrow.classList.remove('waiting');
+
+  panel.innerHTML = '';
+  choices.forEach((choice, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.dataset.mood = choice.mood;
+    btn.dataset.idx = idx;
+
+    const tensionStr = choice.tension > 0
+      ? `<span class="${choice.tension > 8 ? 'neg' : ''}">Tension +${choice.tension}</span>`
+      : choice.tension < 0
+        ? `<span class="pos">Tension ${choice.tension}</span>`
+        : `<span>Tension ±0</span>`;
+    const hypeStr = choice.hype > 0
+      ? `<span class="pos">Hype +${choice.hype}</span>`
+      : choice.hype < 0
+        ? `<span class="neg">Hype ${choice.hype}</span>`
+        : '';
+
+    btn.innerHTML = `
+      <div class="answer-btn-tag">${choice.mood} · ${choice.preview}</div>
+      <div class="answer-btn-text">"${choice.quote.replace('{opp}', state.blue.name.split(' ').slice(-1)[0])}"</div>
+      <div class="answer-btn-effects">${tensionStr} ${hypeStr}</div>
+    `;
+    btn.addEventListener('click', () => onPlayerAnswered(choice, topic));
+    panel.appendChild(btn);
+  });
+
+  state.waitingForAnswer = true;
+}
+
+function clearAnswerChoices(label) {
+  document.getElementById('answer-choices').innerHTML = `<div class="answer-empty">${label || 'Awaiting press…'}</div>`;
+  const eyebrow = document.getElementById('panel-eyebrow');
+  eyebrow.textContent = label || 'Awaiting press…';
+  eyebrow.classList.add('waiting');
+  state.waitingForAnswer = false;
+}
+
+/* ============================================================
+   FLOW
+   ============================================================ */
+async function askNextQuestion() {
+  if (state.questionIdx >= state.questions.length) {
+    document.getElementById('phase-pill').textContent = 'Complete';
+    clearAnswerChoices('Press conference complete');
+    document.getElementById('current-question').textContent = 'Press conference adjourned.';
+    document.getElementById('current-reporter').innerHTML = '— · <span class="outlet">—</span>';
+    return;
+  }
+
+  const q = state.questions[state.questionIdx];
+  const reporter = pick(REPORTERS);
+  state.pendingQuestion = q;
+  state.pendingReporter = reporter;
+
+  setCurrentQuestion(q.q, reporter);
+  burstFlashes(3);
+
+  state.questionIdx++;
+
+  // Determine who answers — and IN WHAT ORDER (player always first if both answer)
+  if (q.target === 'player') {
+    showAnswerChoices(q.topic);
+  } else if (q.target === 'opponent' || q.target === 'react') {
+    clearAnswerChoices('Opponent is answering...');
+    await wait(600);
+    await opponentAnswer(q.topic);
+    await wait(1800);
+    askNextQuestion();
+  } else if (q.target === 'both') {
+    // Player goes first, then opponent reacts
+    showAnswerChoices(q.topic);
+  }
+}
+
+async function onPlayerAnswered(choice, topic) {
+  if (!state.waitingForAnswer) return;
+  state.waitingForAnswer = false;
+  clearAnswerChoices('Speaking...');
+
+  const oppLast = state.blue.name.split(' ').slice(-1)[0];
+  const quoteText = choice.quote.replace(/\{opp\}/g, oppLast);
+
+  setMoodPill('red', choice.mood);
+  await typeQuote(quoteText, 'red');
+
+  // Apply deltas
+  setTension(state.tension + choice.tension);
+  setHype(state.hype + choice.hype);
+
+  await wait(2200);
+
+  // If question is "both", opponent goes next
+  const q = state.pendingQuestion;
+  if (q && q.target === 'both') {
+    await opponentAnswer(q.topic);
+    await wait(2000);
+  }
+
+  await askNextQuestion();
+}
+
+async function opponentAnswer(topic) {
+  setMoodPill('blue', 'thinking');
+  await wait(700);
+
+  const mood = opponentPickMood(topic);
+  const quote = opponentGenerateQuote(mood, topic);
+
+  setMoodPill('blue', mood);
+  await typeQuote(quote, 'blue');
+
+  const delta = deltaTensionFromMood(mood, state.redMood);
+  setTension(state.tension + delta);
+}
+
+/* ============================================================
+   AUTO-RUN — career game calls this after setFighters()
+   ============================================================ */
+async function autoRun() {
+  document.getElementById('phase-pill').textContent =
+    state.format === 'pre_fight' ? 'Pre-Fight Presser' : 'Post-Fight Presser';
+
+  setTension(0);
+  setHype(state.hype || 0);
+  state.questionIdx = 0;
+
+  await wait(700);
+  askNextQuestion();
+}
+
+/* ============================================================
+   PUBLIC API
+   ============================================================ */
+window.Interview = {
+  /** Switch venue tier. */
+  setVenue(tier) {
+    if (VENUES[tier]) { state.venue = tier; renderVenue(); }
+  },
+  /** 'pre_fight' or 'post_fight'. */
+  setFormat(format) {
+    if (FORMATS[format]) { state.format = format; renderFormat(); }
+  },
+  /** Set fighters. red = player. blue = opponent (with personality). */
+  setFighters(red, blue) {
+    state.red = { ...DEFAULT_RED, ...red };
+    state.blue = { ...DEFAULT_BLUE, ...blue };
+    renderFighters();
+  },
+  /** Set initial player hype/rep (e.g. carried over from career state). */
+  setHype(value) { setHype(value); },
+  /** Run the full press conference. Game can override question bank first. */
+  async run() { await autoRun(); },
+  /** Get the final tension / hype / mood snapshot when done. */
+  getOutcome() {
+    return {
+      tension: state.tension,
+      hype: state.hype,
+      finalPlayerMood: state.redMood,
+      finalOpponentMood: state.blueMood
+    };
+  },
+  /** Read-only state. */
+  getState() { return JSON.parse(JSON.stringify(state)); }
+};
+
+/* ============================================================
+   INIT — auto-run shortly after load
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderVenue();
+  renderFormat();
+  renderFighters();
+  setTension(0);
+  setHype(0);
+
+  // Game gets a short window to call setFighters / setVenue / setFormat
+  // before the auto-run kicks in. If it doesn't, run with defaults.
+  setTimeout(() => {
+    autoRun();
+  }, 600);
+});
+</script>
+
+</body>
+</html>

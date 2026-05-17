@@ -11,4 +11,5 @@ export {
 } from './data/attributes.js';
 export { ARCHETYPES, ARCHETYPE_LOOKUP } from './data/archetypes.js';
 export { COACHES } from './data/coaches.js';
+export { EVENTS } from './data/events.js';
 export { ROSTER } from './data/roster.js';

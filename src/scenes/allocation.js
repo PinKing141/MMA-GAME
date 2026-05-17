@@ -3,20 +3,18 @@ import {
     ARCHETYPES,
     ARCHETYPE_LOOKUP,
     ATTRIBUTE_GROUPS,
-    ATTRIBUTE_GROUP_ORDER,
-    MAX_ATTRIBUTE,
-    MIN_ATTRIBUTE
+    ATTRIBUTE_GROUP_ORDER
 } from '../lib/data.js';
 import {
-    buildPresetStats,
     detectArchetype,
     getAttributeAverage,
     getCategorySnapshot,
     getOverallAverage,
-    resetStats,
     state,
     statColorClass
 } from '../lib/core.js';
+import { applyPresetAction, decrementStatAction, incrementStatAction, resetBuildAction } from '../lib/actions/build-actions.js';
+import { refreshCurrentScene } from '../lib/scene-controller.js';
 import { getIcon } from '../lib/ui/icons.js';
 import { renderArchetypeExamples, renderArchetypeImage, renderCategoryStat, renderModifierList, renderPresetButton } from '../lib/ui/markup.js';
 
@@ -93,9 +91,13 @@ export function renderAllocateCategories() {
 
         setupHoldRepeat(button, () => {
             if (action === 'inc') {
-                incrementStat(statKey);
+                if (incrementStatAction(statKey)) {
+                    updateStatDisplay(statKey);
+                }
             } else {
-                decrementStat(statKey);
+                if (decrementStatAction(statKey)) {
+                    updateStatDisplay(statKey);
+                }
             }
         });
     });
@@ -131,28 +133,6 @@ function setupHoldRepeat(button, callback) {
     });
 }
 
-export function incrementStat(statKey) {
-    if (state.pointsRemaining <= 0 || state.stats[statKey] >= MAX_ATTRIBUTE) {
-        return;
-    }
-
-    state.stats[statKey] += 1;
-    state.pointsRemaining -= 1;
-    state.selectedPreset = null;
-    updateStatDisplay(statKey);
-}
-
-export function decrementStat(statKey) {
-    if (state.stats[statKey] <= MIN_ATTRIBUTE) {
-        return;
-    }
-
-    state.stats[statKey] -= 1;
-    state.pointsRemaining += 1;
-    state.selectedPreset = null;
-    updateStatDisplay(statKey);
-}
-
 function updateStatDisplay(statKey) {
     const value = state.stats[statKey];
     const valueElement = document.querySelector(`[data-val="${statKey}"]`);
@@ -185,6 +165,13 @@ export function updateAllocHeader() {
     pointsLeft.textContent = state.pointsRemaining;
     pointsLeft.classList.toggle('empty', state.pointsRemaining === 0);
     document.getElementById('ovr-value').textContent = getOverallAverage(state.stats);
+}
+
+export function renderAllocationScene() {
+    renderAllocateCategories();
+    updateAllocHeader();
+    drawHexagon();
+    selectStat(state.selectedStat || ALL_ATTRIBUTES[0].key);
 }
 
 export function selectStat(statKey) {
@@ -282,31 +269,14 @@ function renderDerivedPanels() {
     renderPresetButtons();
 }
 
-export function applyPreset(presetKey) {
-    const archetype = ARCHETYPE_LOOKUP[presetKey];
-    if (!archetype) {
-        return;
+export function handlePresetSelection(presetKey) {
+    if (applyPresetAction(presetKey)) {
+        refreshCurrentScene();
     }
-
-    const presetStats = buildPresetStats(archetype);
-    ALL_ATTRIBUTES.forEach(attribute => {
-        state.stats[attribute.key] = presetStats[attribute.key];
-    });
-
-    const totalSpent = ALL_ATTRIBUTES.reduce((sum, attribute) => sum + (state.stats[attribute.key] - MIN_ATTRIBUTE), 0);
-    state.pointsRemaining = state.pointsTotal - totalSpent;
-    state.selectedPreset = presetKey;
-    state.archetype = archetype;
-
-    renderAllocateCategories();
-    updateAllocHeader();
-    selectStat(state.selectedStat || ALL_ATTRIBUTES[0].key);
 }
 
-export function resetBuild() {
-    resetStats();
-    state.selectedPreset = 'all-rounder';
-    renderAllocateCategories();
-    updateAllocHeader();
-    selectStat(state.selectedStat || ALL_ATTRIBUTES[0].key);
+export function handleBuildReset() {
+    if (resetBuildAction()) {
+        refreshCurrentScene();
+    }
 }

@@ -8,8 +8,8 @@ export const COACHES = [
         reputationRequired: 0,
         gymReputationGain: 3,
         longTermTrait: {
-            label: 'Technical Layering',
-            description: 'Striking-focused camps slowly raise technical ceilings across future bookings.',
+            label: 'Padwork Rounds',
+            description: 'Stay with Vega and your hands keep getting sharper from fight to fight.',
             statGrowth: { accuracy: 1, punchSpeed: 1 }
         },
         actionBonuses: {
@@ -35,8 +35,8 @@ export const COACHES = [
         reputationRequired: 2,
         gymReputationGain: 4,
         longTermTrait: {
-            label: 'Mat Tax',
-            description: 'Repeated camps improve grind-heavy stats even outside dedicated wrestling weeks.',
+            label: 'Chain Wrestling',
+            description: 'Stick with Hayes and your control game keeps getting tighter every camp.',
             statGrowth: { takedownDefense: 1, topControl: 1 }
         },
         actionBonuses: {
@@ -57,13 +57,13 @@ export const COACHES = [
         id: 'sato',
         name: 'Rin Sato',
         gym: 'Tempo Lab',
-        specialty: 'Conditioning science, recovery balance, and disciplined camp management.',
+        specialty: 'Conditioning, recovery, and steady camp management.',
         fee: 2100,
         reputationRequired: 4,
         gymReputationGain: 5,
         longTermTrait: {
-            label: 'Longevity Program',
-            description: 'Each completed camp improves durability and lowers future wear.',
+            label: 'Recovery Routine',
+            description: 'Every camp makes you tougher and a little easier to keep healthy.',
             statGrowth: { cardio: 1, cutResistance: 1 }
         },
         actionBonuses: {
