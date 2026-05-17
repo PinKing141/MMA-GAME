@@ -1,27 +1,19 @@
+/*
+ * Career app scene styles.
+ * Design tokens come from octagon-design.css (imported via index.html).
+ * Only scene-local layout and overrides live here.
+ */
+
 :root {
-    --bg: #060813;
-    --bg-grid: rgba(63, 104, 255, 0.14);
-    --surface: rgba(11, 15, 29, 0.92);
-    --surface-2: rgba(17, 22, 39, 0.94);
-    --surface-3: rgba(23, 29, 50, 0.98);
-    --surface-4: rgba(31, 39, 65, 0.98);
-    --border: rgba(125, 141, 186, 0.22);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --text: #f6f7fb;
-    --text-muted: #9ea7c2;
-    --text-dim: #65708f;
-    --accent-hot: #ff1e56;
-    --accent-hot-2: #ff4d6d;
-    --accent-blue: #4bb2ff;
-    --accent-gold: #f2c25b;
-    --standup: #ff4d6d;
-    --grappling: #c175ff;
-    --health: #f7b731;
-    --mind: #4ecdc4;
-    --red: #d83a58;
-    --font-display: 'Anton', 'Impact', sans-serif;
-    --font-body: 'Manrope', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* Career-app scene-local overrides. Canonical tokens are in octagon-design.css. */
+    --bg: var(--bg-grad-top);
+    --bg-grid: rgba(255, 255, 255, 0.02);
+
+    /* Attribute category accents — kept stable but re-tuned to the editorial palette */
+    --standup: var(--red-bright);
+    --grappling: #8b5cf6;
+    --health: var(--gold-bright);
+    --mind: #06b6d4;
 }
 
 * {
@@ -34,14 +26,14 @@ html,
 body {
     min-height: 100vh;
     background:
-        radial-gradient(circle at top, rgba(255, 30, 86, 0.18), transparent 24%),
-        radial-gradient(circle at 80% 20%, rgba(75, 178, 255, 0.14), transparent 28%),
-        linear-gradient(180deg, #09101f 0%, #05070d 100%);
+        radial-gradient(ellipse at top, var(--bg-grad-top), var(--bg-grad-bottom));
+    background-attachment: fixed;
     color: var(--text);
     font-family: var(--font-body);
     font-size: 15px;
     line-height: 1.5;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 body::before {
@@ -49,22 +41,9 @@ body::before {
     position: fixed;
     inset: 0;
     background-image:
-        linear-gradient(var(--bg-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-    background-size: 58px 58px;
-    mask-image: linear-gradient(180deg, transparent, black 18%, black 82%, transparent);
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px);
     pointer-events: none;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    inset: auto 0 0 0;
-    height: 32vh;
-    background: linear-gradient(180deg, transparent, rgba(28, 77, 255, 0.06));
-    transform: perspective(420px) rotateX(72deg);
-    transform-origin: bottom;
-    pointer-events: none;
+    z-index: 0;
 }
 
 button,
@@ -98,29 +77,34 @@ select {
 .brand {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     gap: 24px;
-    padding-bottom: 28px;
+    padding: 14px 22px;
     margin-bottom: 34px;
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(20, 20, 26, 0.92), rgba(20, 20, 26, 0.62));
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red-bright);
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
 }
 
 .brand-mark {
     display: flex;
-    gap: 16px;
+    gap: 14px;
     align-items: baseline;
 }
 
 .brand-logo {
     font-family: var(--font-display);
-    font-size: 44px;
+    font-size: 32px;
     letter-spacing: 0.04em;
     line-height: 1;
 }
 
 .brand-logo .accent,
 .accent-text {
-    color: var(--accent-hot);
+    color: var(--red-bright);
 }
 
 .brand-tag,
@@ -240,14 +224,51 @@ select {
 .identity-card,
 .path-card,
 .continue-bar {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 32%),
-        var(--surface);
+    position: relative;
+    background: var(--surface);
     border: 1px solid var(--border);
-    backdrop-filter: blur(14px);
     box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.32),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* 3px editorial accent stripe at the top of every primary card */
+.form-card::before,
+.preview-card::before,
+.build-card::before,
+.info-card::before,
+.preset-card::before,
+.gym-main-card::before,
+.opponent-main-card::before,
+.fight-main-card::before,
+.profile-header::before,
+.stat-card::before,
+.identity-card::before,
+.path-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border-strong);
+    pointer-events: none;
+}
+
+/* Red accent: primary "your fighter" panels */
+.form-card::before,
+.profile-header::before,
+.gym-main-card::before,
+.fight-main-card::before,
+.opponent-main-card::before {
+    background: var(--red-bright);
+}
+
+/* Gold accent: identity / prestige / build identity panels */
+.identity-card::before,
+.preset-card::before,
+.preview-card::before {
+    background: var(--gold-bright);
 }
 
 .form-card,
@@ -261,7 +282,8 @@ select {
 .stat-card,
 .identity-card,
 .path-card {
-    border-radius: 24px;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .form-card,
@@ -372,9 +394,9 @@ select {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #f6f7fb;
-    border: 3px solid var(--accent-hot);
-    box-shadow: 0 0 0 4px rgba(255, 30, 86, 0.16);
+    background: var(--text);
+    border: 3px solid var(--red-bright);
+    box-shadow: 0 0 0 4px var(--red-glow);
     cursor: pointer;
 }
 
@@ -382,9 +404,9 @@ select {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #f6f7fb;
-    border: 3px solid var(--accent-hot);
-    box-shadow: 0 0 0 4px rgba(255, 30, 86, 0.16);
+    background: var(--text);
+    border: 3px solid var(--red-bright);
+    box-shadow: 0 0 0 4px var(--red-glow);
     cursor: pointer;
 }
 
@@ -642,39 +664,56 @@ select {
 }
 
 .btn {
-    border: none;
-    border-radius: 16px;
-    padding: 15px 22px;
-    background: linear-gradient(135deg, var(--accent-hot), var(--accent-hot-2));
+    border: 1px solid var(--red-bright);
+    border-radius: 3px;
+    padding: 14px 22px;
+    background: var(--red-bright);
     color: var(--text);
     font-family: var(--font-display);
-    font-size: 17px;
-    letter-spacing: 0.16em;
+    font-size: 16px;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(255, 30, 86, 0.24);
+.btn:hover:not(:disabled) {
+    background: var(--red);
+    box-shadow: 0 12px 30px -10px var(--red-glow);
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .btn.ghost {
     background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
 }
 
-.btn.ghost:hover {
+.btn.ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+    border-color: var(--text-muted);
     box-shadow: none;
-    color: var(--text);
-    border-color: var(--border-strong);
+}
+
+.btn.gold {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1a1408;
+}
+
+.btn.gold:hover:not(:disabled) {
+    background: var(--gold-bright);
+    box-shadow: 0 12px 30px -10px var(--gold-glow);
 }
 
 .btn.small {
-    padding: 11px 16px;
+    padding: 9px 14px;
     font-size: 12px;
+    letter-spacing: 0.1em;
 }
 
 .btn.full-width {
@@ -687,8 +726,9 @@ select {
     align-items: center;
     gap: 18px;
     padding: 20px 24px;
-    border-radius: 22px;
+    border-radius: 4px;
     margin-bottom: 24px;
+    border-top: 3px solid var(--gold-bright);
 }
 
 .alloc-title {
@@ -1484,8 +1524,8 @@ select {
     gap: 20px;
     align-items: center;
     margin-top: 24px;
-    padding: 22px 24px;
-    border-radius: 22px;
+    padding: 18px 22px;
+    border-radius: 4px;
 }
 
 .continue-bar .text .head {
@@ -1748,7 +1788,7 @@ select {
     min-height: 920px;
     border: 0;
     display: block;
-    background: #05070d;
+    background: var(--bg-grad-top);
 }
 
 .fight-summary-stack {
@@ -1811,7 +1851,7 @@ select {
     height: calc(100vh - 92px);
     border: 0;
     border-radius: 12px;
-    background: #05070d;
+    background: var(--bg-grad-top);
 }
 
 body.fight-replay-open {
@@ -2190,41 +2230,38 @@ body.fight-replay-open {
     font-variant-numeric: tabular-nums;
 }
 
-/* Continue-bar reads as the primary action zone */
+/* Continue-bar reads as the primary action zone — gold accent stripe */
 .continue-bar {
     position: relative;
     overflow: hidden;
-}
-
-.continue-bar::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent,
-        rgba(255, 30, 86, 0.55) 30%,
-        rgba(75, 178, 255, 0.55) 70%,
-        transparent);
+    border-top: 3px solid var(--gold);
+    border-radius: 4px;
 }
 
 .continue-bar .text .head {
     letter-spacing: 0.025em;
 }
 
-/* Accessible focus rings on buttons (the existing hover is fine; this adds keyboard polish) */
+/* Accessible focus rings on buttons */
 .btn:focus-visible {
     outline: none;
     box-shadow:
-        0 0 0 2px var(--bg),
-        0 0 0 4px rgba(255, 30, 86, 0.55),
-        0 14px 28px rgba(255, 30, 86, 0.24);
+        0 0 0 2px var(--bg-grad-top),
+        0 0 0 4px var(--red-glow),
+        0 12px 30px -10px var(--red-glow);
 }
 
 .btn.ghost:focus-visible {
     box-shadow:
-        0 0 0 2px var(--bg),
+        0 0 0 2px var(--bg-grad-top),
         0 0 0 4px rgba(255, 255, 255, 0.22);
+}
+
+.btn.gold:focus-visible {
+    box-shadow:
+        0 0 0 2px var(--bg-grad-top),
+        0 0 0 4px var(--gold-glow),
+        0 12px 30px -10px var(--gold-glow);
 }
 
 .btn:active {
