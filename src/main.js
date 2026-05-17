@@ -3,14 +3,16 @@ import './scenes/career-screens.css';
 
 import { handleBuildReset, handlePresetSelection } from './scenes/allocation.js';
 import {
-    acceptFightOfferAction,
     advanceProfileAction,
     applyCampAction,
     openFightSceneAction,
     openGymSceneAction,
     openOpponentSceneAction,
     openProfileSceneAction,
+    proposeFightOfferAction,
+    rejectPendingContractAction,
     selectCoachAction,
+    signPendingContractAction,
     simulateFightAction
 } from './lib/actions/career-actions.js';
 import {
@@ -19,6 +21,13 @@ import {
     resetPickerPhase as resetOpponentPickerPhase,
     selectOfferByIndex
 } from './scenes/opponent.js';
+import {
+    cancelSigningMode as cancelContractSigningMode,
+    clearSignatureInk,
+    enterSigningMode as enterContractSigningMode,
+    hasSignatureInk,
+    playStampAndExit
+} from './scenes/contract.js';
 import { closeFightReplayModal, openFightReplayModal } from './lib/fight-engine-bridge.js';
 import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, restartGameAction } from './lib/actions/setup-actions.js';
 import { state } from './lib/core.js';
@@ -228,13 +237,35 @@ function wireEvents() {
             if (action === 'accept') {
                 const offer = getSelectedOffer();
                 if (offer && offer.event && !offer.locked) {
-                    acceptFightOfferAction({
+                    proposeFightOfferAction({
                         opponentId: offer.opponent.id,
                         eventId: offer.event.id,
                         campWeeks: offer.campWeeks
                     });
                     resetOpponentPickerPhase();
                 }
+            }
+            return;
+        }
+
+        const contractButton = event.target.closest('[data-contract-action]');
+        if (contractButton) {
+            const action = contractButton.dataset.contractAction;
+            if (action === 'enter-sign') {
+                enterContractSigningMode();
+            } else if (action === 'clear') {
+                clearSignatureInk();
+            } else if (action === 'cancel-sign') {
+                cancelContractSigningMode();
+            } else if (action === 'confirm-sign') {
+                if (!hasSignatureInk()) {
+                    return;
+                }
+                playStampAndExit(() => signPendingContractAction());
+            } else if (action === 'reject') {
+                rejectPendingContractAction();
+            } else if (action === 'back') {
+                openOpponentSceneAction();
             }
             return;
         }

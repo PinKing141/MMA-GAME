@@ -64,11 +64,11 @@ export function selectEventAction(eventId) {
 }
 
 /**
- * Accept a packaged fight offer (opponent + event together).
- * Used by the new opponent picker — pairs the two selections and signs
- * the contract in one motion.
+ * Lock in an offer (event + opponent) and route to the contract signing
+ * scene. Contract is NOT signed yet — the player still has to put pen
+ * to paper. Camp window is pre-staged from the offer's tier.
  */
-export function acceptFightOfferAction({ opponentId, eventId, campWeeks }) {
+export function proposeFightOfferAction({ opponentId, eventId, campWeeks }) {
     syncAvailableOpponents();
     syncAvailableEvents();
 
@@ -80,15 +80,41 @@ export function acceptFightOfferAction({ opponentId, eventId, campWeeks }) {
         return false;
     }
 
-    if (!signContractState()) {
-        return false;
-    }
-
     if (campWeeks && Number.isFinite(campWeeks)) {
         state.career.campWeeksTotal = campWeeks;
     }
 
+    showScene('contract');
+    return true;
+}
+
+/**
+ * Finalize the proposed contract after the player has signed.
+ * Promotes selectedEvent + selectedOpponent into state.career.contract
+ * and opens the gym.
+ */
+export function signPendingContractAction() {
+    if (!getContractPreview()) {
+        return false;
+    }
+
+    if (!signContractState()) {
+        return false;
+    }
+
     showScene('gym');
+    return true;
+}
+
+/**
+ * Walk away from a proposed contract before signing. Clears the staged
+ * event + opponent and sends the player back to the offer board.
+ */
+export function rejectPendingContractAction() {
+    state.career.selectedEvent = null;
+    state.career.selectedOpponent = null;
+    state.career.contract = null;
+    showScene('opponent');
     return true;
 }
 

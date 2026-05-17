@@ -1141,3 +1141,512 @@
 .tier-legend .swatch.medium { color: var(--gold-bright); }
 .tier-legend .swatch.hard { color: var(--red-bright); }
 .tier-legend .swatch.elite { color: #a855f7; }
+
+/* ===================================================================
+   CONTRACT SIGN SCENE
+   =================================================================== */
+:root {
+  --paper-cream: #f5f1e8;
+  --paper-cream-edge: #e8e1d0;
+  --paper-text: #1a1810;
+  --paper-text-muted: #5c5648;
+  --paper-rule: #b8aa8a;
+  --stamp-red: #b8222e;
+  --stamp-red-faded: #9a1a26;
+  --font-legal: 'Playfair Display', 'Times New Roman', serif;
+  --font-signature: 'Caveat', cursive;
+}
+
+#scene-contract {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+}
+#scene-contract.active { display: flex; }
+
+#scene-contract .contract-empty {
+    padding: 40px 20px;
+}
+
+.contract-header-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 22px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 22px;
+    align-items: center;
+    position: relative;
+}
+.contract-header-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--red-bright) 0%, var(--gold) 50%, var(--red-bright) 100%);
+}
+.contract-header-bar .event-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.contract-header-bar .event-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+.contract-header-bar .timer-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    padding: 6px 12px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stage-frame {
+    background: linear-gradient(180deg, #0c0c10 0%, #050507 100%);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 540px;
+    padding: 28px 30px 24px;
+}
+.stage-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 50% at center top, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 90% 80% at center 40%, rgba(212, 175, 55, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+.stage-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent 0 80px, rgba(0,0,0,0.2) 80px 82px);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.contract-stack {
+    position: relative;
+    z-index: 2;
+    perspective: 2000px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 680px;
+}
+
+.contract {
+    background: var(--paper-cream);
+    width: 100%;
+    padding: 36px 50px 30px;
+    font-family: var(--font-legal);
+    color: var(--paper-text);
+    position: relative;
+    box-shadow:
+        0 1px 0 var(--paper-cream-edge) inset,
+        0 30px 80px -20px rgba(0, 0, 0, 0.85),
+        0 12px 24px -6px rgba(0, 0, 0, 0.5),
+        0 0 60px -10px rgba(212, 175, 55, 0.18);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s;
+    transform-style: preserve-3d;
+}
+.contract.signing { transform: rotateX(2deg); }
+.contract.signed {
+    transform: rotateX(-12deg) translateY(40px) scale(0.96);
+    opacity: 0;
+}
+.contract::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(120, 90, 50, 0.04), transparent 40%),
+        radial-gradient(ellipse at 80% 70%, rgba(120, 90, 50, 0.05), transparent 40%),
+        repeating-linear-gradient(0deg, transparent 0 24px, rgba(184, 170, 138, 0.04) 24px 25px);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+}
+.contract-edge-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(180deg, rgba(120, 100, 70, 0.18), transparent);
+    pointer-events: none;
+}
+
+.contract-paper-header {
+    text-align: center;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+    border-bottom: 2px double var(--paper-rule);
+    position: relative;
+    z-index: 2;
+}
+.contract-league-mark {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: var(--paper-text);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+.contract-league-mark .accent { color: var(--stamp-red); }
+.contract-paper-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--paper-text-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.contract-paper-title {
+    font-family: var(--font-legal);
+    font-style: italic;
+    font-weight: 900;
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+    color: var(--paper-text);
+    margin-bottom: 4px;
+}
+.contract-paper-subtitle {
+    font-family: var(--font-legal);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--paper-text-muted);
+    letter-spacing: 1px;
+}
+
+.contract-paper-body {
+    font-family: var(--font-legal);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--paper-text);
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 2;
+}
+.contract-paper-body p { margin-bottom: 8px; }
+.contract-paper-body .recipient {
+    font-family: var(--font-legal);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    display: block;
+    margin: 4px 0 10px;
+    text-transform: uppercase;
+}
+.contract-paper-body .fine-print {
+    font-size: 11px;
+    color: var(--paper-text-muted);
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.contract-terms {
+    background: rgba(184, 170, 138, 0.12);
+    border-top: 1px solid var(--paper-rule);
+    border-bottom: 1px solid var(--paper-rule);
+    padding: 12px 18px;
+    margin: 18px 0 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    position: relative;
+    z-index: 2;
+}
+.term-row { display: flex; flex-direction: column; gap: 2px; }
+.term-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--paper-text-muted);
+    font-weight: 700;
+}
+.term-value {
+    font-family: var(--font-legal);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--paper-text);
+    letter-spacing: 0.3px;
+}
+.term-value .small {
+    font-family: var(--font-legal);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--paper-text-muted);
+    font-style: italic;
+    margin-left: 4px;
+}
+
+.signature-area {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    position: relative;
+    z-index: 2;
+}
+.signature-block {
+    position: relative;
+    padding-top: 36px;
+}
+.signature-line {
+    height: 1px;
+    background: var(--paper-text);
+    margin-bottom: 6px;
+    position: relative;
+}
+.signature-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--paper-text-muted);
+}
+.counter-signature {
+    position: absolute;
+    top: 0;
+    left: 6px;
+    font-family: var(--font-signature);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--stamp-red-faded);
+    transform: rotate(-3deg);
+    letter-spacing: 0.5px;
+    line-height: 1;
+    white-space: nowrap;
+}
+.signature-canvas-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    pointer-events: auto;
+}
+#contract-signature-canvas {
+    width: 100%;
+    height: 100%;
+    cursor: not-allowed;
+    touch-action: none;
+    display: block;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+}
+#contract-signature-canvas.active {
+    cursor: crosshair;
+    opacity: 1;
+}
+.signature-prompt {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-legal);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--paper-text-muted);
+    pointer-events: none;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    transition: opacity 0.3s;
+    text-transform: uppercase;
+}
+.signature-prompt.hidden { opacity: 0; }
+
+.contract-stamp {
+    position: absolute;
+    bottom: 90px;
+    right: 50px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 4px double var(--stamp-red);
+    display: grid;
+    place-items: center;
+    transform: rotate(-12deg) scale(0);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 3;
+    pointer-events: none;
+}
+.contract-stamp.show {
+    transform: rotate(-12deg) scale(1);
+    opacity: 0.85;
+}
+.stamp-inner {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    color: var(--stamp-red);
+    text-align: center;
+    line-height: 0.9;
+    padding: 8px;
+    text-shadow: 1px 0 0 rgba(255, 245, 235, 0.3);
+    position: relative;
+    z-index: 2;
+}
+.stamp-inner .small {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.contract-action-bar {
+    position: relative;
+    z-index: 3;
+    max-width: 680px;
+    margin: 4px auto 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+}
+.contract-action-bar.signing-mode { grid-template-columns: 1fr 1fr 1fr; }
+
+.contract-action-bar .btn-action {
+    background: rgba(20, 20, 26, 0.95);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 16px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.contract-action-bar .btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--border);
+    transition: background 0.2s;
+}
+.contract-action-bar .btn-action.accept {
+    background: linear-gradient(180deg, #1a1a22 0%, #14141a 100%);
+}
+.contract-action-bar .btn-action.accept::before { background: var(--gold); box-shadow: 0 0 12px var(--gold-glow); }
+.contract-action-bar .btn-action.accept:hover {
+    background: linear-gradient(180deg, #2a2a38 0%, #1c1c24 100%);
+    color: var(--gold-bright);
+    transform: translateY(-2px);
+}
+.contract-action-bar .btn-action.defer::before { background: var(--text-muted); }
+.contract-action-bar .btn-action.defer:hover {
+    background: rgba(40, 40, 50, 0.95);
+    transform: translateY(-1px);
+}
+.contract-action-bar .btn-action.reject::before { background: var(--red-bright); }
+.contract-action-bar .btn-action.reject:hover {
+    background: rgba(50, 20, 25, 0.95);
+    color: var(--red-bright);
+    transform: translateY(-1px);
+}
+.contract-action-bar .btn-action.confirm-sign {
+    background: linear-gradient(180deg, #3d2a18 0%, #2a1c10 100%);
+    color: var(--gold-bright);
+}
+.contract-action-bar .btn-action.confirm-sign::before {
+    background: var(--gold-bright);
+    box-shadow: 0 0 16px rgba(240, 200, 80, 0.6);
+}
+.contract-action-bar .btn-action.confirm-sign:hover:not(:disabled) {
+    background: linear-gradient(180deg, #5a3e22 0%, #3d2a18 100%);
+    transform: translateY(-2px);
+}
+.contract-action-bar .btn-action.confirm-sign:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+.contract-action-bar .btn-action.clear::before { background: var(--text-muted); }
+.contract-action-bar .btn-action .sub {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.contract-confirmation {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.7), rgba(0,0,0,0.95));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: contractConfFade 0.6s ease forwards;
+}
+.contract-confirmation[hidden] { display: none; }
+@keyframes contractConfFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.contract-confirmation-panel {
+    text-align: center;
+    padding: 40px 60px;
+    max-width: 500px;
+}
+.confirmation-mark {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 4px;
+    margin-bottom: 14px;
+    color: var(--gold-bright);
+}
+.confirmation-title {
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    color: var(--text);
+}
+.confirmation-title.accept { color: var(--gold-bright); }
+.confirmation-title.reject { color: var(--red-bright); }
+.confirmation-desc {
+    font-family: var(--font-legal);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 380px;
+    margin: 0 auto;
+}

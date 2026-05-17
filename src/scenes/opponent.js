@@ -198,7 +198,7 @@ function renderDetailPhase(offer) {
 
                         <div class="detail-actions">
                             <button class="btn-detail accept" data-offer-action="accept" ${locked ? 'disabled' : ''}>
-                                Sign & Start Camp
+                                Review Contract
                                 <span class="sub">${campWeeks} weeks of camp</span>
                             </button>
                             <button class="btn-detail back" data-offer-action="back">

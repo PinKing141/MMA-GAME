@@ -8,7 +8,7 @@ import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculation
 const MIN_AGE = 18;
 const MAX_AGE = 60;
 
-export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'gym', 'fight'];
+export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym', 'fight'];
 
 function createDefaultSetupState() {
     return {
