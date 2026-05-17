@@ -1,9 +1,9 @@
 import { COACHES } from '../data.js';
 import { state } from '../core.js';
 import { getContractPreview, signContractState } from './contract-actions.js';
-import { selectEventState } from './event-actions.js';
+import { selectEventState, syncAvailableEvents } from './event-actions.js';
 import { applyCampWeekState } from './camp-state.js';
-import { selectCoachState, selectOpponentState } from './career-state.js';
+import { selectCoachState, selectOpponentState, syncAvailableOpponents } from './career-state.js';
 import { simulateFightState } from './fight-state.js';
 import { refreshCurrentScene, showScene } from '../scene-controller.js';
 
@@ -61,6 +61,35 @@ export function selectEventAction(eventId) {
     if (selectEventState(eventId)) {
         refreshCurrentScene();
     }
+}
+
+/**
+ * Accept a packaged fight offer (opponent + event together).
+ * Used by the new opponent picker — pairs the two selections and signs
+ * the contract in one motion.
+ */
+export function acceptFightOfferAction({ opponentId, eventId, campWeeks }) {
+    syncAvailableOpponents();
+    syncAvailableEvents();
+
+    if (!selectEventState(eventId)) {
+        return false;
+    }
+
+    if (!selectOpponentState(opponentId)) {
+        return false;
+    }
+
+    if (!signContractState()) {
+        return false;
+    }
+
+    if (campWeeks && Number.isFinite(campWeeks)) {
+        state.career.campWeeksTotal = campWeeks;
+    }
+
+    showScene('gym');
+    return true;
 }
 
 export function signContractAction() {

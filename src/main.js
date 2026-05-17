@@ -1,7 +1,9 @@
 import './styles.css';
+import './scenes/career-screens.css';
 
 import { handleBuildReset, handlePresetSelection } from './scenes/allocation.js';
 import {
+    acceptFightOfferAction,
     advanceProfileAction,
     applyCampAction,
     openFightSceneAction,
@@ -9,17 +11,20 @@ import {
     openOpponentSceneAction,
     openProfileSceneAction,
     selectCoachAction,
-    selectEventAction,
-    selectOpponentAction,
-    signContractAction,
     simulateFightAction
 } from './lib/actions/career-actions.js';
+import {
+    backToPicker as backToOpponentPicker,
+    getSelectedOffer,
+    resetPickerPhase as resetOpponentPickerPhase,
+    selectOfferByIndex
+} from './scenes/opponent.js';
 import { closeFightReplayModal, openFightReplayModal } from './lib/fight-engine-bridge.js';
 import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, restartGameAction } from './lib/actions/setup-actions.js';
 import { state } from './lib/core.js';
 import { formatSaveStatus, getSavedGameMeta, hasSavedGame, loadGameState, SAVE_META_EVENT, saveGameState, scheduleGameSave } from './lib/persistence.js';
 import { getFightViewModel } from './lib/selectors/fight-selectors.js';
-import { showScene } from './lib/scene-controller.js';
+import { refreshCurrentScene, showScene } from './lib/scene-controller.js';
 import { syncFrameControls, updatePreview } from './scenes/setup.js';
 
 function showValidationError(id, message) {
@@ -154,19 +159,8 @@ function wireEvents() {
     });
 
     document.getElementById('btn-finalize').addEventListener('click', () => {
+        resetOpponentPickerPhase();
         openProfileSceneAction();
-    });
-
-    document.getElementById('btn-profile-progress').addEventListener('click', () => {
-        advanceProfileAction();
-    });
-
-    document.getElementById('btn-back-profile-from-opponent').addEventListener('click', () => {
-        openProfileSceneAction();
-    });
-
-    document.getElementById('btn-begin-camp').addEventListener('click', () => {
-        signContractAction();
     });
 
     document.getElementById('btn-back-profile-from-gym').addEventListener('click', () => {
@@ -199,12 +193,6 @@ function wireEvents() {
         openProfileSceneAction();
     });
 
-    document.getElementById('btn-restart').addEventListener('click', () => {
-        if (window.confirm('Start over from scratch? Your fighter will be discarded.')) {
-            restartGameAction();
-        }
-    });
-
     document.getElementById('btn-reset-build').addEventListener('click', () => {
         handleBuildReset();
     });
@@ -220,14 +208,74 @@ function wireEvents() {
             handlePresetSelection(presetButton.dataset.preset);
         }
 
-        const opponentButton = event.target.closest('[data-opponent-id]');
-        if (opponentButton) {
-            selectOpponentAction(opponentButton.dataset.opponentId);
+        const offerCard = event.target.closest('[data-offer-index]');
+        if (offerCard && offerCard.dataset.locked !== 'true') {
+            const index = Number(offerCard.dataset.offerIndex);
+            if (selectOfferByIndex(index)) {
+                refreshCurrentScene();
+            }
+            return;
         }
 
-        const eventButton = event.target.closest('[data-event-id]');
-        if (eventButton) {
-            selectEventAction(eventButton.dataset.eventId);
+        const offerActionButton = event.target.closest('[data-offer-action]');
+        if (offerActionButton) {
+            const action = offerActionButton.dataset.offerAction;
+            if (action === 'back') {
+                backToOpponentPicker();
+                refreshCurrentScene();
+                return;
+            }
+            if (action === 'accept') {
+                const offer = getSelectedOffer();
+                if (offer && offer.event && !offer.locked) {
+                    acceptFightOfferAction({
+                        opponentId: offer.opponent.id,
+                        eventId: offer.event.id,
+                        campWeeks: offer.campWeeks
+                    });
+                    resetOpponentPickerPhase();
+                }
+            }
+            return;
+        }
+
+        const hubActionButton = event.target.closest('[data-hub-action]');
+        if (hubActionButton) {
+            if (hubActionButton.disabled) {
+                return;
+            }
+            const action = hubActionButton.dataset.hubAction;
+            if (action === 'fight-offers') {
+                resetOpponentPickerPhase();
+                openOpponentSceneAction();
+            } else if (action === 'continue-camp') {
+                openGymSceneAction();
+            } else if (action === 'fight-night') {
+                openFightSceneAction();
+            }
+            return;
+        }
+
+        const profileProgressButton = event.target.closest('#btn-profile-progress');
+        if (profileProgressButton) {
+            resetOpponentPickerPhase();
+            advanceProfileAction();
+            return;
+        }
+
+        const restartButton = event.target.closest('#btn-restart');
+        if (restartButton) {
+            if (window.confirm('Start over from scratch? Your fighter will be discarded.')) {
+                restartGameAction();
+            }
+            return;
+        }
+
+        const backFromOpponent = event.target.closest('#btn-back-profile-from-opponent');
+        if (backFromOpponent) {
+            resetOpponentPickerPhase();
+            openProfileSceneAction();
+            return;
         }
 
         const coachButton = event.target.closest('[data-coach-id]');
