@@ -6,15 +6,18 @@ import {
     advanceProfileAction,
     applyCampAction,
     openFightSceneAction,
+    openGymPickerSceneAction,
     openGymSceneAction,
     openOpponentSceneAction,
     openProfileSceneAction,
     proposeFightOfferAction,
     rejectPendingContractAction,
     selectCoachAction,
+    selectGymAction,
     signPendingContractAction,
     simulateFightAction
 } from './lib/actions/career-actions.js';
+import { getSelectedCampSession, selectCampSession } from './scenes/gym.js';
 import {
     backToPicker as backToOpponentPicker,
     getSelectedOffer,
@@ -172,14 +175,6 @@ function wireEvents() {
         openProfileSceneAction();
     });
 
-    document.getElementById('btn-back-profile-from-gym').addEventListener('click', () => {
-        openProfileSceneAction();
-    });
-
-    document.getElementById('btn-fight-night').addEventListener('click', () => {
-        openFightSceneAction();
-    });
-
     document.getElementById('btn-back-gym').addEventListener('click', () => {
         openGymSceneAction();
     });
@@ -306,6 +301,51 @@ function wireEvents() {
         if (backFromOpponent) {
             resetOpponentPickerPhase();
             openProfileSceneAction();
+            return;
+        }
+
+        const gymPickButton = event.target.closest('[data-gym-pick]');
+        if (gymPickButton) {
+            if (gymPickButton.disabled) {
+                return;
+            }
+            selectGymAction(gymPickButton.dataset.gymPick);
+            return;
+        }
+
+        const gymPickerActionButton = event.target.closest('[data-gym-picker-action]');
+        if (gymPickerActionButton) {
+            if (gymPickerActionButton.dataset.gymPickerAction === 'back') {
+                openProfileSceneAction();
+            }
+            return;
+        }
+
+        const sessionRow = event.target.closest('[data-session-key]');
+        if (sessionRow) {
+            if (sessionRow.disabled) {
+                return;
+            }
+            selectCampSession(sessionRow.dataset.sessionKey);
+            refreshCurrentScene();
+            return;
+        }
+
+        const campActionButton = event.target.closest('[data-camp-action]');
+        if (campActionButton) {
+            const action = campActionButton.dataset.campAction;
+            if (action === 'commit') {
+                const campDone = state.career.campWeeksCompleted >= state.career.campWeeksTotal;
+                if (campDone) {
+                    openFightSceneAction();
+                    return;
+                }
+                applyCampAction(getSelectedCampSession());
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            } else if (action === 'goto-picker') {
+                openGymPickerSceneAction();
+            }
             return;
         }
 

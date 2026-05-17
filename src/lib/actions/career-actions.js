@@ -20,7 +20,18 @@ export function openGymSceneAction() {
         return false;
     }
 
+    // No gym signed yet → pick a gym before camp can begin.
+    if (!state.career.selectedCoach) {
+        showScene('gym-picker');
+        return true;
+    }
+
     showScene('gym');
+    return true;
+}
+
+export function openGymPickerSceneAction() {
+    showScene('gym-picker');
     return true;
 }
 
@@ -102,7 +113,8 @@ export function signPendingContractAction() {
         return false;
     }
 
-    showScene('gym');
+    // After signing, send the player to pick their home gym for this camp.
+    showScene('gym-picker');
     return true;
 }
 
@@ -138,6 +150,22 @@ export function selectCoachAction(coachId) {
     if (selectCoachState(coach, relationship)) {
         refreshCurrentScene();
     }
+}
+
+/**
+ * Pick a gym from the gym-picker scene. Same effect as selectCoachAction
+ * but on success routes into the weekly camp.
+ */
+export function selectGymAction(coachId) {
+    const coach = findCoach(coachId);
+    const relationship = coach ? state.career.coachRelationships[coach.id] || null : null;
+
+    if (selectCoachState(coach, relationship)) {
+        showScene('gym');
+        return true;
+    }
+
+    return false;
 }
 
 export function applyCampAction(actionKey) {

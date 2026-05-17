@@ -4,6 +4,7 @@ import { scheduleGameSave } from './persistence.js';
 import { renderAllocationScene } from '../scenes/allocation.js';
 import { renderContractScene } from '../scenes/contract.js';
 import { renderFightScene } from '../scenes/fight.js';
+import { renderGymPickerScene } from '../scenes/gym-picker.js';
 import { renderGymScene } from '../scenes/gym.js';
 import { renderOpponentScene } from '../scenes/opponent.js';
 import { renderProfile } from '../scenes/profile.js';
@@ -29,6 +30,7 @@ const SCENE_RENDERERS = {
     profile: renderProfile,
     opponent: renderOpponentScene,
     contract: renderContractScene,
+    'gym-picker': renderGymPickerScene,
     gym: renderGymScene,
     fight: renderFightScene
 };
