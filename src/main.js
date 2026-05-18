@@ -1,25 +1,46 @@
 import './styles.css';
+import './scenes/career-screens.css';
 
 import { handleBuildReset, handlePresetSelection } from './scenes/allocation.js';
 import {
     advanceProfileAction,
     applyCampAction,
     openFightSceneAction,
+    openGymPickerSceneAction,
     openGymSceneAction,
+    openInterviewSceneAction,
     openOpponentSceneAction,
     openProfileSceneAction,
+    openWeighInSceneAction,
+    proposeFightOfferAction,
+    rejectPendingContractAction,
     selectCoachAction,
-    selectEventAction,
-    selectOpponentAction,
-    signContractAction,
+    selectGymAction,
+    signPendingContractAction,
     simulateFightAction
 } from './lib/actions/career-actions.js';
+import { getSelectedCampSession, selectCampSession } from './scenes/gym.js';
+import { getInterviewResult, handleInterviewAnswer, isInterviewComplete } from './scenes/interview.js';
+import { isWeighInComplete } from './scenes/weigh-in.js';
+import {
+    backToPicker as backToOpponentPicker,
+    getSelectedOffer,
+    resetPickerPhase as resetOpponentPickerPhase,
+    selectOfferByIndex
+} from './scenes/opponent.js';
+import {
+    cancelSigningMode as cancelContractSigningMode,
+    clearSignatureInk,
+    enterSigningMode as enterContractSigningMode,
+    hasSignatureInk,
+    playStampAndExit
+} from './scenes/contract.js';
 import { closeFightReplayModal, openFightReplayModal } from './lib/fight-engine-bridge.js';
 import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, restartGameAction } from './lib/actions/setup-actions.js';
 import { state } from './lib/core.js';
 import { formatSaveStatus, getSavedGameMeta, hasSavedGame, loadGameState, SAVE_META_EVENT, saveGameState, scheduleGameSave } from './lib/persistence.js';
 import { getFightViewModel } from './lib/selectors/fight-selectors.js';
-import { showScene } from './lib/scene-controller.js';
+import { refreshCurrentScene, showScene } from './lib/scene-controller.js';
 import { syncFrameControls, updatePreview } from './scenes/setup.js';
 
 function showValidationError(id, message) {
@@ -154,27 +175,8 @@ function wireEvents() {
     });
 
     document.getElementById('btn-finalize').addEventListener('click', () => {
+        resetOpponentPickerPhase();
         openProfileSceneAction();
-    });
-
-    document.getElementById('btn-profile-progress').addEventListener('click', () => {
-        advanceProfileAction();
-    });
-
-    document.getElementById('btn-back-profile-from-opponent').addEventListener('click', () => {
-        openProfileSceneAction();
-    });
-
-    document.getElementById('btn-begin-camp').addEventListener('click', () => {
-        signContractAction();
-    });
-
-    document.getElementById('btn-back-profile-from-gym').addEventListener('click', () => {
-        openProfileSceneAction();
-    });
-
-    document.getElementById('btn-fight-night').addEventListener('click', () => {
-        openFightSceneAction();
     });
 
     document.getElementById('btn-back-gym').addEventListener('click', () => {
@@ -199,12 +201,6 @@ function wireEvents() {
         openProfileSceneAction();
     });
 
-    document.getElementById('btn-restart').addEventListener('click', () => {
-        if (window.confirm('Start over from scratch? Your fighter will be discarded.')) {
-            restartGameAction();
-        }
-    });
-
     document.getElementById('btn-reset-build').addEventListener('click', () => {
         handleBuildReset();
     });
@@ -220,14 +216,182 @@ function wireEvents() {
             handlePresetSelection(presetButton.dataset.preset);
         }
 
-        const opponentButton = event.target.closest('[data-opponent-id]');
-        if (opponentButton) {
-            selectOpponentAction(opponentButton.dataset.opponentId);
+        const offerCard = event.target.closest('[data-offer-index]');
+        if (offerCard && offerCard.dataset.locked !== 'true') {
+            const index = Number(offerCard.dataset.offerIndex);
+            if (selectOfferByIndex(index)) {
+                refreshCurrentScene();
+            }
+            return;
         }
 
-        const eventButton = event.target.closest('[data-event-id]');
-        if (eventButton) {
-            selectEventAction(eventButton.dataset.eventId);
+        const offerActionButton = event.target.closest('[data-offer-action]');
+        if (offerActionButton) {
+            const action = offerActionButton.dataset.offerAction;
+            if (action === 'back') {
+                backToOpponentPicker();
+                refreshCurrentScene();
+                return;
+            }
+            if (action === 'accept') {
+                const offer = getSelectedOffer();
+                if (offer && offer.event && !offer.locked) {
+                    proposeFightOfferAction({
+                        opponentId: offer.opponent.id,
+                        eventId: offer.event.id,
+                        campWeeks: offer.campWeeks
+                    });
+                    resetOpponentPickerPhase();
+                }
+            }
+            return;
+        }
+
+        const contractButton = event.target.closest('[data-contract-action]');
+        if (contractButton) {
+            const action = contractButton.dataset.contractAction;
+            if (action === 'enter-sign') {
+                enterContractSigningMode();
+            } else if (action === 'clear') {
+                clearSignatureInk();
+            } else if (action === 'cancel-sign') {
+                cancelContractSigningMode();
+            } else if (action === 'confirm-sign') {
+                if (!hasSignatureInk()) {
+                    return;
+                }
+                playStampAndExit(() => signPendingContractAction());
+            } else if (action === 'reject') {
+                rejectPendingContractAction();
+            } else if (action === 'back') {
+                openOpponentSceneAction();
+            }
+            return;
+        }
+
+        const hubActionButton = event.target.closest('[data-hub-action]');
+        if (hubActionButton) {
+            if (hubActionButton.disabled) {
+                return;
+            }
+            const action = hubActionButton.dataset.hubAction;
+            if (action === 'fight-offers') {
+                resetOpponentPickerPhase();
+                openOpponentSceneAction();
+            } else if (action === 'continue-camp') {
+                openGymSceneAction();
+            } else if (action === 'fight-night') {
+                openFightSceneAction();
+            }
+            return;
+        }
+
+        const profileProgressButton = event.target.closest('#btn-profile-progress');
+        if (profileProgressButton) {
+            resetOpponentPickerPhase();
+            advanceProfileAction();
+            return;
+        }
+
+        const restartButton = event.target.closest('#btn-restart');
+        if (restartButton) {
+            if (window.confirm('Start over from scratch? Your fighter will be discarded.')) {
+                restartGameAction();
+            }
+            return;
+        }
+
+        const backFromOpponent = event.target.closest('#btn-back-profile-from-opponent');
+        if (backFromOpponent) {
+            resetOpponentPickerPhase();
+            openProfileSceneAction();
+            return;
+        }
+
+        const answerButton = event.target.closest('[data-answer-idx]');
+        if (answerButton) {
+            if (answerButton.disabled) return;
+            handleInterviewAnswer(Number(answerButton.dataset.answerIdx));
+            return;
+        }
+
+        const interviewActionButton = event.target.closest('[data-interview-action]');
+        if (interviewActionButton) {
+            const action = interviewActionButton.dataset.interviewAction;
+            if (action === 'finish') {
+                if (isInterviewComplete()) {
+                    const result = getInterviewResult();
+                    // Bank earned hype once as a pre-fight reputation bump.
+                    const repBump = Math.max(0, Math.round(result.hype / 8));
+                    if (repBump > 0 && state.career.preFight.hype > 0) {
+                        state.career.reputation += repBump;
+                        state.career.preFight.hype = 0;
+                    }
+                    openWeighInSceneAction();
+                }
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            }
+            return;
+        }
+
+        const weighActionButton = event.target.closest('[data-weigh-action]');
+        if (weighActionButton) {
+            if (weighActionButton.disabled) return;
+            const action = weighActionButton.dataset.weighAction;
+            if (action === 'walk') {
+                if (isWeighInComplete()) {
+                    openFightSceneAction();
+                }
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            }
+            return;
+        }
+
+        const gymPickButton = event.target.closest('[data-gym-pick]');
+        if (gymPickButton) {
+            if (gymPickButton.disabled) {
+                return;
+            }
+            selectGymAction(gymPickButton.dataset.gymPick);
+            return;
+        }
+
+        const gymPickerActionButton = event.target.closest('[data-gym-picker-action]');
+        if (gymPickerActionButton) {
+            if (gymPickerActionButton.dataset.gymPickerAction === 'back') {
+                openProfileSceneAction();
+            }
+            return;
+        }
+
+        const sessionRow = event.target.closest('[data-session-key]');
+        if (sessionRow) {
+            if (sessionRow.disabled) {
+                return;
+            }
+            selectCampSession(sessionRow.dataset.sessionKey);
+            refreshCurrentScene();
+            return;
+        }
+
+        const campActionButton = event.target.closest('[data-camp-action]');
+        if (campActionButton) {
+            const action = campActionButton.dataset.campAction;
+            if (action === 'commit') {
+                const campDone = state.career.campWeeksCompleted >= state.career.campWeeksTotal;
+                if (campDone) {
+                    openFightSceneAction();
+                    return;
+                }
+                applyCampAction(getSelectedCampSession());
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            } else if (action === 'goto-picker') {
+                openGymPickerSceneAction();
+            }
+            return;
         }
 
         const coachButton = event.target.closest('[data-coach-id]');

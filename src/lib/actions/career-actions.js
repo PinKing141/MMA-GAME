@@ -1,11 +1,15 @@
 import { COACHES } from '../data.js';
 import { state } from '../core.js';
 import { getContractPreview, signContractState } from './contract-actions.js';
-import { selectEventState } from './event-actions.js';
+import { selectEventState, syncAvailableEvents } from './event-actions.js';
 import { applyCampWeekState } from './camp-state.js';
-import { selectCoachState, selectOpponentState } from './career-state.js';
+import { selectCoachState, selectOpponentState, syncAvailableOpponents } from './career-state.js';
 import { simulateFightState } from './fight-state.js';
 import { refreshCurrentScene, showScene } from '../scene-controller.js';
+import { isInterviewComplete, resetInterviewState } from '../../scenes/interview.js';
+import { isWeighInComplete, resetWeighInState } from '../../scenes/weigh-in.js';
+import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
+import { createPlayerDefaultPersonality } from '../domain/personality.js';
 
 function findCoach(coachId) {
     return COACHES.find(entry => entry.id === coachId) || null;
@@ -20,20 +24,66 @@ export function openGymSceneAction() {
         return false;
     }
 
+    // No gym signed yet → pick a gym before camp can begin.
+    if (!state.career.selectedCoach) {
+        showScene('gym-picker');
+        return true;
+    }
+
     showScene('gym');
     return true;
 }
 
+export function openGymPickerSceneAction() {
+    showScene('gym-picker');
+    return true;
+}
+
+/**
+ * Walking to the cage gates on: contract signed, camp done, press
+ * conference complete, weigh-in ceremony complete.
+ */
 export function openFightSceneAction() {
     if (!state.career.contract || state.career.campWeeksCompleted < state.career.campWeeksTotal) {
         return false;
+    }
+
+    if (!isInterviewComplete()) {
+        showScene('interview');
+        return true;
+    }
+
+    if (!isWeighInComplete()) {
+        showScene('weigh-in');
+        return true;
     }
 
     showScene('fight');
     return true;
 }
 
+export function openInterviewSceneAction() {
+    showScene('interview');
+}
+
+export function openWeighInSceneAction() {
+    showScene('weigh-in');
+}
+
 export function openProfileSceneAction() {
+    // Lazily derive the player's style fingerprint from the chosen
+    // preset + country on first hub visit. Already-derived fingerprints
+    // stay put so training drift accumulates.
+    const isEmpty = !state.career.playerFingerprint || Object.keys(state.career.playerFingerprint).length === 0;
+    if (isEmpty && state.selectedPreset) {
+        state.career.playerFingerprint = generateFingerprintForArchetype({
+            countryCode: state.setup.country?.code || 'US',
+            archetypeKey: state.selectedPreset
+        });
+        // Reset personality from the chosen preset on first hub visit
+        // so a kickboxer doesn't carry the all-rounder default.
+        state.career.playerPersonality = createPlayerDefaultPersonality(state.selectedPreset);
+    }
     showScene('profile');
 }
 
@@ -63,6 +113,66 @@ export function selectEventAction(eventId) {
     }
 }
 
+/**
+ * Lock in an offer (event + opponent) and route to the contract signing
+ * scene. Contract is NOT signed yet — the player still has to put pen
+ * to paper. Camp window is pre-staged from the offer's tier.
+ */
+export function proposeFightOfferAction({ opponentId, eventId, campWeeks }) {
+    syncAvailableOpponents();
+    syncAvailableEvents();
+
+    if (!selectEventState(eventId)) {
+        return false;
+    }
+
+    if (!selectOpponentState(opponentId)) {
+        return false;
+    }
+
+    if (campWeeks && Number.isFinite(campWeeks)) {
+        state.career.campWeeksTotal = campWeeks;
+    }
+
+    showScene('contract');
+    return true;
+}
+
+/**
+ * Finalize the proposed contract after the player has signed.
+ * Promotes selectedEvent + selectedOpponent into state.career.contract
+ * and opens the gym.
+ */
+export function signPendingContractAction() {
+    if (!getContractPreview()) {
+        return false;
+    }
+
+    if (!signContractState()) {
+        return false;
+    }
+
+    // Reset per-contract pre-fight state so each camp gets fresh beats.
+    resetInterviewState();
+    resetWeighInState();
+
+    // After signing, send the player to pick their home gym for this camp.
+    showScene('gym-picker');
+    return true;
+}
+
+/**
+ * Walk away from a proposed contract before signing. Clears the staged
+ * event + opponent and sends the player back to the offer board.
+ */
+export function rejectPendingContractAction() {
+    state.career.selectedEvent = null;
+    state.career.selectedOpponent = null;
+    state.career.contract = null;
+    showScene('opponent');
+    return true;
+}
+
 export function signContractAction() {
     if (!getContractPreview()) {
         return false;
@@ -83,6 +193,22 @@ export function selectCoachAction(coachId) {
     if (selectCoachState(coach, relationship)) {
         refreshCurrentScene();
     }
+}
+
+/**
+ * Pick a gym from the gym-picker scene. Same effect as selectCoachAction
+ * but on success routes into the weekly camp.
+ */
+export function selectGymAction(coachId) {
+    const coach = findCoach(coachId);
+    const relationship = coach ? state.career.coachRelationships[coach.id] || null : null;
+
+    if (selectCoachState(coach, relationship)) {
+        showScene('gym');
+        return true;
+    }
+
+    return false;
 }
 
 export function applyCampAction(actionKey) {

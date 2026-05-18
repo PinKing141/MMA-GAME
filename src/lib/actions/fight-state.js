@@ -83,6 +83,20 @@ function clearCampAfterFight() {
     state.career.overtrainingWarnings = 0;
     state.career.fatigue = clamp(Math.round(state.career.fatigue * 0.35), 0, 20);
     state.career.sharpness = clamp(Math.round(state.career.sharpness * 0.72), 35, 88);
+
+    // Flag the per-contract pre-fight bundle as stale so the next signing
+    // resets it cleanly even if the player saves between fights.
+    if (state.career.preFight) {
+        state.career.preFight.contractId = null;
+        state.career.preFight.questionIdx = 0;
+        state.career.preFight.tension = 0;
+        state.career.preFight.hype = 0;
+        state.career.preFight.weighInComplete = false;
+        state.career.preFight.weighInStarted = false;
+        state.career.preFight.weighInRedResult = null;
+        state.career.preFight.weighInBlueResult = null;
+        state.career.preFight.faceoff = null;
+    }
 }
 
 export function simulateFightState() {
@@ -100,6 +114,10 @@ export function simulateFightState() {
         fatigue: state.career.fatigue,
         injuryCount: state.career.injuries.length
     };
+
+    const preFight = state.career.preFight || {};
+    const playerMissedWeight = preFight.weighInRedResult && preFight.weighInRedResult.onWeight === false;
+    const opponentMissedWeight = preFight.weighInBlueResult && preFight.weighInBlueResult.onWeight === false;
 
     const simulation = simulateCareerFight({
         player: {
@@ -121,7 +139,21 @@ export function simulateFightState() {
             fatigue: state.career.fatigue,
             overtrainingWarnings: state.career.overtrainingWarnings,
             injuries: state.career.injuries
-        }
+        },
+        preFight: {
+            tension: preFight.tension || 0,
+            hype: preFight.hype || 0,
+            playerMissedWeight,
+            opponentMissedWeight,
+            playerWeightOver: playerMissedWeight
+                ? (preFight.weighInRedResult.weight - getWeightClassEntry(state.setup.weight).max)
+                : 0,
+            opponentWeightOver: opponentMissedWeight
+                ? (preFight.weighInBlueResult.weight - getWeightClassEntry(state.setup.weight).max)
+                : 0
+        },
+        playerFingerprint: state.career.playerFingerprint || {},
+        opponentFingerprint: opponent.fingerprint || {}
     });
 
     if (simulation.result === 'Draw') {
@@ -139,7 +171,20 @@ export function simulateFightState() {
 
     updateOpponentRecord(opponent, simulation.result);
     const rankingUpdate = updateRankings(simulation.result, opponent);
-    const purseEarned = simulation.purseEarned;
+
+    // Missed-weight purse transfer: 20% of show money moves to whoever made weight.
+    const transferAmount = Math.round(contract.showMoney * 0.20);
+    let weightAdjustment = 0;
+    let weightNote = '';
+    if (playerMissedWeight && !opponentMissedWeight) {
+        weightAdjustment = -transferAmount;
+        weightNote = `Missed weight by ${preFight.weighInRedResult.weight - getWeightClassEntry(state.setup.weight).max}: forfeited ${formatMoney(transferAmount)} to opponent.`;
+    } else if (opponentMissedWeight && !playerMissedWeight) {
+        weightAdjustment = transferAmount;
+        weightNote = `Opponent missed weight: collected an extra ${formatMoney(transferAmount)} from their purse.`;
+    }
+
+    const purseEarned = simulation.purseEarned + weightAdjustment;
     state.career.cash += purseEarned;
     const coachProgress = applyCoachProgress(simulation.result);
 
@@ -187,6 +232,12 @@ export function simulateFightState() {
         `Purse earned: ${formatMoney(purseEarned)}. Player rank is now ${getRankLabel(rankingUpdate.after)}.`,
         state.career.lastFightResult.coachProgressText
     );
+    if (weightNote) {
+        state.career.lastFightResult.notes.push(weightNote);
+    }
+    if ((preFight.tension || 0) >= 60) {
+        state.career.lastFightResult.notes.push(`Pre-fight tension was ${Math.round(preFight.tension)}% — the cage opened at a violent pace.`);
+    }
 
     clearCampAfterFight();
     return true;

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/src/octagon-design.css">
 </head>
@@ -305,244 +305,19 @@
             </div>
         </section>
 
-        <section class="scene" id="scene-profile">
-            <div class="eyebrow">Career Hub · First Fight Ahead</div>
+        <section class="scene hub-scene" id="scene-profile"></section>
 
-            <div class="profile-header">
-                <div class="profile-id">
-                    <div class="profile-class-pill" id="pr-class">Welterweight</div>
-                    <div class="name" id="pr-name">Unnamed Fighter</div>
-                    <div class="nickname-slot" id="pr-nickname">No nickname yet · earn it in the cage</div>
-                    <div class="profile-discipline-tag" id="pr-discipline">All-Rounder</div>
-                    <p class="profile-style-note" id="pr-style-note"></p>
-                    <div class="meta">
-                        <span id="pr-flag"></span>
-                        <span class="sep">/</span>
-                        <span id="pr-age">20 y/o</span>
-                        <span class="sep">/</span>
-                        <span id="pr-stance">Orthodox</span>
-                        <span class="sep">/</span>
-                        <span id="pr-record">0-0-0 (Pro Debut)</span>
-                    </div>
-                </div>
-                <div class="profile-vitals">
-                    <div class="profile-vital">
-                        <div class="label">Height</div>
-                        <div class="value" id="pr-height">5'10"</div>
-                    </div>
-                    <div class="profile-vital">
-                        <div class="label">Weight</div>
-                        <div class="value" id="pr-weight">170</div>
-                    </div>
-                    <div class="profile-vital">
-                        <div class="label">Reach</div>
-                        <div class="value" id="pr-reach">5'11"</div>
-                    </div>
-                    <div class="profile-vital">
-                        <div class="label">Overall</div>
-                        <div class="ovr-big" id="pr-ovr">10</div>
-                    </div>
-                </div>
-            </div>
+        <section class="scene" id="scene-opponent"></section>
 
-            <div class="profile-grid">
-                <div class="profile-groups" id="profile-groups"></div>
+        <section class="scene" id="scene-contract"></section>
 
-                <div class="identity-card">
-                    <div class="stat-card-header">
-                        <span class="title">Build Identity</span>
-                        <span class="avg">Nearest Style <strong id="identity-name">Preset</strong></span>
-                    </div>
-                    <div class="identity-hero">
-                        <div class="identity-hero-icon" id="profile-archetype-icon"></div>
-                        <div class="identity-hero-copy">
-                            <p id="profile-archetype-blurb"></p>
-                            <p class="preset-focus-detail" id="profile-archetype-detail"></p>
-                        </div>
-                    </div>
-                    <div class="archetype-examples-block profile-examples-block">
-                        <div class="modifier-title">Known Examples</div>
-                        <div class="archetype-example-list" id="profile-archetype-examples"></div>
-                    </div>
-                    <div class="build-category-meters profile-meter-grid" id="profile-category-meters"></div>
-                    <div class="modifier-columns profile-modifiers">
-                        <div class="modifier-block">
-                            <div class="modifier-title">Strengths</div>
-                            <ul class="modifier-list" id="profile-strengths"></ul>
-                        </div>
-                        <div class="modifier-block">
-                            <div class="modifier-title">Weaknesses</div>
-                            <ul class="modifier-list" id="profile-weaknesses"></ul>
-                        </div>
-                    </div>
+        <section class="scene" id="scene-gym-picker"></section>
 
-                    <div class="stat-card-header split-top">
-                        <span class="title">Career State</span>
-                        <span class="avg" id="career-day">Week 1</span>
-                    </div>
-                    <div class="career-row">
-                        <div class="career-stat">
-                            <div class="label">Fitness</div>
-                            <div class="value" id="career-fitness">100<span class="unit">%</span></div>
-                        </div>
-                        <div class="career-stat">
-                            <div class="label">Morale</div>
-                            <div class="value" id="career-morale">100<span class="unit">%</span></div>
-                        </div>
-                        <div class="career-stat">
-                            <div class="label">Sharpness</div>
-                            <div class="value" id="career-sharpness">35<span class="unit">%</span></div>
-                        </div>
-                        <div class="career-stat">
-                            <div class="label">Reputation</div>
-                            <div class="value" id="career-reputation">0</div>
-                        </div>
-                    </div>
-                    <div class="nick-info" id="career-story">Your first real run starts with the deal you sign and the way you win.</div>
-                </div>
-            </div>
+        <section class="scene camp-scene" id="scene-gym"></section>
 
-            <div class="continue-bar">
-                <div class="text">
-                    <div class="head" id="profile-next-head">Next: Pick A Card And Opponent</div>
-                    <p id="profile-next-copy">Pick the show, choose the matchup, then build camp around the style you just
-                        built.</p>
-                </div>
-                <button class="btn" id="btn-profile-progress">Fight Offers</button>
-                <button class="btn ghost small" id="btn-restart">Start Over</button>
-            </div>
-        </section>
+        <section class="scene" id="scene-interview"></section>
 
-        <section class="scene" id="scene-opponent">
-            <div class="eyebrow">Step 05 · Matchmaking</div>
-            <h1 class="scene-title">Book the fight.<br>Pick the matchup.</h1>
-            <p class="scene-subtitle">Choose the card, then choose the opponent. Once the deal is signed, camp can start.</p>
-
-            <div class="opponent-grid">
-                <div class="opponent-main-card">
-                    <div class="stat-card-header">
-                        <span class="title">Available Opponents</span>
-                        <span class="avg">Fight Board</span>
-                    </div>
-                    <div class="opponent-list" id="opponent-cards"></div>
-                </div>
-
-                <aside class="opponent-side">
-                    <div class="identity-card opponent-side-card">
-                        <div class="stat-card-header">
-                            <span class="title">Event Offers</span>
-                            <span class="avg">Show Money</span>
-                        </div>
-                        <div class="opponent-list" id="opponent-event-cards"></div>
-                    </div>
-
-                    <div class="identity-card opponent-side-card">
-                        <div class="stat-card-header">
-                            <span class="title">Fight Deal</span>
-                            <span class="avg">OVR <strong id="opponent-player-ovr">10</strong></span>
-                        </div>
-                        <div class="preview-class-pill" id="opponent-player-class">Welterweight</div>
-                        <div class="career-row opponent-player-meta">
-                            <div class="career-stat">
-                                <div class="label">Rank</div>
-                                <div class="value" id="opponent-player-rank">NR</div>
-                            </div>
-                            <div class="career-stat">
-                                <div class="label">Cash</div>
-                                <div class="value opponent-money" id="opponent-player-cash">$0</div>
-                            </div>
-                        </div>
-                        <div class="opponent-summary" id="opponent-summary"></div>
-                        <p class="gym-complete-note" id="opponent-cut-note"></p>
-                        <div class="opponent-summary" id="opponent-contract-summary"></div>
-                        <p class="gym-complete-note" id="opponent-contract-note"></p>
-                        <div class="stat-card-header split-top">
-                            <span class="title">Division Rankings</span>
-                            <span class="avg">Top 30</span>
-                        </div>
-                        <div class="ranking-board" id="opponent-rankings"></div>
-                    </div>
-                </aside>
-            </div>
-
-            <div class="continue-bar">
-                <div class="text">
-                    <div class="head">The deal sets up camp</div>
-                    <p>Once the fight is signed, the coach, the weight cut, and the full camp all matter.</p>
-                </div>
-                <button class="btn" id="btn-begin-camp" disabled>Sign Deal &amp; Start Camp</button>
-                <button class="btn ghost" id="btn-back-profile-from-opponent">Back to Profile</button>
-            </div>
-        </section>
-
-        <section class="scene" id="scene-gym">
-            <div class="eyebrow">Step 06 · Gym Camp</div>
-            <h1 class="scene-title">Get ready for the fight.<br>Build the camp.</h1>
-            <p class="scene-subtitle">Each week is a choice. Raise the right skills, manage fatigue, and show up ready on fight night.</p>
-
-            <div class="gym-grid">
-                <div class="gym-main-card">
-                    <div class="gym-header">
-                        <div>
-                            <div class="preview-title">Camp Fighter</div>
-                            <div class="preview-name" id="gym-name">Unnamed Fighter</div>
-                        </div>
-                        <div class="gym-week-pill" id="gym-week">Week 1 of 4</div>
-                    </div>
-
-                    <div class="gym-brief-grid">
-                        <div class="gym-brief-card">
-                            <div class="modifier-title">Opponent</div>
-                            <div id="gym-opponent-summary"></div>
-                        </div>
-                        <div class="gym-brief-card">
-                            <div class="modifier-title">Choose Coach</div>
-                            <div class="coach-grid" id="gym-coaches"></div>
-                        </div>
-                    </div>
-
-                    <div class="gym-status" id="gym-status"></div>
-                    <div class="gym-action-grid" id="gym-actions"></div>
-                </div>
-
-                <aside class="gym-side">
-                    <div class="identity-card gym-side-card">
-                        <div class="stat-card-header">
-                            <span class="title">Camp Snapshot</span>
-                            <span class="avg">4 Week Block</span>
-                        </div>
-                        <div class="career-row" id="gym-metrics"></div>
-                        <p class="gym-complete-note" id="gym-coach-note"></p>
-                        <p class="gym-complete-note" id="gym-complete-note"></p>
-                    </div>
-
-                    <div class="identity-card gym-side-card">
-                        <div class="stat-card-header">
-                            <span class="title">Risk Report</span>
-                            <span class="avg">Camp Wear</span>
-                        </div>
-                        <div class="gym-injury-list" id="gym-injuries"></div>
-                    </div>
-
-                    <div class="identity-card gym-side-card">
-                        <div class="stat-card-header">
-                            <span class="title">Training Log</span>
-                            <span class="avg">Camp Notes</span>
-                        </div>
-                        <div class="gym-log" id="gym-history"></div>
-                    </div>
-                </aside>
-            </div>
-
-            <div class="continue-bar">
-                <div class="text">
-                    <div class="head">Everything in camp carries into fight night</div>
-                    <p>Coach bonuses, injuries, the cut, and overtraining all follow the fighter into the cage.</p>
-                </div>
-                <button class="btn" id="btn-fight-night" disabled>Fight Night</button>
-                <button class="btn ghost" id="btn-back-profile-from-gym">Back to Profile</button>
-            </div>
-        </section>
+        <section class="scene" id="scene-weigh-in"></section>
 
         <section class="scene" id="scene-fight">
             <div class="eyebrow">Step 07 · Fight Night</div>

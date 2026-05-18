@@ -3,6 +3,7 @@ import { getWeightClassEntry } from '../core.js';
 import { clamp, getAttributeAverage } from '../utils/calculations.js';
 import { formatMoney } from '../utils/formatters.js';
 import { getAllowedVenueTiers, getDefaultVenueTier } from './venues.js';
+import { pickMove, pickRange } from '../domain/move-selector.js';
 
 function countryCodeToFlagEmoji(code) {
     if (!code || typeof code !== 'string' || code.length !== 2) {
@@ -132,24 +133,132 @@ function getFacingAngle(from, to) {
     return (Math.atan2(to.x - from.x, from.y - to.y) * (180 / Math.PI) + 360) % 360;
 }
 
-function getExchangePositions(round, step, aggressor, isFinish) {
+/**
+ * Per-range gap profiles. The gap between fighters scales with the
+ * current range — clinch/ground exchanges sit on top of each other,
+ * long-range exchanges keep distance. Keeps motion inside the cage
+ * with tighter clamps than before (28-72 vs 24-76).
+ */
+const RANGE_GAP = {
+    Long:   { lateral: 5.0, vertical: 6.4 },
+    Mid:    { lateral: 3.2, vertical: 4.8 },
+    Close:  { lateral: 2.0, vertical: 3.6 },
+    Clinch: { lateral: 1.0, vertical: 2.2 },
+    Ground: { lateral: 0.6, vertical: 1.4 }
+};
+
+/**
+ * Sum the Primary Range distribution of a fingerprint into a movement
+ * profile: how much this fighter wants to close vs hold distance.
+ * - closing: 0..1, drive toward Clinch/Ground (wrestlers high)
+ * - distance: 0..1, hold Long/Mid space (out-fighters high)
+ * - pressure: 0..1, walk forward regardless (Muay Thai high)
+ */
+export function getMovementProfile(fingerprint) {
+    if (!fingerprint || Object.keys(fingerprint).length === 0) {
+        return { closing: 0.4, distance: 0.4, pressure: 0.4 };
+    }
+    // Style-name buckets. Wrestlers/grapplers close; karate/TKD hold
+    // distance; Muay Thai/boxing/kickboxing press forward.
+    const closing = (fingerprint['Wrestling'] || 0)
+        + (fingerprint['Brazilian Jiu-Jitsu'] || 0)
+        + (fingerprint['Sambo'] || 0)
+        + (fingerprint['Judo'] || 0)
+        + (fingerprint['Catch Wrestling'] || 0)
+        + (fingerprint['Sumo'] || 0);
+    const distance = (fingerprint['Tae Kwon Do'] || 0)
+        + (fingerprint['Karate'] || 0)
+        + (fingerprint['Savate'] || 0)
+        + (fingerprint['Kickboxing'] || 0) * 0.4
+        + (fingerprint['American Kickboxing'] || 0) * 0.4;
+    const pressure = (fingerprint['Muay Thai'] || 0)
+        + (fingerprint['Boxing'] || 0)
+        + (fingerprint['Kyokushin'] || 0)
+        + (fingerprint['Kickboxing'] || 0) * 0.6;
+    return {
+        closing: Math.min(1, closing),
+        distance: Math.min(1, distance),
+        pressure: Math.min(1, pressure)
+    };
+}
+
+/**
+ * Compute target positions for both fighters this step. Respects:
+ * - current range (clinch/ground stack them, long pushes apart)
+ * - aggressor's movement profile (pressure closes faster)
+ * - retreat state (defender drifts toward a wall when hurt)
+ * - cage cutting (aggressor positions between defender and center)
+ * - the cage clamp box (28-72 on both axes)
+ */
+function getExchangePositions({
+    round,
+    step,
+    aggressor,
+    isFinish,
+    range = 'Mid',
+    aggressorProfile = { pressure: 0.5, closing: 0.4, distance: 0.4 },
+    defenderProfile = { pressure: 0.5, closing: 0.4, distance: 0.4 },
+    defenderRetreating = false,
+    defenderWallSide = null,
+    prevRed = null,
+    prevBlue = null
+}) {
     const orbit = (round * 0.82) + (step * 0.67) + (aggressor === 'red' ? 0.24 : -0.24);
-    const centerX = clamp(50 + (Math.sin(orbit * 1.15) * 8), 36, 64);
-    const centerY = clamp(50 + (Math.cos(orbit * 0.95) * 9), 34, 66);
-    const lateralGap = isFinish ? 1.1 : 1.8;
-    const verticalGap = isFinish ? 3.2 : 4.2;
-    const pressureShift = aggressor === 'red' ? -0.8 : 0.8;
+    const centerX = clamp(50 + (Math.sin(orbit * 1.15) * 7), 40, 60);
+    const centerY = clamp(50 + (Math.cos(orbit * 0.95) * 8), 38, 62);
+    const profile = RANGE_GAP[range] || RANGE_GAP.Mid;
 
-    const red = {
-        x: clamp(centerX - lateralGap + Math.min(0, pressureShift), 24, 76),
-        y: clamp(centerY - (verticalGap / 2) + (aggressor === 'red' ? -1.1 : 0.7), 24, 76)
-    };
-    const blue = {
-        x: clamp(centerX + lateralGap + Math.max(0, pressureShift), 24, 76),
-        y: clamp(centerY + (verticalGap / 2) + (aggressor === 'blue' ? 1.1 : -0.7), 24, 76)
-    };
+    // Pressure shrinks the gap; distance widens it. The defender's
+    // distance bias also widens (they retreat to range).
+    const gapMultiplier = clamp(
+        1 + (defenderProfile.distance * 0.25) - (aggressorProfile.pressure * 0.3),
+        0.55, 1.4
+    );
+    const lateralGap = (isFinish ? profile.lateral * 0.55 : profile.lateral) * gapMultiplier;
+    const verticalGap = (isFinish ? profile.vertical * 0.7 : profile.vertical) * gapMultiplier;
 
-    return { red, blue };
+    // Pressure shift — aggressor closes harder when their profile
+    // demands it, defender's closing profile pulls them back.
+    const pressureShift = (aggressor === 'red' ? -1 : 1) * (0.4 + aggressorProfile.pressure * 0.6);
+
+    let redX = centerX - lateralGap + Math.min(0, pressureShift);
+    let blueX = centerX + lateralGap + Math.max(0, pressureShift);
+    let redY = centerY - (verticalGap / 2) + (aggressor === 'red' ? -1.1 : 0.7);
+    let blueY = centerY + (verticalGap / 2) + (aggressor === 'blue' ? 1.1 : -0.7);
+
+    // Defender retreat: drift the defender toward the nearest wall on
+    // the chosen side. Aggressor cuts the angle by positioning between
+    // the defender and the cage center on that side.
+    if (defenderRetreating) {
+        const wall = defenderWallSide || (aggressor === 'red' ? 'right' : 'left');
+        const wallTarget = wall === 'right' ? 70 : 30;
+        if (aggressor === 'red') {
+            blueX = blueX * 0.45 + wallTarget * 0.55;
+            // Cut the angle — red moves toward the same wall but slightly
+            // inside the defender's escape path.
+            redX = clamp(blueX + 2.4, 28, 72);
+        } else {
+            redX = redX * 0.45 + wallTarget * 0.55;
+            blueX = clamp(redX - 2.4, 28, 72);
+        }
+    }
+
+    // Smooth toward the target so fighters slide rather than teleport
+    // between steps. Heavier interpolation on the wall-cutting path.
+    const smooth = defenderRetreating ? 0.55 : 0.4;
+    if (prevRed) {
+        redX = prevRed.x * (1 - smooth) + redX * smooth;
+        redY = prevRed.y * (1 - smooth) + redY * smooth;
+    }
+    if (prevBlue) {
+        blueX = prevBlue.x * (1 - smooth) + blueX * smooth;
+        blueY = prevBlue.y * (1 - smooth) + blueY * smooth;
+    }
+
+    return {
+        red: { x: clamp(redX, 28, 72), y: clamp(redY, 28, 72) },
+        blue: { x: clamp(blueX, 28, 72), y: clamp(blueY, 28, 72) }
+    };
 }
 
 function cloneReplayState(cornerState) {
@@ -215,7 +324,94 @@ function buildScorecards(resultLabel, winnerCorner, totalRounds) {
     return { red, blue };
 }
 
-function buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo }) {
+/**
+ * Force the finish step into the range that matches the method.
+ * Submissions happen on the ground; KO/TKO happen in striking range.
+ */
+function getFinishRange(method) {
+    if (method === 'Submission') return 'Ground';
+    if (method === 'TKO' || method === 'KO') return 'Mid';
+    return null;
+}
+
+/**
+ * Build a corner-style tactical note for the round break, reading the
+ * round's damage delta and the most-used range. Used in place of the
+ * old generic "Round N ends" line.
+ */
+function buildRoundNote({ round, redDamage, blueDamage, playerName, opponentName, dominantRange, redKnockdowns, blueKnockdowns }) {
+    const delta = redDamage - blueDamage;
+    const leadName = delta > 0 ? playerName : opponentName;
+    const trailName = delta > 0 ? opponentName : playerName;
+    const lastNameLead = leadName.split(/\s+/).slice(-1)[0];
+    const lastNameTrail = trailName.split(/\s+/).slice(-1)[0];
+    const knockdownNote = (redKnockdowns + blueKnockdowns) > 0
+        ? ` ${redKnockdowns > 0 ? lastNameTrail : lastNameLead} hit the canvas.`
+        : '';
+
+    const rangeColor = {
+        Long: 'kept it long',
+        Mid: 'fought at boxing range',
+        Close: 'lived in the pocket',
+        Clinch: 'won the clinch exchanges',
+        Ground: 'controlled the ground'
+    }[dominantRange] || 'pressed the action';
+
+    if (Math.abs(delta) < 6) {
+        return `Round ${round} was even. Both corners had work to do — ${lastNameLead} edged it by hair on the ${rangeColor.replace('won the ', '').replace('controlled the ', '')}.${knockdownNote}`;
+    }
+    if (Math.abs(delta) < 14) {
+        return `Round ${round} to ${lastNameLead} — ${rangeColor} and out-landed ${lastNameTrail}.${knockdownNote}`;
+    }
+    return `Round ${round} was a clear ${lastNameLead} round. ${lastNameTrail} could not get out of the way and ${rangeColor.replace('won the ', '').replace('controlled the ', '')}.${knockdownNote}`;
+}
+
+/**
+ * Aggression curve based on round, score gap, and remaining cardio.
+ * Trailing fighters in later rounds get desperate; tired fighters slow
+ * down regardless of round.
+ */
+function getAggression({ round, totalRounds, scoreLead, stamina }) {
+    let base = 0.55;
+    // Late-round urgency for the fighter behind on cards.
+    if (round >= totalRounds - 1 && scoreLead < 0) {
+        base += 0.25 + Math.min(0.2, Math.abs(scoreLead) * 0.05);
+    } else if (round === totalRounds) {
+        base += 0.1;
+    }
+    // Tired fighters pull aggression way back.
+    if (stamina < 35) {
+        base -= 0.25;
+    } else if (stamina < 55) {
+        base -= 0.1;
+    }
+    return Math.max(0.2, Math.min(0.95, base));
+}
+
+/**
+ * Verb table for the play-by-play. Mirrors describeMove but tuned for
+ * the fight ticker's rhythm.
+ */
+function getActionVerb(move) {
+    const type = (move?.Type || '').toLowerCase();
+    switch (type) {
+        case 'punch': return 'rips';
+        case 'kick': return 'whips';
+        case 'knee': return 'drives';
+        case 'elbow': return 'cuts with';
+        case 'takedown': return 'shoots';
+        case 'throw': return 'launches';
+        case 'submission': return 'attacks with';
+        case 'sweep': return 'sweeps with';
+        case 'control': return 'locks down with';
+        case 'clinch': return 'clinches with';
+        case 'defense': return 'reads with';
+        case 'headbutt': return 'lands a';
+        default: return 'lands';
+    }
+}
+
+function buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo, playerFingerprint, opponentFingerprint }) {
     const winnerCorner = resultLabel === 'Win' ? 'red' : resultLabel === 'Loss' ? 'blue' : 'draw';
     const venue = getDefaultVenueTier(contract);
     const allowedVenues = getAllowedVenueTiers(contract);
@@ -223,7 +419,16 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
     const resolvedRounds = methodInfo.round || totalRounds;
     const playerReadiness = clamp(Math.round((fightNight.fitness + fightNight.sharpness) / 2), 45, 100);
     const opponentReadiness = clamp(80 - (opponent.difficultyBias * 4), 42, 96);
-    const openingPositions = getExchangePositions(1, 0, 'red', false);
+    const playerProfile = getMovementProfile(playerFingerprint);
+    const opponentProfile = getMovementProfile(opponentFingerprint);
+    const profiles = { red: playerProfile, blue: opponentProfile };
+    // Retreat state persists across steps so cage-cutting reads correctly.
+    const retreatState = { red: false, blue: false, redWall: null, blueWall: null };
+
+    const openingPositions = getExchangePositions({
+        round: 1, step: 0, aggressor: 'red', isFinish: false, range: 'Mid',
+        aggressorProfile: playerProfile, defenderProfile: opponentProfile
+    });
     const redState = createReplayState(playerReadiness, openingPositions.red.y, getFacingAngle(openingPositions.red, openingPositions.blue), 'Awaiting bell');
     const blueState = createReplayState(opponentReadiness, openingPositions.blue.y, getFacingAngle(openingPositions.blue, openingPositions.red), 'Awaiting bell');
     redState.x = openingPositions.red.x;
@@ -234,6 +439,9 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
 
     for (let round = 1; round <= resolvedRounds; round += 1) {
         const stepCount = round === resolvedRounds && methodInfo.round ? 5 : 4;
+        const roundDamage = { red: 0, blue: 0 };
+        const roundRangeCount = {};
+        const roundKnockdowns = { red: 0, blue: 0 };
 
         for (let step = 0; step < stepCount; step += 1) {
             const isFinish = Boolean(methodInfo.round && round === methodInfo.round && step === stepCount - 1);
@@ -245,21 +453,116 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
             const defender = aggressor === 'red' ? 'blue' : 'red';
             const attackerState = aggressor === 'red' ? redState : blueState;
             const defenderState = defender === 'red' ? redState : blueState;
-            const attackText = isFinish
-                ? pickCommentary(actionPools.finish)
-                : pickCommentary(actionPools[aggressor]);
-            const damageZone = isFinish && methodInfo.method === 'Submission'
-                ? 'body'
-                : ['head', 'body', 'legs'][(round + step) % 3];
+            const aggressorFingerprint = aggressor === 'red' ? playerFingerprint : opponentFingerprint;
+            const hasFingerprint = aggressorFingerprint && Object.keys(aggressorFingerprint).length > 0;
+
+            // Pick a real move when we have a fingerprint; otherwise
+            // fall back to the legacy generic phrase pool.
+            const range = isFinish
+                ? (getFinishRange(methodInfo.method) || pickRange({ fingerprint: aggressorFingerprint }))
+                : pickRange({ fingerprint: aggressorFingerprint });
+            // AI urgency: scoreLead positive when aggressor is ahead on
+            // damage this fight, negative when behind. Stamina drops over
+            // the fight and rises slightly between rounds.
+            const scoreLead = aggressor === 'red'
+                ? (100 - blueState.hp) - (100 - redState.hp)
+                : (100 - redState.hp) - (100 - blueState.hp);
+            const aggression = isFinish ? 0.95 : getAggression({
+                round,
+                totalRounds: resolvedRounds,
+                scoreLead,
+                stamina: attackerState.stm
+            });
+
+            const realMove = hasFingerprint
+                ? pickMove({
+                    fingerprint: aggressorFingerprint,
+                    range,
+                    modifiers: {
+                        hurt: attackerState.hp < 40,
+                        winning: aggressor === winnerCorner && step > 1,
+                        aggression
+                    }
+                })
+                : null;
+
+            const attackText = realMove
+                ? `${getActionVerb(realMove)} a ${realMove.Move}`
+                : (isFinish
+                    ? pickCommentary(actionPools.finish)
+                    : pickCommentary(actionPools[aggressor]));
+
+            // Damage zone follows the move's Target when available.
+            const damageZone = realMove
+                ? (realMove.Target === 'Head' ? 'head'
+                    : realMove.Target === 'Legs' ? 'legs'
+                    : realMove.Target === 'Neck' || realMove.Target === 'Joint' || realMove.Target === 'Hip' ? 'body'
+                    : 'body')
+                : (isFinish && methodInfo.method === 'Submission'
+                    ? 'body'
+                    : ['head', 'body', 'legs'][(round + step) % 3]);
+
+            // Damage scales with the move's Power (1-5) so a Power-5
+            // kick lands harder than a Power-2 jab. Finishes keep their
+            // dramatic baseline.
+            const movePower = realMove ? (realMove.Power || 3) : 3;
             const damage = isFinish
                 ? (methodInfo.method === 'Submission' ? 18 : 28)
-                : 4 + Math.floor(Math.random() * 6);
-            const positions = getExchangePositions(round, step, aggressor, isFinish);
+                : 3 + Math.round(movePower * 1.2) + Math.floor(Math.random() * 3);
+            const positions = getExchangePositions({
+                round,
+                step,
+                aggressor,
+                isFinish,
+                range,
+                aggressorProfile: profiles[aggressor],
+                defenderProfile: profiles[defender],
+                defenderRetreating: retreatState[defender],
+                defenderWallSide: retreatState[defender + 'Wall'],
+                prevRed: { x: redState.x, y: redState.y },
+                prevBlue: { x: blueState.x, y: blueState.y }
+            });
 
-            attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 4), 8, 100);
+            attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 3 + Math.round(movePower * 0.5)), 8, 100);
             defenderState.hp = clamp(defenderState.hp - damage, 0, 100);
             defenderState.stm = clamp(defenderState.stm - Math.max(2, Math.round(damage * 0.45)), 0, 100);
             defenderState.damage[damageZone] = clamp(defenderState.damage[damageZone] + damage * 1.3, 0, 100);
+
+            // Accumulate per-round stats for the corner note + scoring.
+            roundDamage[aggressor] += damage;
+            roundRangeCount[range] = (roundRangeCount[range] || 0) + 1;
+            if (damage >= 22) {
+                roundKnockdowns[defender] += 1;
+                defenderState.down = true;
+            }
+
+            // Retreat trigger: defender pulls back when hurt (low HP),
+            // gassed (low stamina), or just took a heavy shot. Out-fighters
+            // retreat at higher HP because their game is space.
+            const distanceBias = profiles[defender].distance;
+            const retreatThreshold = 55 + distanceBias * 25;
+            const shouldRetreat = defenderState.hp < retreatThreshold
+                || defenderState.stm < 30
+                || damage >= 10;
+            retreatState[defender] = shouldRetreat;
+            if (shouldRetreat) {
+                // Pick the wall on the defender's current side of the
+                // cage so motion looks deliberate rather than random.
+                const currentX = defender === 'red' ? redState.x : blueState.x;
+                retreatState[defender + 'Wall'] = currentX < 50 ? 'left' : 'right';
+            } else {
+                retreatState[defender + 'Wall'] = null;
+            }
+            // Aggressor never retreats on the step they're attacking.
+            retreatState[aggressor] = false;
+            retreatState[aggressor + 'Wall'] = null;
+
+            // Tag the fighter state with retreating + range so the iframe
+            // can switch visual mode without recomputing.
+            redState.retreating = retreatState.red;
+            blueState.retreating = retreatState.blue;
+            redState.range = range;
+            blueState.range = range;
 
             redState.x = positions.red.x;
             redState.y = positions.red.y;
@@ -271,7 +574,7 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 ? 'Closing the choke'
                 : isFinish
                     ? 'Finishing sequence'
-                    : 'Pressing the exchange';
+                    : (realMove ? `Throwing ${realMove.Move}` : 'Pressing the exchange');
             defenderState.action = isFinish
                 ? methodInfo.method === 'Submission'
                     ? 'Trapped under the grip'
@@ -284,9 +587,11 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
 
             const time = getTimeForStep(300, step, stepCount, isFinish, methodInfo.time);
             const fighterName = aggressor === 'red' ? player.name : opponent.name;
+            const styleTag = realMove ? ` (${realMove.Style})` : '';
             const detailText = isFinish
-                ? `${fighterName} ${attackText}. ${methodInfo.method} ends it in round ${round}.`
-                : `${fighterName} ${attackText}.`;
+                ? `${fighterName} ${attackText}${styleTag}. ${methodInfo.method} ends it in round ${round}.`
+                : `${fighterName} ${attackText}${styleTag}.`;
+            const microText = realMove ? realMove.Move : (isFinish ? methodInfo.method : attackText);
 
             timeline.push({
                 round,
@@ -294,23 +599,44 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 corner: aggressor,
                 tone: isFinish ? 'danger' : aggressor,
                 tickerText: detailText,
-                microText: isFinish ? methodInfo.method : attackText,
-                callout: isFinish || damage >= 8 ? (isFinish ? methodInfo.method.toUpperCase() : 'Clean Shot') : '',
+                microText,
+                callout: isFinish ? methodInfo.method.toUpperCase() : (damage >= 8 ? 'Clean Shot' : ''),
                 dramatic: isFinish || (damage >= 8 && dramaticMoments.has(methodInfo.method)),
                 redState: cloneReplayState(redState),
                 blueState: cloneReplayState(blueState),
-                phase: isFinish ? 'finished' : 'fighting'
+                phase: isFinish ? 'finished' : 'fighting',
+                range
             });
         }
 
         if (round < resolvedRounds && !methodInfo.round) {
+            const dominantRange = Object.entries(roundRangeCount)
+                .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Mid';
+            const note = buildRoundNote({
+                round,
+                redDamage: roundDamage.red,
+                blueDamage: roundDamage.blue,
+                playerName: player.name,
+                opponentName: opponent.name,
+                dominantRange,
+                redKnockdowns: roundKnockdowns.red,
+                blueKnockdowns: roundKnockdowns.blue
+            });
+
+            // Recover a little stamina between rounds — the corner work
+            // matters. Hurt fighters recover less.
+            redState.stm = clamp(redState.stm + (redState.hp < 40 ? 8 : 14), 0, 100);
+            blueState.stm = clamp(blueState.stm + (blueState.hp < 40 ? 8 : 14), 0, 100);
+            redState.down = false;
+            blueState.down = false;
+
             timeline.push({
                 round,
                 time: '0:00',
                 corner: 'gold',
                 tone: 'gold',
-                tickerText: `Round ${round} ends. Corners go to work and the pace resets.`,
-                microText: `Round ${round} break`,
+                tickerText: note,
+                microText: `Round ${round} break · ${dominantRange} range`,
                 callout: `Round ${round} Over`,
                 dramatic: true,
                 redState: cloneReplayState(redState),
@@ -391,10 +717,41 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
     };
 }
 
-export function simulateCareerFight({ player, opponent, contract, fightNight }) {
-    const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight)) + ((Math.random() * 6) - 3);
-    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent)) + ((Math.random() * 6) - 3);
-    const scoreGap = Math.abs(playerScore - opponentScore);
+function getPreFightAdjustments(preFight) {
+    if (!preFight) {
+        return { playerDelta: 0, opponentDelta: 0, finishBias: 0 };
+    }
+
+    let playerDelta = 0;
+    let opponentDelta = 0;
+
+    // Missing weight drains the fighter — bigger cuts hit harder.
+    if (preFight.playerMissedWeight) {
+        const over = Math.max(0.5, preFight.playerWeightOver || 1);
+        playerDelta -= Math.min(6, 2 + over * 1.2);
+    }
+    if (preFight.opponentMissedWeight) {
+        const over = Math.max(0.5, preFight.opponentWeightOver || 1);
+        opponentDelta -= Math.min(6, 2 + over * 1.2);
+    }
+
+    // Tension affects pacing — high tension = chaotic exchanges. Slight edge
+    // to whoever has the better composure under pressure (player composure
+    // already in fightNight adjustment; opponent uses static composure).
+    const tension = preFight.tension || 0;
+    let finishBias = 0;
+    if (tension >= 60) {
+        finishBias = tension >= 85 ? 4 : 2;
+    }
+
+    return { playerDelta, opponentDelta, finishBias };
+}
+
+export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint }) {
+    const adj = getPreFightAdjustments(preFight);
+    const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight) + adj.playerDelta) + ((Math.random() * 6) - 3);
+    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta) + ((Math.random() * 6) - 3);
+    const scoreGap = Math.abs(playerScore - opponentScore) + adj.finishBias;
 
     let headline;
     let copy;
@@ -427,7 +784,7 @@ export function simulateCareerFight({ player, opponent, contract, fightNight }) 
     }
 
     const notes = getResultNotes(player.stats, opponent, fightNight, playerScore - opponentScore, resultLabel);
-    const replay = buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo });
+    const replay = buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo, playerFingerprint, opponentFingerprint });
 
     return {
         result: resultLabel,

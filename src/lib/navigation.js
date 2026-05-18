@@ -4,8 +4,12 @@ const SCENE_META = {
     allocate: { phaseLabel: 'Phase 3', phaseName: 'Build Style' },
     profile: { phaseLabel: 'Phase 4', phaseName: 'Career Hub' },
     opponent: { phaseLabel: 'Phase 5', phaseName: 'Fight Offers' },
-    gym: { phaseLabel: 'Phase 6', phaseName: 'Training Camp' },
-    fight: { phaseLabel: 'Phase 7', phaseName: 'Fight Night' }
+    contract: { phaseLabel: 'Phase 6', phaseName: 'Contract Office' },
+    'gym-picker': { phaseLabel: 'Phase 7', phaseName: 'Pick A Gym' },
+    gym: { phaseLabel: 'Phase 8', phaseName: 'Weekly Camp' },
+    interview: { phaseLabel: 'Phase 9', phaseName: 'Press Conference' },
+    'weigh-in': { phaseLabel: 'Phase 10', phaseName: 'Weigh-In' },
+    fight: { phaseLabel: 'Phase 11', phaseName: 'Fight Night' }
 };
 
 export function gotoScene(sceneName) {

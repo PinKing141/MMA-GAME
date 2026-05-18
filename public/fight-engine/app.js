@@ -236,6 +236,12 @@ function renderFighterState(corner) {
 function renderFighterPositions() {
   const canvas = document.getElementById('cage-canvas');
 
+  // Range is on the fighter state (sim writes the same range to both
+  // fighters per step). Drives a visual mode class on each element.
+  const currentRange = state.fighterState.red?.range
+    || state.fighterState.blue?.range
+    || 'Mid';
+
   ['red', 'blue'].forEach(corner => {
     const fighterState = state.fighterState[corner];
     let element = document.getElementById(`fighter-${corner}`);
@@ -250,8 +256,25 @@ function renderFighterPositions() {
 
     element.style.left = `${fighterState.x}%`;
     element.style.top = `${fighterState.y}%`;
-    element.style.transform = `rotate(${fighterState.facing}deg) scale(${fighterState.down ? 0.82 : 1})`;
+
+    // Clinch and Ground modes shrink + tilt so the pair reads as
+    // tied up / on the mat. Down still overrides for KO posture.
+    const rangeScale = fighterState.down ? 0.82
+      : currentRange === 'Ground' ? 0.72
+      : currentRange === 'Clinch' ? 0.88
+      : 1;
+    const rangeTilt = currentRange === 'Ground' ? 80
+      : currentRange === 'Clinch' ? (corner === 'red' ? -12 : 12)
+      : 0;
+    element.style.transform = `rotate(${fighterState.facing + rangeTilt}deg) scale(${rangeScale})`;
+
     element.classList.toggle('down', !!fighterState.down);
+    element.classList.toggle('retreating', !!fighterState.retreating);
+    element.classList.toggle('range-long', currentRange === 'Long');
+    element.classList.toggle('range-mid', currentRange === 'Mid');
+    element.classList.toggle('range-close', currentRange === 'Close');
+    element.classList.toggle('range-clinch', currentRange === 'Clinch');
+    element.classList.toggle('range-ground', currentRange === 'Ground');
   });
 }
 

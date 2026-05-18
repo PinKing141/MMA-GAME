@@ -4,11 +4,14 @@ import { ALL_ATTRIBUTES, MIN_ATTRIBUTE, POINTS_BUDGET } from '../data/attributes
 import { COACHES } from '../data/coaches.js';
 import { ROSTER } from '../data/roster.js';
 import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculations.js';
+import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
+import { createFingerprint } from '../domain/style-fingerprint.js';
+import { createPlayerDefaultPersonality, generatePersonality } from '../domain/personality.js';
 
 const MIN_AGE = 18;
 const MAX_AGE = 60;
 
-export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'gym', 'fight'];
+export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym-picker', 'gym', 'interview', 'weigh-in', 'fight'];
 
 function createDefaultSetupState() {
     return {
@@ -84,13 +87,48 @@ function createRosterState() {
             archetype,
             stats,
             overall: getOverallAverage(stats),
-            difficulty: getDifficultyLabel(entry.difficultyBias)
+            difficulty: getDifficultyLabel(entry.difficultyBias),
+            fingerprint: generateFingerprintForArchetype({
+                countryCode: entry.countryCode,
+                archetypeKey: entry.archetypeKey
+            }),
+            personality: generatePersonality(entry.archetypeKey)
         };
     });
 }
 
+/**
+ * Player fingerprint starts empty and is derived from their chosen
+ * preset on first hub visit (see openProfileSceneAction). Lives
+ * separately from state.career.roster so player drift doesn't bleed
+ * into NPCs.
+ */
+function createDefaultPlayerFingerprint() {
+    return {};
+}
+
 function createPlayerRankings() {
     return {};
+}
+
+function createDefaultPreFightState() {
+    return {
+        contractId: null,
+        // Interview
+        questionIdx: 0,
+        tension: 0,
+        hype: 0,
+        redMood: 'silent',
+        blueMood: 'silent',
+        lastQuote: null,
+        lastSpeakerCorner: null,
+        // Weigh-in
+        weighInStarted: false,
+        weighInComplete: false,
+        weighInRedResult: null,
+        weighInBlueResult: null,
+        faceoff: null
+    };
 }
 
 function createDefaultCareerState() {
@@ -123,7 +161,11 @@ function createDefaultCareerState() {
             draws: 0,
             finishes: 0
         },
-        lastFightResult: null
+        lastFightResult: null,
+        preFight: createDefaultPreFightState(),
+        playerFingerprint: createDefaultPlayerFingerprint(),
+        playerPersonality: createPlayerDefaultPersonality('all-rounder'),
+        rivalries: {}
     };
 }
 
@@ -226,6 +268,17 @@ export function hydrateState(snapshot) {
             ...defaultCareer.record,
             ...(careerSnapshot.record || {})
         },
+        preFight: {
+            ...defaultCareer.preFight,
+            ...(careerSnapshot.preFight || {})
+        },
+        playerFingerprint: careerSnapshot.playerFingerprint && Object.keys(careerSnapshot.playerFingerprint).length > 0
+            ? careerSnapshot.playerFingerprint
+            : defaultCareer.playerFingerprint,
+        playerPersonality: careerSnapshot.playerPersonality || defaultCareer.playerPersonality,
+        rivalries: careerSnapshot.rivalries && typeof careerSnapshot.rivalries === 'object'
+            ? careerSnapshot.rivalries
+            : defaultCareer.rivalries,
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
         selectedCoach: careerSnapshot.selectedCoach || null,
