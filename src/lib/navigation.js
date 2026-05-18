@@ -7,7 +7,9 @@ const SCENE_META = {
     contract: { phaseLabel: 'Phase 6', phaseName: 'Contract Office' },
     'gym-picker': { phaseLabel: 'Phase 7', phaseName: 'Pick A Gym' },
     gym: { phaseLabel: 'Phase 8', phaseName: 'Weekly Camp' },
-    fight: { phaseLabel: 'Phase 9', phaseName: 'Fight Night' }
+    interview: { phaseLabel: 'Phase 9', phaseName: 'Press Conference' },
+    'weigh-in': { phaseLabel: 'Phase 10', phaseName: 'Weigh-In' },
+    fight: { phaseLabel: 'Phase 11', phaseName: 'Fight Night' }
 };
 
 export function gotoScene(sceneName) {

@@ -6,6 +6,8 @@ import { applyCampWeekState } from './camp-state.js';
 import { selectCoachState, selectOpponentState, syncAvailableOpponents } from './career-state.js';
 import { simulateFightState } from './fight-state.js';
 import { refreshCurrentScene, showScene } from '../scene-controller.js';
+import { isInterviewComplete, resetInterviewState } from '../../scenes/interview.js';
+import { isWeighInComplete, resetWeighInState } from '../../scenes/weigh-in.js';
 
 function findCoach(coachId) {
     return COACHES.find(entry => entry.id === coachId) || null;
@@ -35,13 +37,35 @@ export function openGymPickerSceneAction() {
     return true;
 }
 
+/**
+ * Walking to the cage gates on: contract signed, camp done, press
+ * conference complete, weigh-in ceremony complete.
+ */
 export function openFightSceneAction() {
     if (!state.career.contract || state.career.campWeeksCompleted < state.career.campWeeksTotal) {
         return false;
     }
 
+    if (!isInterviewComplete()) {
+        showScene('interview');
+        return true;
+    }
+
+    if (!isWeighInComplete()) {
+        showScene('weigh-in');
+        return true;
+    }
+
     showScene('fight');
     return true;
+}
+
+export function openInterviewSceneAction() {
+    showScene('interview');
+}
+
+export function openWeighInSceneAction() {
+    showScene('weigh-in');
 }
 
 export function openProfileSceneAction() {
@@ -112,6 +136,10 @@ export function signPendingContractAction() {
     if (!signContractState()) {
         return false;
     }
+
+    // Reset per-contract pre-fight state so each camp gets fresh beats.
+    resetInterviewState();
+    resetWeighInState();
 
     // After signing, send the player to pick their home gym for this camp.
     showScene('gym-picker');

@@ -8,8 +8,10 @@ import {
     openFightSceneAction,
     openGymPickerSceneAction,
     openGymSceneAction,
+    openInterviewSceneAction,
     openOpponentSceneAction,
     openProfileSceneAction,
+    openWeighInSceneAction,
     proposeFightOfferAction,
     rejectPendingContractAction,
     selectCoachAction,
@@ -18,6 +20,8 @@ import {
     simulateFightAction
 } from './lib/actions/career-actions.js';
 import { getSelectedCampSession, selectCampSession } from './scenes/gym.js';
+import { getInterviewResult, handleInterviewAnswer, isInterviewComplete } from './scenes/interview.js';
+import { isWeighInComplete } from './scenes/weigh-in.js';
 import {
     backToPicker as backToOpponentPicker,
     getSelectedOffer,
@@ -301,6 +305,46 @@ function wireEvents() {
         if (backFromOpponent) {
             resetOpponentPickerPhase();
             openProfileSceneAction();
+            return;
+        }
+
+        const answerButton = event.target.closest('[data-answer-idx]');
+        if (answerButton) {
+            if (answerButton.disabled) return;
+            handleInterviewAnswer(Number(answerButton.dataset.answerIdx));
+            return;
+        }
+
+        const interviewActionButton = event.target.closest('[data-interview-action]');
+        if (interviewActionButton) {
+            const action = interviewActionButton.dataset.interviewAction;
+            if (action === 'finish') {
+                if (isInterviewComplete()) {
+                    const result = getInterviewResult();
+                    // Bank earned hype as a pre-fight reputation bump.
+                    const repBump = Math.max(0, Math.round(result.hype / 8));
+                    if (repBump > 0) {
+                        state.career.reputation += repBump;
+                    }
+                    openWeighInSceneAction();
+                }
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            }
+            return;
+        }
+
+        const weighActionButton = event.target.closest('[data-weigh-action]');
+        if (weighActionButton) {
+            if (weighActionButton.disabled) return;
+            const action = weighActionButton.dataset.weighAction;
+            if (action === 'walk') {
+                if (isWeighInComplete()) {
+                    openFightSceneAction();
+                }
+            } else if (action === 'back') {
+                openProfileSceneAction();
+            }
             return;
         }
 

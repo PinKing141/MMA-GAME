@@ -6,7 +6,9 @@ import { renderContractScene } from '../scenes/contract.js';
 import { renderFightScene } from '../scenes/fight.js';
 import { renderGymPickerScene } from '../scenes/gym-picker.js';
 import { renderGymScene } from '../scenes/gym.js';
+import { renderInterviewScene } from '../scenes/interview.js';
 import { renderOpponentScene } from '../scenes/opponent.js';
+import { renderWeighInScene } from '../scenes/weigh-in.js';
 import { renderProfile } from '../scenes/profile.js';
 import { renderNations, renderWeightClasses, syncFrameControls, syncSetupFormFromState, updatePreview } from '../scenes/setup.js';
 
@@ -32,6 +34,8 @@ const SCENE_RENDERERS = {
     contract: renderContractScene,
     'gym-picker': renderGymPickerScene,
     gym: renderGymScene,
+    interview: renderInterviewScene,
+    'weigh-in': renderWeighInScene,
     fight: renderFightScene
 };
 
