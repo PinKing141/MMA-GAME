@@ -1,4 +1,7 @@
 import { STYLE_MOVES } from '../data/style-moves.js';
+import { STYLES } from '../data/styles.js';
+
+const STYLE_LOOKUP = Object.fromEntries(STYLES.map(s => [s.Style, s]));
 
 /**
  * Pre-index moves by range for O(1) range queries. Loaded once.
@@ -31,6 +34,45 @@ export function getMovesAtRange(range) {
 
 export function getMovesForStyle(styleName) {
     return MOVES_BY_STYLE[styleName] || [];
+}
+
+/**
+ * Weighted random range pick for a fighter based on their style
+ * fingerprint. Each style's Primary Range gets full weight, Secondary
+ * Range gets half — so a Wrestler-heavy fingerprint preferentially
+ * sits at Clinch / Close, a Karate-heavy fighter at Long / Mid.
+ */
+export function pickRange({ fingerprint, modifiers = {}, rng = Math.random }) {
+    const buckets = {};
+    Object.entries(fingerprint || {}).forEach(([styleName, share]) => {
+        const entry = STYLE_LOOKUP[styleName];
+        if (!entry || share <= 0) return;
+        const primary = entry['Primary Range'];
+        const secondary = entry['Secondary Range'];
+        if (primary) buckets[primary] = (buckets[primary] || 0) + share;
+        if (secondary) buckets[secondary] = (buckets[secondary] || 0) + share * 0.5;
+    });
+
+    // Wrestler intent forces transitions toward Clinch / Ground when
+    // the aggressor wants to grapple.
+    if (modifiers.wantsGrapple) {
+        buckets.Clinch = (buckets.Clinch || 0) + 0.6;
+        buckets.Ground = (buckets.Ground || 0) + 0.4;
+    }
+    if (modifiers.wantsDistance) {
+        buckets.Long = (buckets.Long || 0) + 0.5;
+        buckets.Mid = (buckets.Mid || 0) + 0.3;
+    }
+
+    const total = Object.values(buckets).reduce((sum, v) => sum + v, 0);
+    if (total <= 0) return 'Mid';
+
+    let cursor = rng() * total;
+    for (const [range, weight] of Object.entries(buckets)) {
+        cursor -= weight;
+        if (cursor <= 0) return range;
+    }
+    return 'Mid';
 }
 
 /**

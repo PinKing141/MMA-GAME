@@ -151,7 +151,9 @@ export function simulateFightState() {
             opponentWeightOver: opponentMissedWeight
                 ? (preFight.weighInBlueResult.weight - getWeightClassEntry(state.setup.weight).max)
                 : 0
-        }
+        },
+        playerFingerprint: state.career.playerFingerprint || {},
+        opponentFingerprint: opponent.fingerprint || {}
     });
 
     if (simulation.result === 'Draw') {

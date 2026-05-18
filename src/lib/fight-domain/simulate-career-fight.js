@@ -3,6 +3,7 @@ import { getWeightClassEntry } from '../core.js';
 import { clamp, getAttributeAverage } from '../utils/calculations.js';
 import { formatMoney } from '../utils/formatters.js';
 import { getAllowedVenueTiers, getDefaultVenueTier } from './venues.js';
+import { pickMove, pickRange } from '../domain/move-selector.js';
 
 function countryCodeToFlagEmoji(code) {
     if (!code || typeof code !== 'string' || code.length !== 2) {
@@ -215,7 +216,40 @@ function buildScorecards(resultLabel, winnerCorner, totalRounds) {
     return { red, blue };
 }
 
-function buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo }) {
+/**
+ * Force the finish step into the range that matches the method.
+ * Submissions happen on the ground; KO/TKO happen in striking range.
+ */
+function getFinishRange(method) {
+    if (method === 'Submission') return 'Ground';
+    if (method === 'TKO' || method === 'KO') return 'Mid';
+    return null;
+}
+
+/**
+ * Verb table for the play-by-play. Mirrors describeMove but tuned for
+ * the fight ticker's rhythm.
+ */
+function getActionVerb(move) {
+    const type = (move?.Type || '').toLowerCase();
+    switch (type) {
+        case 'punch': return 'rips';
+        case 'kick': return 'whips';
+        case 'knee': return 'drives';
+        case 'elbow': return 'cuts with';
+        case 'takedown': return 'shoots';
+        case 'throw': return 'launches';
+        case 'submission': return 'attacks with';
+        case 'sweep': return 'sweeps with';
+        case 'control': return 'locks down with';
+        case 'clinch': return 'clinches with';
+        case 'defense': return 'reads with';
+        case 'headbutt': return 'lands a';
+        default: return 'lands';
+    }
+}
+
+function buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo, playerFingerprint, opponentFingerprint }) {
     const winnerCorner = resultLabel === 'Win' ? 'red' : resultLabel === 'Loss' ? 'blue' : 'draw';
     const venue = getDefaultVenueTier(contract);
     const allowedVenues = getAllowedVenueTiers(contract);
@@ -245,18 +279,52 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
             const defender = aggressor === 'red' ? 'blue' : 'red';
             const attackerState = aggressor === 'red' ? redState : blueState;
             const defenderState = defender === 'red' ? redState : blueState;
-            const attackText = isFinish
-                ? pickCommentary(actionPools.finish)
-                : pickCommentary(actionPools[aggressor]);
-            const damageZone = isFinish && methodInfo.method === 'Submission'
-                ? 'body'
-                : ['head', 'body', 'legs'][(round + step) % 3];
+            const aggressorFingerprint = aggressor === 'red' ? playerFingerprint : opponentFingerprint;
+            const hasFingerprint = aggressorFingerprint && Object.keys(aggressorFingerprint).length > 0;
+
+            // Pick a real move when we have a fingerprint; otherwise
+            // fall back to the legacy generic phrase pool.
+            const range = isFinish
+                ? (getFinishRange(methodInfo.method) || pickRange({ fingerprint: aggressorFingerprint }))
+                : pickRange({ fingerprint: aggressorFingerprint });
+            const realMove = hasFingerprint
+                ? pickMove({
+                    fingerprint: aggressorFingerprint,
+                    range,
+                    modifiers: {
+                        hurt: attackerState.hp < 40,
+                        winning: aggressor === winnerCorner && step > 1,
+                        aggression: isFinish ? 0.95 : 0.55
+                    }
+                })
+                : null;
+
+            const attackText = realMove
+                ? `${getActionVerb(realMove)} a ${realMove.Move}`
+                : (isFinish
+                    ? pickCommentary(actionPools.finish)
+                    : pickCommentary(actionPools[aggressor]));
+
+            // Damage zone follows the move's Target when available.
+            const damageZone = realMove
+                ? (realMove.Target === 'Head' ? 'head'
+                    : realMove.Target === 'Legs' ? 'legs'
+                    : realMove.Target === 'Neck' || realMove.Target === 'Joint' || realMove.Target === 'Hip' ? 'body'
+                    : 'body')
+                : (isFinish && methodInfo.method === 'Submission'
+                    ? 'body'
+                    : ['head', 'body', 'legs'][(round + step) % 3]);
+
+            // Damage scales with the move's Power (1-5) so a Power-5
+            // kick lands harder than a Power-2 jab. Finishes keep their
+            // dramatic baseline.
+            const movePower = realMove ? (realMove.Power || 3) : 3;
             const damage = isFinish
                 ? (methodInfo.method === 'Submission' ? 18 : 28)
-                : 4 + Math.floor(Math.random() * 6);
+                : 3 + Math.round(movePower * 1.2) + Math.floor(Math.random() * 3);
             const positions = getExchangePositions(round, step, aggressor, isFinish);
 
-            attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 4), 8, 100);
+            attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 3 + Math.round(movePower * 0.5)), 8, 100);
             defenderState.hp = clamp(defenderState.hp - damage, 0, 100);
             defenderState.stm = clamp(defenderState.stm - Math.max(2, Math.round(damage * 0.45)), 0, 100);
             defenderState.damage[damageZone] = clamp(defenderState.damage[damageZone] + damage * 1.3, 0, 100);
@@ -271,7 +339,7 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 ? 'Closing the choke'
                 : isFinish
                     ? 'Finishing sequence'
-                    : 'Pressing the exchange';
+                    : (realMove ? `Throwing ${realMove.Move}` : 'Pressing the exchange');
             defenderState.action = isFinish
                 ? methodInfo.method === 'Submission'
                     ? 'Trapped under the grip'
@@ -284,9 +352,11 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
 
             const time = getTimeForStep(300, step, stepCount, isFinish, methodInfo.time);
             const fighterName = aggressor === 'red' ? player.name : opponent.name;
+            const styleTag = realMove ? ` (${realMove.Style})` : '';
             const detailText = isFinish
-                ? `${fighterName} ${attackText}. ${methodInfo.method} ends it in round ${round}.`
-                : `${fighterName} ${attackText}.`;
+                ? `${fighterName} ${attackText}${styleTag}. ${methodInfo.method} ends it in round ${round}.`
+                : `${fighterName} ${attackText}${styleTag}.`;
+            const microText = realMove ? realMove.Move : (isFinish ? methodInfo.method : attackText);
 
             timeline.push({
                 round,
@@ -294,12 +364,13 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 corner: aggressor,
                 tone: isFinish ? 'danger' : aggressor,
                 tickerText: detailText,
-                microText: isFinish ? methodInfo.method : attackText,
-                callout: isFinish || damage >= 8 ? (isFinish ? methodInfo.method.toUpperCase() : 'Clean Shot') : '',
+                microText,
+                callout: isFinish ? methodInfo.method.toUpperCase() : (damage >= 8 ? 'Clean Shot' : ''),
                 dramatic: isFinish || (damage >= 8 && dramaticMoments.has(methodInfo.method)),
                 redState: cloneReplayState(redState),
                 blueState: cloneReplayState(blueState),
-                phase: isFinish ? 'finished' : 'fighting'
+                phase: isFinish ? 'finished' : 'fighting',
+                range
             });
         }
 
@@ -421,7 +492,7 @@ function getPreFightAdjustments(preFight) {
     return { playerDelta, opponentDelta, finishBias };
 }
 
-export function simulateCareerFight({ player, opponent, contract, fightNight, preFight }) {
+export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint }) {
     const adj = getPreFightAdjustments(preFight);
     const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight) + adj.playerDelta) + ((Math.random() * 6) - 3);
     const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta) + ((Math.random() * 6) - 3);
@@ -458,7 +529,7 @@ export function simulateCareerFight({ player, opponent, contract, fightNight, pr
     }
 
     const notes = getResultNotes(player.stats, opponent, fightNight, playerScore - opponentScore, resultLabel);
-    const replay = buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo });
+    const replay = buildReplay({ player, opponent, contract, fightNight, resultLabel, methodInfo, playerFingerprint, opponentFingerprint });
 
     return {
         result: resultLabel,
