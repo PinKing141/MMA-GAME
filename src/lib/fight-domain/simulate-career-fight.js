@@ -147,26 +147,118 @@ const RANGE_GAP = {
     Ground: { lateral: 0.6, vertical: 1.4 }
 };
 
-function getExchangePositions(round, step, aggressor, isFinish, range = 'Mid') {
+/**
+ * Sum the Primary Range distribution of a fingerprint into a movement
+ * profile: how much this fighter wants to close vs hold distance.
+ * - closing: 0..1, drive toward Clinch/Ground (wrestlers high)
+ * - distance: 0..1, hold Long/Mid space (out-fighters high)
+ * - pressure: 0..1, walk forward regardless (Muay Thai high)
+ */
+export function getMovementProfile(fingerprint) {
+    if (!fingerprint || Object.keys(fingerprint).length === 0) {
+        return { closing: 0.4, distance: 0.4, pressure: 0.4 };
+    }
+    // Style-name buckets. Wrestlers/grapplers close; karate/TKD hold
+    // distance; Muay Thai/boxing/kickboxing press forward.
+    const closing = (fingerprint['Wrestling'] || 0)
+        + (fingerprint['Brazilian Jiu-Jitsu'] || 0)
+        + (fingerprint['Sambo'] || 0)
+        + (fingerprint['Judo'] || 0)
+        + (fingerprint['Catch Wrestling'] || 0)
+        + (fingerprint['Sumo'] || 0);
+    const distance = (fingerprint['Tae Kwon Do'] || 0)
+        + (fingerprint['Karate'] || 0)
+        + (fingerprint['Savate'] || 0)
+        + (fingerprint['Kickboxing'] || 0) * 0.4
+        + (fingerprint['American Kickboxing'] || 0) * 0.4;
+    const pressure = (fingerprint['Muay Thai'] || 0)
+        + (fingerprint['Boxing'] || 0)
+        + (fingerprint['Kyokushin'] || 0)
+        + (fingerprint['Kickboxing'] || 0) * 0.6;
+    return {
+        closing: Math.min(1, closing),
+        distance: Math.min(1, distance),
+        pressure: Math.min(1, pressure)
+    };
+}
+
+/**
+ * Compute target positions for both fighters this step. Respects:
+ * - current range (clinch/ground stack them, long pushes apart)
+ * - aggressor's movement profile (pressure closes faster)
+ * - retreat state (defender drifts toward a wall when hurt)
+ * - cage cutting (aggressor positions between defender and center)
+ * - the cage clamp box (28-72 on both axes)
+ */
+function getExchangePositions({
+    round,
+    step,
+    aggressor,
+    isFinish,
+    range = 'Mid',
+    aggressorProfile = { pressure: 0.5, closing: 0.4, distance: 0.4 },
+    defenderProfile = { pressure: 0.5, closing: 0.4, distance: 0.4 },
+    defenderRetreating = false,
+    defenderWallSide = null,
+    prevRed = null,
+    prevBlue = null
+}) {
     const orbit = (round * 0.82) + (step * 0.67) + (aggressor === 'red' ? 0.24 : -0.24);
-    const centerX = clamp(50 + (Math.sin(orbit * 1.15) * 8), 38, 62);
-    const centerY = clamp(50 + (Math.cos(orbit * 0.95) * 9), 36, 64);
+    const centerX = clamp(50 + (Math.sin(orbit * 1.15) * 7), 40, 60);
+    const centerY = clamp(50 + (Math.cos(orbit * 0.95) * 8), 38, 62);
     const profile = RANGE_GAP[range] || RANGE_GAP.Mid;
-    const lateralGap = isFinish ? Math.max(0.6, profile.lateral * 0.55) : profile.lateral;
-    const verticalGap = isFinish ? Math.max(1.4, profile.vertical * 0.7) : profile.vertical;
-    // Aggressor presses forward — closes the gap on their side.
-    const pressureShift = aggressor === 'red' ? -0.8 : 0.8;
 
-    const red = {
-        x: clamp(centerX - lateralGap + Math.min(0, pressureShift), 28, 72),
-        y: clamp(centerY - (verticalGap / 2) + (aggressor === 'red' ? -1.1 : 0.7), 28, 72)
-    };
-    const blue = {
-        x: clamp(centerX + lateralGap + Math.max(0, pressureShift), 28, 72),
-        y: clamp(centerY + (verticalGap / 2) + (aggressor === 'blue' ? 1.1 : -0.7), 28, 72)
-    };
+    // Pressure shrinks the gap; distance widens it. The defender's
+    // distance bias also widens (they retreat to range).
+    const gapMultiplier = clamp(
+        1 + (defenderProfile.distance * 0.25) - (aggressorProfile.pressure * 0.3),
+        0.55, 1.4
+    );
+    const lateralGap = (isFinish ? profile.lateral * 0.55 : profile.lateral) * gapMultiplier;
+    const verticalGap = (isFinish ? profile.vertical * 0.7 : profile.vertical) * gapMultiplier;
 
-    return { red, blue };
+    // Pressure shift — aggressor closes harder when their profile
+    // demands it, defender's closing profile pulls them back.
+    const pressureShift = (aggressor === 'red' ? -1 : 1) * (0.4 + aggressorProfile.pressure * 0.6);
+
+    let redX = centerX - lateralGap + Math.min(0, pressureShift);
+    let blueX = centerX + lateralGap + Math.max(0, pressureShift);
+    let redY = centerY - (verticalGap / 2) + (aggressor === 'red' ? -1.1 : 0.7);
+    let blueY = centerY + (verticalGap / 2) + (aggressor === 'blue' ? 1.1 : -0.7);
+
+    // Defender retreat: drift the defender toward the nearest wall on
+    // the chosen side. Aggressor cuts the angle by positioning between
+    // the defender and the cage center on that side.
+    if (defenderRetreating) {
+        const wall = defenderWallSide || (aggressor === 'red' ? 'right' : 'left');
+        const wallTarget = wall === 'right' ? 70 : 30;
+        if (aggressor === 'red') {
+            blueX = blueX * 0.45 + wallTarget * 0.55;
+            // Cut the angle — red moves toward the same wall but slightly
+            // inside the defender's escape path.
+            redX = clamp(blueX + 2.4, 28, 72);
+        } else {
+            redX = redX * 0.45 + wallTarget * 0.55;
+            blueX = clamp(redX - 2.4, 28, 72);
+        }
+    }
+
+    // Smooth toward the target so fighters slide rather than teleport
+    // between steps. Heavier interpolation on the wall-cutting path.
+    const smooth = defenderRetreating ? 0.55 : 0.4;
+    if (prevRed) {
+        redX = prevRed.x * (1 - smooth) + redX * smooth;
+        redY = prevRed.y * (1 - smooth) + redY * smooth;
+    }
+    if (prevBlue) {
+        blueX = prevBlue.x * (1 - smooth) + blueX * smooth;
+        blueY = prevBlue.y * (1 - smooth) + blueY * smooth;
+    }
+
+    return {
+        red: { x: clamp(redX, 28, 72), y: clamp(redY, 28, 72) },
+        blue: { x: clamp(blueX, 28, 72), y: clamp(blueY, 28, 72) }
+    };
 }
 
 function cloneReplayState(cornerState) {
@@ -327,7 +419,16 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
     const resolvedRounds = methodInfo.round || totalRounds;
     const playerReadiness = clamp(Math.round((fightNight.fitness + fightNight.sharpness) / 2), 45, 100);
     const opponentReadiness = clamp(80 - (opponent.difficultyBias * 4), 42, 96);
-    const openingPositions = getExchangePositions(1, 0, 'red', false);
+    const playerProfile = getMovementProfile(playerFingerprint);
+    const opponentProfile = getMovementProfile(opponentFingerprint);
+    const profiles = { red: playerProfile, blue: opponentProfile };
+    // Retreat state persists across steps so cage-cutting reads correctly.
+    const retreatState = { red: false, blue: false, redWall: null, blueWall: null };
+
+    const openingPositions = getExchangePositions({
+        round: 1, step: 0, aggressor: 'red', isFinish: false, range: 'Mid',
+        aggressorProfile: playerProfile, defenderProfile: opponentProfile
+    });
     const redState = createReplayState(playerReadiness, openingPositions.red.y, getFacingAngle(openingPositions.red, openingPositions.blue), 'Awaiting bell');
     const blueState = createReplayState(opponentReadiness, openingPositions.blue.y, getFacingAngle(openingPositions.blue, openingPositions.red), 'Awaiting bell');
     redState.x = openingPositions.red.x;
@@ -408,7 +509,19 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
             const damage = isFinish
                 ? (methodInfo.method === 'Submission' ? 18 : 28)
                 : 3 + Math.round(movePower * 1.2) + Math.floor(Math.random() * 3);
-            const positions = getExchangePositions(round, step, aggressor, isFinish, range);
+            const positions = getExchangePositions({
+                round,
+                step,
+                aggressor,
+                isFinish,
+                range,
+                aggressorProfile: profiles[aggressor],
+                defenderProfile: profiles[defender],
+                defenderRetreating: retreatState[defender],
+                defenderWallSide: retreatState[defender + 'Wall'],
+                prevRed: { x: redState.x, y: redState.y },
+                prevBlue: { x: blueState.x, y: blueState.y }
+            });
 
             attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 3 + Math.round(movePower * 0.5)), 8, 100);
             defenderState.hp = clamp(defenderState.hp - damage, 0, 100);
@@ -422,6 +535,34 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 roundKnockdowns[defender] += 1;
                 defenderState.down = true;
             }
+
+            // Retreat trigger: defender pulls back when hurt (low HP),
+            // gassed (low stamina), or just took a heavy shot. Out-fighters
+            // retreat at higher HP because their game is space.
+            const distanceBias = profiles[defender].distance;
+            const retreatThreshold = 55 + distanceBias * 25;
+            const shouldRetreat = defenderState.hp < retreatThreshold
+                || defenderState.stm < 30
+                || damage >= 10;
+            retreatState[defender] = shouldRetreat;
+            if (shouldRetreat) {
+                // Pick the wall on the defender's current side of the
+                // cage so motion looks deliberate rather than random.
+                const currentX = defender === 'red' ? redState.x : blueState.x;
+                retreatState[defender + 'Wall'] = currentX < 50 ? 'left' : 'right';
+            } else {
+                retreatState[defender + 'Wall'] = null;
+            }
+            // Aggressor never retreats on the step they're attacking.
+            retreatState[aggressor] = false;
+            retreatState[aggressor + 'Wall'] = null;
+
+            // Tag the fighter state with retreating + range so the iframe
+            // can switch visual mode without recomputing.
+            redState.retreating = retreatState.red;
+            blueState.retreating = retreatState.blue;
+            redState.range = range;
+            blueState.range = range;
 
             redState.x = positions.red.x;
             redState.y = positions.red.y;
