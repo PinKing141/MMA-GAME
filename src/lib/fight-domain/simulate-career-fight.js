@@ -391,10 +391,41 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
     };
 }
 
-export function simulateCareerFight({ player, opponent, contract, fightNight }) {
-    const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight)) + ((Math.random() * 6) - 3);
-    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent)) + ((Math.random() * 6) - 3);
-    const scoreGap = Math.abs(playerScore - opponentScore);
+function getPreFightAdjustments(preFight) {
+    if (!preFight) {
+        return { playerDelta: 0, opponentDelta: 0, finishBias: 0 };
+    }
+
+    let playerDelta = 0;
+    let opponentDelta = 0;
+
+    // Missing weight drains the fighter — bigger cuts hit harder.
+    if (preFight.playerMissedWeight) {
+        const over = Math.max(0.5, preFight.playerWeightOver || 1);
+        playerDelta -= Math.min(6, 2 + over * 1.2);
+    }
+    if (preFight.opponentMissedWeight) {
+        const over = Math.max(0.5, preFight.opponentWeightOver || 1);
+        opponentDelta -= Math.min(6, 2 + over * 1.2);
+    }
+
+    // Tension affects pacing — high tension = chaotic exchanges. Slight edge
+    // to whoever has the better composure under pressure (player composure
+    // already in fightNight adjustment; opponent uses static composure).
+    const tension = preFight.tension || 0;
+    let finishBias = 0;
+    if (tension >= 60) {
+        finishBias = tension >= 85 ? 4 : 2;
+    }
+
+    return { playerDelta, opponentDelta, finishBias };
+}
+
+export function simulateCareerFight({ player, opponent, contract, fightNight, preFight }) {
+    const adj = getPreFightAdjustments(preFight);
+    const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight) + adj.playerDelta) + ((Math.random() * 6) - 3);
+    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta) + ((Math.random() * 6) - 3);
+    const scoreGap = Math.abs(playerScore - opponentScore) + adj.finishBias;
 
     let headline;
     let copy;

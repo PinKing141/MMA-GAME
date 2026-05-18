@@ -321,10 +321,11 @@ function wireEvents() {
             if (action === 'finish') {
                 if (isInterviewComplete()) {
                     const result = getInterviewResult();
-                    // Bank earned hype as a pre-fight reputation bump.
+                    // Bank earned hype once as a pre-fight reputation bump.
                     const repBump = Math.max(0, Math.round(result.hype / 8));
-                    if (repBump > 0) {
+                    if (repBump > 0 && state.career.preFight.hype > 0) {
                         state.career.reputation += repBump;
+                        state.career.preFight.hype = 0;
                     }
                     openWeighInSceneAction();
                 }

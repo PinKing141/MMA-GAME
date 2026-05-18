@@ -9,15 +9,15 @@ const FACEOFFS = [
     { title: 'STARE-DOWN', desc: 'Forty-five seconds of silent intensity. Cameras snap furiously.' }
 ];
 
-const weighInState = {
-    contractId: null,
-    started: false,
-    finished: false,
-    redResult: null,
-    blueResult: null,
-    faceoffOutcome: null,
+// Module-local UI state only. Persistent ceremony progress lives in
+// state.career.preFight so saves survive a refresh mid-ceremony.
+const weighInUi = {
     flashTimer: null
 };
+
+function pre() {
+    return state.career.preFight;
+}
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -73,13 +73,16 @@ function getOpponentCorner() {
 
 function ensureContractScoped() {
     const contractId = state.career.contract?.id || null;
-    if (weighInState.contractId !== contractId) {
-        weighInState.contractId = contractId;
-        weighInState.started = false;
-        weighInState.finished = false;
-        weighInState.redResult = null;
-        weighInState.blueResult = null;
-        weighInState.faceoffOutcome = null;
+    const p = pre();
+    if (p.contractId !== contractId) {
+        // Interview handles full reset; we just clear weigh-in fields too
+        // in case weigh-in is entered without going through interview.
+        p.contractId = contractId;
+        p.weighInStarted = false;
+        p.weighInComplete = false;
+        p.weighInRedResult = null;
+        p.weighInBlueResult = null;
+        p.faceoff = null;
     }
 }
 
@@ -114,7 +117,7 @@ function burstFlashes(stage, count) {
 function startFlashCadence() {
     stopFlashCadence();
     const intensity = getFlashIntensity();
-    weighInState.flashTimer = setInterval(() => {
+    weighInUi.flashTimer = setInterval(() => {
         const stage = document.getElementById('weigh-stage');
         if (!stage || !document.getElementById('scene-weigh-in')?.classList.contains('active')) {
             return;
@@ -124,9 +127,9 @@ function startFlashCadence() {
 }
 
 export function stopFlashCadence() {
-    if (weighInState.flashTimer) {
-        clearInterval(weighInState.flashTimer);
-        weighInState.flashTimer = null;
+    if (weighInUi.flashTimer) {
+        clearInterval(weighInUi.flashTimer);
+        weighInUi.flashTimer = null;
     }
 }
 
@@ -265,8 +268,8 @@ function playFaceoff(outcome) {
 }
 
 async function runCeremony() {
-    if (weighInState.started) return;
-    weighInState.started = true;
+    if (pre().weighInStarted) return;
+    pre().weighInStarted = true;
 
     const red = getPlayerCorner();
     const blue = getOpponentCorner();
@@ -276,11 +279,11 @@ async function runCeremony() {
     await wait(700);
 
     const redResult = await animateWeighIn('red', red);
-    weighInState.redResult = redResult;
+    pre().weighInRedResult = redResult;
     await wait(1100);
 
     const blueResult = await animateWeighIn('blue', blue);
-    weighInState.blueResult = blueResult;
+    pre().weighInBlueResult = blueResult;
     await wait(900);
 
     setScaleLabel('Both weighed in');
@@ -289,10 +292,10 @@ async function runCeremony() {
     await wait(500);
 
     const outcome = pick(FACEOFFS);
-    weighInState.faceoffOutcome = outcome;
+    pre().faceoff = outcome;
     await playFaceoff(outcome);
 
-    weighInState.finished = true;
+    pre().weighInComplete = true;
     setLog('<strong>Ceremony complete.</strong> 24 hours to fight night.');
 
     // Trigger a re-render to enable the "Walk to the Cage" button.
@@ -326,7 +329,7 @@ export function renderWeighInScene() {
         : tier === 'regional' ? 'Regional Showcase · Ceremonial'
         : 'Local Card · Weigh-Ins';
 
-    const isFinished = weighInState.finished;
+    const isFinished = pre().weighInComplete;
 
     root.innerHTML = `
         <header class="media-header">
@@ -412,13 +415,13 @@ export function renderWeighInScene() {
     `;
 
     // If we've already finished once for this contract, restore the on-weight UI.
-    if (weighInState.finished) {
-        setStatus('red', weighInState.redResult.onWeight ? 'on_weight' : 'over_weight', weighInState.redResult.weight, red.classLimit);
-        setStatus('blue', weighInState.blueResult.onWeight ? 'on_weight' : 'over_weight', weighInState.blueResult.weight, blue.classLimit);
+    if (pre().weighInComplete) {
+        setStatus('red', pre().weighInRedResult.onWeight ? 'on_weight' : 'over_weight', pre().weighInRedResult.weight, red.classLimit);
+        setStatus('blue', pre().weighInBlueResult.onWeight ? 'on_weight' : 'over_weight', pre().weighInBlueResult.weight, blue.classLimit);
         setScaleLabel('Ceremony complete');
         setLcd(0);
         setLog('<strong>Ceremony complete.</strong> 24 hours to fight night.');
-    } else if (!weighInState.started) {
+    } else if (!pre().weighInStarted) {
         // Auto-run the ceremony shortly after mount.
         setTimeout(() => runCeremony(), 450);
     }
@@ -427,23 +430,19 @@ export function renderWeighInScene() {
 }
 
 export function isWeighInComplete() {
-    return weighInState.finished;
+    return pre().weighInComplete;
 }
 
 export function getWeighInResult() {
     return {
-        red: weighInState.redResult,
-        blue: weighInState.blueResult,
-        faceoff: weighInState.faceoffOutcome,
-        finished: weighInState.finished
+        red: pre().weighInRedResult,
+        blue: pre().weighInBlueResult,
+        faceoff: pre().faceoff,
+        finished: pre().weighInComplete
     };
 }
 
 export function resetWeighInState() {
-    weighInState.contractId = null;
-    weighInState.started = false;
-    weighInState.finished = false;
-    weighInState.redResult = null;
-    weighInState.blueResult = null;
-    weighInState.faceoffOutcome = null;
+    // ensureContractScoped resets persistent fields on next render when
+    // the contract changes; nothing module-local to clear here.
 }

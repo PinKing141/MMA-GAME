@@ -89,20 +89,15 @@ const ARCHETYPE_PERSONALITY = {
     'All-Rounder': { confidence: 65, trashTalk: 35, humility: 60, respect: 70 }
 };
 
-// Module-local state. Reset whenever the scene opens for a new contract.
-const interviewState = {
-    contractId: null,
-    questionIdx: 0,
-    tension: 0,
-    hype: 0,
-    redMood: 'silent',
-    blueMood: 'silent',
+// Module-local UI state only. Persistent values live in state.career.preFight.
+const interviewUiState = {
     waitingForAnswer: false,
-    flashTimer: null,
-    lastQuote: null,
-    lastSpeakerCorner: null,
-    advancingCb: null
+    flashTimer: null
 };
+
+function pre() {
+    return state.career.preFight;
+}
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -143,15 +138,21 @@ function getOpponentPersonality() {
 
 function ensureContractScoped() {
     const contractId = state.career.contract?.id || null;
-    if (interviewState.contractId !== contractId) {
-        interviewState.contractId = contractId;
-        interviewState.questionIdx = 0;
-        interviewState.tension = 0;
-        interviewState.hype = 0;
-        interviewState.redMood = 'silent';
-        interviewState.blueMood = 'silent';
-        interviewState.lastQuote = null;
-        interviewState.lastSpeakerCorner = null;
+    const p = pre();
+    if (p.contractId !== contractId) {
+        p.contractId = contractId;
+        p.questionIdx = 0;
+        p.tension = 0;
+        p.hype = 0;
+        p.redMood = 'silent';
+        p.blueMood = 'silent';
+        p.lastQuote = null;
+        p.lastSpeakerCorner = null;
+        p.weighInStarted = false;
+        p.weighInComplete = false;
+        p.weighInRedResult = null;
+        p.weighInBlueResult = null;
+        p.faceoff = null;
     }
 }
 
@@ -191,11 +192,11 @@ function getHypeLabel(value) {
 }
 
 function getCurrentQuestion() {
-    return QUESTIONS[interviewState.questionIdx] || null;
+    return QUESTIONS[pre().questionIdx] || null;
 }
 
 function getCurrentReporter() {
-    return REPORTERS[interviewState.questionIdx % REPORTERS.length];
+    return REPORTERS[pre().questionIdx % REPORTERS.length];
 }
 
 function buildAnswerButton(choice, idx, opponentLast) {
@@ -235,11 +236,11 @@ function renderAnswerPanel() {
     const choices = ANSWER_CHOICES[question.topic] || [];
     const opponentLast = getOpponentLastName();
     return `
-        <div class="answer-panel-eyebrow${interviewState.waitingForAnswer ? '' : ' waiting'}">
-            ${interviewState.waitingForAnswer ? 'Awaiting opponent…' : 'Choose your response'}
+        <div class="answer-panel-eyebrow${interviewUiState.waitingForAnswer ? '' : ' waiting'}">
+            ${interviewUiState.waitingForAnswer ? 'Awaiting opponent…' : 'Choose your response'}
         </div>
         <div class="answer-choices">
-            ${interviewState.waitingForAnswer
+            ${interviewUiState.waitingForAnswer
                 ? '<div class="answer-empty">The press is hearing from the opponent first…</div>'
                 : choices.map((choice, idx) => buildAnswerButton(choice, idx, opponentLast)).join('')}
         </div>
@@ -247,19 +248,19 @@ function renderAnswerPanel() {
 }
 
 function renderQuoteBlock() {
-    if (!interviewState.lastQuote) {
+    if (!pre().lastQuote) {
         return `
             <div class="quote-quotemark">"</div>
             <div class="quote-text"><span style="color: var(--text-muted); font-style: italic; font-size: 16px;">Press conference begins…</span></div>
         `;
     }
-    const speaker = interviewState.lastSpeakerCorner === 'red'
+    const speaker = pre().lastSpeakerCorner === 'red'
         ? getPlayerFullName()
         : (state.career.selectedOpponent?.name || 'Opponent');
     return `
         <div class="quote-quotemark">"</div>
-        <div class="quote-text">${escapeHtml(interviewState.lastQuote)}</div>
-        <div class="quote-attribution ${interviewState.lastSpeakerCorner}">
+        <div class="quote-text">${escapeHtml(pre().lastQuote)}</div>
+        <div class="quote-attribution ${pre().lastSpeakerCorner}">
             <span class="dash"></span>
             <span class="name">${escapeHtml(speaker)}</span>
             <span class="dash"></span>
@@ -320,9 +321,9 @@ export function renderInterviewScene() {
     const weightClass = getWeightClassLabel();
     const question = getCurrentQuestion();
     const reporter = getCurrentReporter();
-    const tensionInfo = getTensionLabel(interviewState.tension);
-    const hypeInfo = getHypeLabel(interviewState.hype);
-    const hypeVisualPct = ((interviewState.hype + 50) / 150) * 100;
+    const tensionInfo = getTensionLabel(pre().tension);
+    const hypeInfo = getHypeLabel(pre().hype);
+    const hypeVisualPct = ((pre().hype + 50) / 150) * 100;
     const eventName = state.career.contract.eventName;
 
     root.innerHTML = `
@@ -345,16 +346,16 @@ export function renderInterviewScene() {
             </div>
 
             <div class="quote-stage">
-                ${renderPodium('red', playerName, playerFlag, weightClass, interviewState.redMood)}
+                ${renderPodium('red', playerName, playerFlag, weightClass, pre().redMood)}
                 <div class="quote-block">
                     ${renderQuoteBlock()}
                 </div>
-                ${renderPodium('blue', opponentName, opponentFlag, weightClass, interviewState.blueMood)}
+                ${renderPodium('blue', opponentName, opponentFlag, weightClass, pre().blueMood)}
             </div>
 
             ${question ? `
                 <div class="question-strip">
-                    <div class="label">Question ${interviewState.questionIdx + 1} / ${QUESTIONS.length}</div>
+                    <div class="label">Question ${pre().questionIdx + 1} / ${QUESTIONS.length}</div>
                     <div class="question">"${escapeHtml(question.q)}"</div>
                     <div class="reporter">${escapeHtml(reporter.name)} · <span class="outlet">${escapeHtml(reporter.outlet)}</span></div>
                 </div>
@@ -364,14 +365,14 @@ export function renderInterviewScene() {
                 <div class="meter-block">
                     <div class="meter-head">
                         <span class="lbl">Tension</span>
-                        <span class="media-meter-readout ${tensionInfo.cls}">${Math.round(interviewState.tension)}% · ${escapeHtml(tensionInfo.label)}</span>
+                        <span class="media-meter-readout ${tensionInfo.cls}">${Math.round(pre().tension)}% · ${escapeHtml(tensionInfo.label)}</span>
                     </div>
-                    <div class="media-meter-bar tension"><div class="fill" style="width: ${Math.round(interviewState.tension)}%"></div></div>
+                    <div class="media-meter-bar tension"><div class="fill" style="width: ${Math.round(pre().tension)}%"></div></div>
                 </div>
                 <div class="meter-block">
                     <div class="meter-head">
                         <span class="lbl">Hype</span>
-                        <span class="media-meter-readout ${hypeInfo.cls}">${Math.round(interviewState.hype)} · ${escapeHtml(hypeInfo.label)}</span>
+                        <span class="media-meter-readout ${hypeInfo.cls}">${Math.round(pre().hype)} · ${escapeHtml(hypeInfo.label)}</span>
                     </div>
                     <div class="media-meter-bar hype"><div class="fill" style="width: ${Math.round(hypeVisualPct)}%"></div></div>
                 </div>
@@ -395,10 +396,10 @@ export function renderInterviewScene() {
 }
 
 function startCameraFlashes() {
-    if (interviewState.flashTimer) clearInterval(interviewState.flashTimer);
+    if (interviewUiState.flashTimer) clearInterval(interviewUiState.flashTimer);
     const stage = document.getElementById('interview-stage');
     if (!stage) return;
-    interviewState.flashTimer = setInterval(() => {
+    interviewUiState.flashTimer = setInterval(() => {
         if (Math.random() < 0.35 && document.getElementById('scene-interview')?.classList.contains('active')) {
             spawnFlash(stage);
         }
@@ -415,9 +416,9 @@ function spawnFlash(stage) {
 }
 
 export function stopInterviewFlashes() {
-    if (interviewState.flashTimer) {
-        clearInterval(interviewState.flashTimer);
-        interviewState.flashTimer = null;
+    if (interviewUiState.flashTimer) {
+        clearInterval(interviewUiState.flashTimer);
+        interviewUiState.flashTimer = null;
     }
 }
 
@@ -430,17 +431,17 @@ export async function handleInterviewAnswer(answerIdx) {
     if (!question) return;
     const choices = ANSWER_CHOICES[question.topic] || [];
     const choice = choices[answerIdx];
-    if (!choice || interviewState.waitingForAnswer) return;
+    if (!choice || interviewUiState.waitingForAnswer) return;
 
     const opponentLast = getOpponentLastName();
     const playerQuote = choice.quote.replace(/\{opp\}/g, opponentLast);
 
-    interviewState.redMood = choice.mood;
-    interviewState.lastQuote = playerQuote;
-    interviewState.lastSpeakerCorner = 'red';
-    interviewState.tension = clamp(interviewState.tension + choice.tension, 0, 100);
-    interviewState.hype = clamp(interviewState.hype + choice.hype, -50, 100);
-    interviewState.waitingForAnswer = true;
+    pre().redMood = choice.mood;
+    pre().lastQuote = playerQuote;
+    pre().lastSpeakerCorner = 'red';
+    pre().tension = clamp(pre().tension + choice.tension, 0, 100);
+    pre().hype = clamp(pre().hype + choice.hype, -50, 100);
+    interviewUiState.waitingForAnswer = true;
     renderInterviewScene();
 
     // Opponent reply after a beat.
@@ -456,36 +457,31 @@ export async function handleInterviewAnswer(answerIdx) {
         : opponentMood === 'humble' || opponentMood === 'respectful' ? -4
         : 0;
 
-    interviewState.blueMood = opponentMood;
-    interviewState.lastQuote = reply;
-    interviewState.lastSpeakerCorner = 'blue';
-    interviewState.tension = clamp(interviewState.tension + oppDelta, 0, 100);
-    interviewState.questionIdx += 1;
-    interviewState.waitingForAnswer = false;
+    pre().blueMood = opponentMood;
+    pre().lastQuote = reply;
+    pre().lastSpeakerCorner = 'blue';
+    pre().tension = clamp(pre().tension + oppDelta, 0, 100);
+    pre().questionIdx += 1;
+    interviewUiState.waitingForAnswer = false;
 
     renderInterviewScene();
 }
 
 export function getInterviewResult() {
     return {
-        tension: interviewState.tension,
-        hype: interviewState.hype,
-        complete: interviewState.questionIdx >= QUESTIONS.length
+        tension: pre().tension,
+        hype: pre().hype,
+        complete: pre().questionIdx >= QUESTIONS.length
     };
 }
 
 export function isInterviewComplete() {
-    return interviewState.questionIdx >= QUESTIONS.length;
+    return pre().questionIdx >= QUESTIONS.length;
 }
 
 export function resetInterviewState() {
-    interviewState.contractId = null;
-    interviewState.questionIdx = 0;
-    interviewState.tension = 0;
-    interviewState.hype = 0;
-    interviewState.redMood = 'silent';
-    interviewState.blueMood = 'silent';
-    interviewState.lastQuote = null;
-    interviewState.lastSpeakerCorner = null;
-    interviewState.waitingForAnswer = false;
+    // Flag a contract mismatch — ensureContractScoped will reset all fields
+    // on the next render so we don't duplicate the default shape here.
+    pre().contractId = null;
+    interviewUiState.waitingForAnswer = false;
 }

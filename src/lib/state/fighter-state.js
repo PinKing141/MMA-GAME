@@ -93,6 +93,26 @@ function createPlayerRankings() {
     return {};
 }
 
+function createDefaultPreFightState() {
+    return {
+        contractId: null,
+        // Interview
+        questionIdx: 0,
+        tension: 0,
+        hype: 0,
+        redMood: 'silent',
+        blueMood: 'silent',
+        lastQuote: null,
+        lastSpeakerCorner: null,
+        // Weigh-in
+        weighInStarted: false,
+        weighInComplete: false,
+        weighInRedResult: null,
+        weighInBlueResult: null,
+        faceoff: null
+    };
+}
+
 function createDefaultCareerState() {
     return {
         cash: 6500,
@@ -123,7 +143,8 @@ function createDefaultCareerState() {
             draws: 0,
             finishes: 0
         },
-        lastFightResult: null
+        lastFightResult: null,
+        preFight: createDefaultPreFightState()
     };
 }
 
@@ -225,6 +246,10 @@ export function hydrateState(snapshot) {
         record: {
             ...defaultCareer.record,
             ...(careerSnapshot.record || {})
+        },
+        preFight: {
+            ...defaultCareer.preFight,
+            ...(careerSnapshot.preFight || {})
         },
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
