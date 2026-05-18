@@ -5,6 +5,7 @@ import { formatMoney, formatRecord, getRankLabel } from '../lib/utils/formatters
 import { buildFightOffers } from '../lib/selectors/fight-offer-selectors.js';
 import { renderPortraitCard, getTierTokens } from '../lib/ui/portrait-card.js';
 import { getDominantStyles, getStyleColor, getStyleLabel } from '../lib/domain/style-fingerprint.js';
+import { getPersonalityTag } from '../lib/domain/personality.js';
 
 const pickerState = {
     phase: 'picker',
@@ -18,6 +19,29 @@ function escapeHtml(value) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+/**
+ * Personality + rivalry block under the specialty card. Reads the
+ * opponent's personality tag plus any persistent rivalry tension the
+ * player has built up across previous fights / press conferences.
+ */
+function renderOpponentPersonality(opponent) {
+    const personalityTag = getPersonalityTag(opponent.personality);
+    const rivalry = state.career.rivalries?.[opponent.id];
+    const rivalryRow = rivalry && rivalry.level !== 'cordial'
+        ? `<div class="opp-rivalry-row">
+                <span class="opp-rivalry-pill ${escapeHtml(rivalry.level)}">${escapeHtml(rivalry.level.toUpperCase())}</span>
+                <span class="opp-rivalry-note">${rivalry.tension}% tension carried over · ${rivalry.history?.length || 0} prior incident${rivalry.history?.length === 1 ? '' : 's'}</span>
+           </div>`
+        : '';
+    return `
+        <div class="opp-personality-row">
+            <span class="opp-personality-label">Personality</span>
+            <span class="opp-personality-tag">${escapeHtml(personalityTag)}</span>
+        </div>
+        ${rivalryRow}
+    `;
 }
 
 /**
@@ -181,6 +205,7 @@ function renderDetailPhase(offer) {
                         <div class="style">${escapeHtml(getStyleLabel(opponent.fingerprint || {}))}</div>
                         <div class="desc">${escapeHtml(stylePhrase)}</div>
                         ${renderOpponentFingerprint(opponent.fingerprint)}
+                        ${renderOpponentPersonality(opponent)}
                     </div>
                 </div>
 

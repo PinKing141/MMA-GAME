@@ -1,4 +1,5 @@
 import { state } from '../lib/core.js';
+import { selectOpponentMood } from '../lib/domain/personality.js';
 
 const QUESTIONS = [
     { topic: 'gameplan', q: 'How do you see this fight playing out?' },
@@ -81,14 +82,6 @@ const OPPONENT_QUOTES = {
     ]
 };
 
-const ARCHETYPE_PERSONALITY = {
-    'Boxer': { confidence: 75, trashTalk: 60, humility: 35, respect: 50 },
-    'Kick Boxer': { confidence: 70, trashTalk: 45, humility: 50, respect: 60 },
-    'Wrestler': { confidence: 80, trashTalk: 35, humility: 45, respect: 60 },
-    'Grappler': { confidence: 60, trashTalk: 30, humility: 65, respect: 70 },
-    'All-Rounder': { confidence: 65, trashTalk: 35, humility: 60, respect: 70 }
-};
-
 // Module-local UI state only. Persistent values live in state.career.preFight.
 const interviewUiState = {
     waitingForAnswer: false,
@@ -132,8 +125,35 @@ function getPlayerFullName() {
 }
 
 function getOpponentPersonality() {
-    const archetypeName = state.career.selectedOpponent?.archetype?.name || 'All-Rounder';
-    return ARCHETYPE_PERSONALITY[archetypeName] || ARCHETYPE_PERSONALITY['All-Rounder'];
+    return state.career.selectedOpponent?.personality || {
+        confidence: 65, trashTalk: 30, humility: 65, respect: 70,
+        showmanship: 50, vendetta: 35
+    };
+}
+
+function getRivalryTension(opponentId) {
+    const rivalry = state.career.rivalries?.[opponentId];
+    return rivalry?.tension || 0;
+}
+
+function bumpRivalry(opponentId, deltaTension, eventLabel) {
+    if (!opponentId) return;
+    if (!state.career.rivalries) state.career.rivalries = {};
+    const existing = state.career.rivalries[opponentId] || {
+        opponentId,
+        tension: 0,
+        history: [],
+        level: 'cordial'
+    };
+    existing.tension = Math.max(0, Math.min(100, existing.tension + deltaTension));
+    existing.level = existing.tension >= 80 ? 'blood'
+        : existing.tension >= 55 ? 'beef'
+        : existing.tension >= 25 ? 'heated'
+        : 'cordial';
+    if (eventLabel) {
+        existing.history = [...(existing.history || []), eventLabel].slice(-6);
+    }
+    state.career.rivalries[opponentId] = existing;
 }
 
 function ensureContractScoped() {
@@ -157,23 +177,13 @@ function ensureContractScoped() {
 }
 
 function opponentPickMood(topic, playerMood) {
-    const p = getOpponentPersonality();
-    if (topic === 'beef' || playerMood === 'trash' || playerMood === 'hostile') {
-        if (p.trashTalk > 55) return 'hostile';
-        if (p.respect > 65) return 'composed';
-        return 'defensive';
-    }
-    if (topic === 'opponent_threat') {
-        if (p.respect > 60) return 'respectful';
-        if (p.trashTalk > 60) return 'trash';
-        return 'composed';
-    }
-    const sum = p.confidence + p.humility + p.trashTalk + p.respect;
-    const r = Math.random() * 100;
-    if (r < (p.trashTalk / sum) * 100) return 'trash';
-    if (r < ((p.trashTalk + p.confidence) / sum) * 100) return 'confident';
-    if (r < ((p.trashTalk + p.confidence + p.humility) / sum) * 100) return 'humble';
-    return 'respectful';
+    const opponentId = state.career.selectedOpponent?.id;
+    return selectOpponentMood({
+        personality: getOpponentPersonality(),
+        topic,
+        playerMood,
+        rivalryTension: getRivalryTension(opponentId)
+    });
 }
 
 function getTensionLabel(value) {
@@ -325,11 +335,15 @@ export function renderInterviewScene() {
     const hypeInfo = getHypeLabel(pre().hype);
     const hypeVisualPct = ((pre().hype + 50) / 150) * 100;
     const eventName = state.career.contract.eventName;
+    const rivalry = state.career.rivalries?.[state.career.selectedOpponent?.id];
+    const rivalryEyebrow = rivalry && rivalry.level !== 'cordial'
+        ? ` · ${rivalry.level === 'blood' ? 'Blood Feud' : rivalry.level === 'beef' ? 'Beef' : 'Heated History'}`
+        : '';
 
     root.innerHTML = `
         <header class="media-header">
             <div>
-                <div class="eyebrow">Pre-Fight Press · ${escapeHtml(eventName)}</div>
+                <div class="eyebrow">Pre-Fight Press · ${escapeHtml(eventName)}${escapeHtml(rivalryEyebrow)}</div>
                 <div class="title">
                     <span>${escapeHtml(playerName.toUpperCase())}</span>
                     <span class="vs">VS</span>
@@ -442,6 +456,14 @@ export async function handleInterviewAnswer(answerIdx) {
     pre().tension = clamp(pre().tension + choice.tension, 0, 100);
     pre().hype = clamp(pre().hype + choice.hype, -50, 100);
     interviewUiState.waitingForAnswer = true;
+
+    // Rivalry escalates faster when the player goes after this specific
+    // opponent in a charged answer. Hostile beats trash beats neutral.
+    const opponentId = state.career.selectedOpponent?.id;
+    if (opponentId && choice.tension > 0) {
+        bumpRivalry(opponentId, Math.round(choice.tension * 0.4), `Press: ${choice.preview}`);
+    }
+
     renderInterviewScene();
 
     // Opponent reply after a beat.
@@ -463,6 +485,10 @@ export async function handleInterviewAnswer(answerIdx) {
     pre().tension = clamp(pre().tension + oppDelta, 0, 100);
     pre().questionIdx += 1;
     interviewUiState.waitingForAnswer = false;
+
+    if (opponentId && oppDelta > 0) {
+        bumpRivalry(opponentId, Math.round(oppDelta * 0.3), `Press reply: ${opponentMood}`);
+    }
 
     renderInterviewScene();
 }

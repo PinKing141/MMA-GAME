@@ -9,6 +9,7 @@ import { refreshCurrentScene, showScene } from '../scene-controller.js';
 import { isInterviewComplete, resetInterviewState } from '../../scenes/interview.js';
 import { isWeighInComplete, resetWeighInState } from '../../scenes/weigh-in.js';
 import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
+import { createPlayerDefaultPersonality } from '../domain/personality.js';
 
 function findCoach(coachId) {
     return COACHES.find(entry => entry.id === coachId) || null;
@@ -79,6 +80,9 @@ export function openProfileSceneAction() {
             countryCode: state.setup.country?.code || 'US',
             archetypeKey: state.selectedPreset
         });
+        // Reset personality from the chosen preset on first hub visit
+        // so a kickboxer doesn't carry the all-rounder default.
+        state.career.playerPersonality = createPlayerDefaultPersonality(state.selectedPreset);
     }
     showScene('profile');
 }

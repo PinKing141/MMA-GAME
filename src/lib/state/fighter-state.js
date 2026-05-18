@@ -6,6 +6,7 @@ import { ROSTER } from '../data/roster.js';
 import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculations.js';
 import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
 import { createFingerprint } from '../domain/style-fingerprint.js';
+import { createPlayerDefaultPersonality, generatePersonality } from '../domain/personality.js';
 
 const MIN_AGE = 18;
 const MAX_AGE = 60;
@@ -90,7 +91,8 @@ function createRosterState() {
             fingerprint: generateFingerprintForArchetype({
                 countryCode: entry.countryCode,
                 archetypeKey: entry.archetypeKey
-            })
+            }),
+            personality: generatePersonality(entry.archetypeKey)
         };
     });
 }
@@ -161,7 +163,9 @@ function createDefaultCareerState() {
         },
         lastFightResult: null,
         preFight: createDefaultPreFightState(),
-        playerFingerprint: createDefaultPlayerFingerprint()
+        playerFingerprint: createDefaultPlayerFingerprint(),
+        playerPersonality: createPlayerDefaultPersonality('all-rounder'),
+        rivalries: {}
     };
 }
 
@@ -271,6 +275,10 @@ export function hydrateState(snapshot) {
         playerFingerprint: careerSnapshot.playerFingerprint && Object.keys(careerSnapshot.playerFingerprint).length > 0
             ? careerSnapshot.playerFingerprint
             : defaultCareer.playerFingerprint,
+        playerPersonality: careerSnapshot.playerPersonality || defaultCareer.playerPersonality,
+        rivalries: careerSnapshot.rivalries && typeof careerSnapshot.rivalries === 'object'
+            ? careerSnapshot.rivalries
+            : defaultCareer.rivalries,
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
         selectedCoach: careerSnapshot.selectedCoach || null,
