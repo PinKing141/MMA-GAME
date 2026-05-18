@@ -454,7 +454,7 @@ export function renderGymScene() {
                 </div>
 
                 <div class="fingerprint-card">
-                    <div class="lbl">Style Fingerprint · ${escapeHtml(fingerprint.label)}</div>
+                    <div class="lbl">Specialty · ${escapeHtml(fingerprint.label)}</div>
                     <div class="fingerprint-bar">${fingerprint.segments}</div>
                     <div class="fp-legend">${fingerprint.rows}</div>
                 </div>

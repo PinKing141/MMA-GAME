@@ -177,7 +177,7 @@ function renderDetailPhase(offer) {
                         <div class="cell"><div class="label">Difficulty</div><div class="value">${escapeHtml(opponent.difficulty)}</div></div>
                     </div>
                     <div class="archetype-block" style="border-left-color:${tokens.accent}">
-                        <div class="label" style="color:${tokens.accent}">Fighting Style</div>
+                        <div class="label" style="color:${tokens.accent}">Specialty</div>
                         <div class="style">${escapeHtml(getStyleLabel(opponent.fingerprint || {}))}</div>
                         <div class="desc">${escapeHtml(stylePhrase)}</div>
                         ${renderOpponentFingerprint(opponent.fingerprint)}

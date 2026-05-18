@@ -200,7 +200,7 @@ function renderHubFingerprint() {
 
     return `
         <div class="hub-fingerprint">
-            <div class="hub-fp-label">Style Fingerprint</div>
+            <div class="hub-fp-label">Style Breakdown</div>
             <div class="hub-fp-bar">${segments}</div>
             <div class="hub-fp-legend">${rows}</div>
         </div>
@@ -352,7 +352,7 @@ export function renderProfile() {
                         `).join('')}
                     </div>
                     <div class="style-tag">
-                        <span>Fighting Style</span>
+                        <span>Specialty</span>
                         <span class="v">${escapeHtml(getStyleLabel(state.career.playerFingerprint))} · ${escapeHtml(vm.country.name)}</span>
                     </div>
                     ${renderHubFingerprint()}
