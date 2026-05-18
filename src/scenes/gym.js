@@ -146,13 +146,21 @@ function renderSessionDetail(coach) {
         return '';
     }
 
+    const multiplier = coach?.disciplineMultipliers?.[actionKey] ?? 1.0;
+    const scaleDelta = (delta) => {
+        const scaled = delta * multiplier;
+        return multiplier >= 1 ? Math.ceil(scaled) : Math.floor(scaled);
+    };
+
     const statGains = Object.entries(action.statChanges).map(([key, delta]) => {
         const label = ATTRIBUTE_GROUP_ORDER.flatMap(g => ATTRIBUTE_GROUPS[g].attributes).find(a => a.key === key)?.label || key;
+        const scaled = scaleDelta(delta);
+        const cls = scaled > delta ? 'positive' : scaled < delta ? 'warning' : 'positive';
         return `
-            <div class="gain-row positive">
-                <div class="icon"><svg viewBox="0 0 12 12" fill="none" stroke="#16a34a" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg></div>
+            <div class="gain-row ${cls}">
+                <div class="icon"><svg viewBox="0 0 12 12" fill="none" stroke="${scaled >= delta ? '#16a34a' : '#f59e0b'}" stroke-width="2"><path d="M2 6l3 3 5-5"/></svg></div>
                 <div class="label">${escapeHtml(label)}</div>
-                <div class="value">+${delta}</div>
+                <div class="value">+${scaled}${scaled !== delta ? ` <small style="color:var(--text-dim); font-size:9px">(base +${delta})</small>` : ''}</div>
             </div>
         `;
     }).join('');
@@ -179,15 +187,21 @@ function renderSessionDetail(coach) {
     const riskClass = action.injuryRisk < 14 ? 'positive' : action.injuryRisk < 20 ? 'warning' : 'negative';
 
     const coachBonus = coach?.actionBonuses?.[actionKey];
+    const multiplierTag = multiplier >= 1.25 ? `${multiplier.toFixed(2)}× · house specialty`
+        : multiplier >= 1.05 ? `${multiplier.toFixed(2)}× · strong`
+        : multiplier < 0.95 ? `${multiplier.toFixed(2)}× · weak`
+        : '1.00× · neutral';
+    const multiplierCls = multiplier >= 1.05 ? 'positive' : multiplier < 0.95 ? 'warning' : '';
+
     const coachRow = coach
         ? `
             <div class="coach-row-summary">
                 <div class="avatar">${escapeHtml(coach.name.split(/\s+/).map(p => p[0]).join('').slice(0, 2))}</div>
                 <div class="text">
                     <div class="name">${escapeHtml(coach.name)}</div>
-                    <div class="tag">${escapeHtml(coach.gym)} · Head Coach</div>
+                    <div class="tag">${escapeHtml(coach.gym)} · ${escapeHtml(coach.specialty || 'MMA')} specialist</div>
                 </div>
-                <div class="bonus">${coachBonus ? '+ trait' : 'flat'}</div>
+                <div class="bonus">${escapeHtml(multiplierTag)}</div>
             </div>
         `
         : '';

@@ -136,14 +136,26 @@ export function applyCampWeekState(actionKey, coach) {
     const action = GYM_ACTIONS[actionKey];
     const { career } = state;
     const coachBonus = coach?.actionBonuses[actionKey] || { stats: {}, career: {} };
+    const multiplier = coach?.disciplineMultipliers?.[actionKey] ?? 1.0;
 
     if (!action || !career.selectedOpponent || !coach || career.campWeeksCompleted >= career.campWeeksTotal) {
         return false;
     }
 
+    /**
+     * Discipline multiplier rounds with directional bias: bonuses ceil
+     * (so 1.6× of +2 lands as +4, not +3), penalties floor (so 0.85× of
+     * +2 lands as +1, not +2). Keeps gym identity visible at low deltas.
+     */
+    const scaleDelta = (delta) => {
+        const scaled = delta * multiplier;
+        return multiplier >= 1 ? Math.ceil(scaled) : Math.floor(scaled);
+    };
+
     Object.entries(action.statChanges).forEach(([key, delta]) => {
+        const scaled = scaleDelta(delta);
         const currentValue = state.stats[key] || MIN_ATTRIBUTE;
-        state.stats[key] = clamp(currentValue + delta, MIN_ATTRIBUTE, MAX_ATTRIBUTE);
+        state.stats[key] = clamp(currentValue + scaled, MIN_ATTRIBUTE, MAX_ATTRIBUTE);
     });
 
     Object.entries(coachBonus.stats).forEach(([key, delta]) => {
@@ -161,8 +173,14 @@ export function applyCampWeekState(actionKey, coach) {
 
     const injury = maybeApplyInjury(actionKey, coach);
     const overtraining = maybeApplyOvertrainingPenalty();
+    const multiplierNote = multiplier > 1.05
+        ? `${coach.gym} ran it at ${multiplier.toFixed(2)}× — gains hit harder than baseline.`
+        : multiplier < 0.95
+            ? `${coach.gym} is weak here (${multiplier.toFixed(2)}×) — pick this less often.`
+            : '';
     const noteSuffix = [
         Object.keys(coachBonus.stats).length ? `${coach.name} added a gym-specific bonus.` : '',
+        multiplierNote,
         injury ? `Injury suffered: ${injury.name}.` : '',
         overtraining ? 'Overtraining penalty hit the week.' : '',
         career.weightCutPressure >= 65 ? 'The weight cut is becoming a problem.' : ''

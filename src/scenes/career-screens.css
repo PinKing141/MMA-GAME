@@ -3456,3 +3456,69 @@
 .log-strip .text .blue { color: var(--blue-bright); font-weight: 700; font-style: normal; }
 .log-strip .text .on { color: var(--green); font-weight: 700; font-style: normal; }
 .log-strip .text .over { color: var(--red-bright); font-weight: 700; font-style: normal; }
+
+/* Gym picker — country flag with image */
+.flag-pill.flag-pill-img {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+}
+.flag-pill.flag-pill-img img {
+    width: 18px;
+    height: 12px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Specialty blurb under the pill */
+.gym-specialty-blurb {
+    margin-top: 8px;
+    font-family: var(--font-quote);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    text-align: center;
+    padding: 0 6px;
+}
+
+/* Multiplier chips */
+.gym-multiplier-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px 4px;
+    justify-content: center;
+}
+.mx-chip {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 4px 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.mx-chip strong {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.4px;
+}
+.mx-chip.high { color: var(--gold-bright); border-color: rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.08); }
+.mx-chip.high strong { color: var(--gold-bright); }
+.mx-chip.mid { color: var(--green); border-color: rgba(22, 163, 74, 0.35); background: rgba(22, 163, 74, 0.06); }
+.mx-chip.mid strong { color: var(--green); }
+.mx-chip.low { color: var(--red-bright); border-color: rgba(225, 29, 54, 0.35); background: rgba(225, 29, 54, 0.06); }
+.mx-chip.low strong { color: var(--red-bright); }
+
+/* Gym specialty row uses centered text now */
+.gym-specialty-row {
+    padding: 12px 16px 4px;
+    text-align: center;
+}
