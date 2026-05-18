@@ -2,6 +2,7 @@ import { ATTRIBUTE_GROUPS, ATTRIBUTE_GROUP_ORDER, COACHES } from '../lib/data.js
 import { getAttributeAverage, state } from '../lib/core.js';
 import { formatMoney } from '../lib/utils/formatters.js';
 import { GYM_ACTIONS } from '../lib/actions/camp-state.js';
+import { getDominantStyles, getStyleColor, getStyleLabel } from '../lib/domain/style-fingerprint.js';
 
 const SESSION_META = {
     boxing: {
@@ -115,27 +116,31 @@ function renderTimeline() {
 }
 
 function renderFingerprint() {
-    const groups = ATTRIBUTE_GROUP_ORDER.map(key => ({
-        key,
-        label: ATTRIBUTE_GROUPS[key].label,
-        average: Math.round(getAttributeAverage(state.stats, key, ATTRIBUTE_GROUPS))
-    }));
-    const total = groups.reduce((sum, g) => sum + g.average, 0) || 1;
-    const colors = {
-        standup: '#e21d36',
-        grappling: '#2563eb',
-        health: '#f59e0b',
-        mind: '#06b6d4'
-    };
-    const segments = groups.map(g => {
-        const pct = Math.round((g.average / total) * 100);
-        return `<div class="fp-segment" style="background:${colors[g.key]}; width:${pct}%"></div>`;
-    }).join('');
-    const rows = groups.map(g => {
-        const pct = Math.round((g.average / total) * 100);
-        return `<div class="fp-row"><span class="swatch" style="background:${colors[g.key]}"></span><span class="name">${escapeHtml(g.label)}</span><span class="pct">${pct}%</span></div>`;
-    }).join('');
-    return { segments, rows };
+    const fingerprint = state.career.playerFingerprint || {};
+    const dominants = getDominantStyles(fingerprint);
+    const label = getStyleLabel(fingerprint);
+
+    if (dominants.length === 0) {
+        return {
+            label: 'Untrained',
+            segments: '<div class="fp-segment" style="background:var(--surface-3); width:100%"></div>',
+            rows: '<div class="fp-row"><span class="name">No styles trained yet</span></div>'
+        };
+    }
+
+    const segments = dominants.map(s =>
+        `<div class="fp-segment" style="background:${getStyleColor(s.name)}; width:${Math.round(s.share * 100)}%"></div>`
+    ).join('');
+
+    const rows = dominants.map(s => `
+        <div class="fp-row">
+            <span class="swatch" style="background:${getStyleColor(s.name)}"></span>
+            <span class="name">${escapeHtml(s.name)}</span>
+            <span class="pct">${Math.round(s.share * 100)}%</span>
+        </div>
+    `).join('');
+
+    return { label, segments, rows };
 }
 
 function renderSessionDetail(coach) {
@@ -449,7 +454,7 @@ export function renderGymScene() {
                 </div>
 
                 <div class="fingerprint-card">
-                    <div class="lbl">Style Fingerprint</div>
+                    <div class="lbl">Style Fingerprint · ${escapeHtml(fingerprint.label)}</div>
                     <div class="fingerprint-bar">${fingerprint.segments}</div>
                     <div class="fp-legend">${fingerprint.rows}</div>
                 </div>

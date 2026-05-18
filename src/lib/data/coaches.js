@@ -47,7 +47,8 @@ export const COACHES = [
         },
         fatigueModifier: 1,
         injuryBuffer: 4,
-        weightCutModifier: 1
+        weightCutModifier: 1,
+        stylePool: { Boxing: 3 }
     },
     {
         id: 'park',
@@ -88,7 +89,8 @@ export const COACHES = [
         },
         fatigueModifier: 0,
         injuryBuffer: 3,
-        weightCutModifier: 0
+        weightCutModifier: 0,
+        stylePool: { 'Tae Kwon Do': 3, Karate: 1 }
     },
     {
         id: 'almeida',
@@ -129,7 +131,8 @@ export const COACHES = [
         },
         fatigueModifier: 0,
         injuryBuffer: 5,
-        weightCutModifier: 0
+        weightCutModifier: 0,
+        stylePool: { 'Brazilian Jiu-Jitsu': 3, 'Jiu Jitsu': 1 }
     },
     {
         id: 'hayes',
@@ -170,7 +173,8 @@ export const COACHES = [
         },
         fatigueModifier: 2,
         injuryBuffer: 2,
-        weightCutModifier: 1
+        weightCutModifier: 1,
+        stylePool: { Wrestling: 3, Sambo: 1 }
     },
     {
         id: 'kruvong',
@@ -211,7 +215,8 @@ export const COACHES = [
         },
         fatigueModifier: 1,
         injuryBuffer: 4,
-        weightCutModifier: 0
+        weightCutModifier: 0,
+        stylePool: { 'Muay Thai': 3, Kickboxing: 1 }
     },
     {
         id: 'sato',
@@ -252,6 +257,7 @@ export const COACHES = [
         },
         fatigueModifier: -2,
         injuryBuffer: 10,
-        weightCutModifier: -3
+        weightCutModifier: -3,
+        stylePool: { Wrestling: 1, Boxing: 1, 'Brazilian Jiu-Jitsu': 1 }
     }
 ];

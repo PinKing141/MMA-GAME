@@ -8,6 +8,7 @@ import { simulateFightState } from './fight-state.js';
 import { refreshCurrentScene, showScene } from '../scene-controller.js';
 import { isInterviewComplete, resetInterviewState } from '../../scenes/interview.js';
 import { isWeighInComplete, resetWeighInState } from '../../scenes/weigh-in.js';
+import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
 
 function findCoach(coachId) {
     return COACHES.find(entry => entry.id === coachId) || null;
@@ -69,6 +70,16 @@ export function openWeighInSceneAction() {
 }
 
 export function openProfileSceneAction() {
+    // Lazily derive the player's style fingerprint from the chosen
+    // preset + country on first hub visit. Already-derived fingerprints
+    // stay put so training drift accumulates.
+    const isEmpty = !state.career.playerFingerprint || Object.keys(state.career.playerFingerprint).length === 0;
+    if (isEmpty && state.selectedPreset) {
+        state.career.playerFingerprint = generateFingerprintForArchetype({
+            countryCode: state.setup.country?.code || 'US',
+            archetypeKey: state.selectedPreset
+        });
+    }
     showScene('profile');
 }
 

@@ -3522,3 +3522,62 @@
     padding: 12px 16px 4px;
     text-align: center;
 }
+
+/* ===================================================================
+   STYLE FINGERPRINT READOUT (hub + opponent picker)
+   =================================================================== */
+.hub-fingerprint {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+}
+.opponent-fingerprint {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+}
+.hub-fp-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+.hub-fp-bar {
+    height: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex;
+    overflow: hidden;
+}
+.hub-fp-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+.hub-fp-legend {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hub-fp-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 9px;
+    border-left: 3px solid var(--gold);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.hub-fp-chip strong {
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text);
+}

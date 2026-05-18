@@ -4,6 +4,7 @@ import { state, getOverallAverage } from '../lib/core.js';
 import { formatMoney, formatRecord, getRankLabel } from '../lib/utils/formatters.js';
 import { buildFightOffers } from '../lib/selectors/fight-offer-selectors.js';
 import { renderPortraitCard, getTierTokens } from '../lib/ui/portrait-card.js';
+import { getDominantStyles, getStyleColor, getStyleLabel } from '../lib/domain/style-fingerprint.js';
 
 const pickerState = {
     phase: 'picker',
@@ -17,6 +18,30 @@ function escapeHtml(value) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+/**
+ * Scouting dossier readout for the opponent detail view. Shows up to
+ * the opponent's top three styles as proportional pills.
+ */
+function renderOpponentFingerprint(fingerprint) {
+    if (!fingerprint) return '';
+    const dominants = getDominantStyles(fingerprint).slice(0, 3);
+    if (dominants.length === 0) return '';
+
+    const segments = dominants.map(s =>
+        `<div class="hub-fp-segment" style="background:${getStyleColor(s.name)}; width:${Math.round(s.share * 100)}%"></div>`
+    ).join('');
+    const rows = dominants.map(s => `
+        <span class="hub-fp-chip" style="border-left-color:${getStyleColor(s.name)}">${escapeHtml(s.name)} <strong>${Math.round(s.share * 100)}%</strong></span>
+    `).join('');
+
+    return `
+        <div class="opponent-fingerprint">
+            <div class="hub-fp-bar">${segments}</div>
+            <div class="hub-fp-legend">${rows}</div>
+        </div>
+    `;
 }
 
 function getStyleDescription(name) {
@@ -153,8 +178,9 @@ function renderDetailPhase(offer) {
                     </div>
                     <div class="archetype-block" style="border-left-color:${tokens.accent}">
                         <div class="label" style="color:${tokens.accent}">Fighting Style</div>
-                        <div class="style">${escapeHtml(opponent.archetype.name)}</div>
+                        <div class="style">${escapeHtml(getStyleLabel(opponent.fingerprint || {}))}</div>
                         <div class="desc">${escapeHtml(stylePhrase)}</div>
+                        ${renderOpponentFingerprint(opponent.fingerprint)}
                     </div>
                 </div>
 

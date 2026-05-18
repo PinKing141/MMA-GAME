@@ -4,6 +4,7 @@ import { getProfileViewModel } from '../lib/selectors/profile-selectors.js';
 import { formatMoney, formatRecord, getRankLabel } from '../lib/utils/formatters.js';
 import { getPlayerRank } from '../lib/selectors/career-selectors.js';
 import { renderPortraitCard } from '../lib/ui/portrait-card.js';
+import { getDominantStyles, getStyleColor, getStyleLabel } from '../lib/domain/style-fingerprint.js';
 
 const ACTION_CARDS = [
     {
@@ -177,6 +178,35 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
+/**
+ * Stacked-bar style fingerprint readout for the hub. Shows up to the
+ * fighter's top three styles as a single proportional bar plus a tight
+ * legend underneath.
+ */
+function renderHubFingerprint() {
+    const fingerprint = state.career.playerFingerprint || {};
+    const dominants = getDominantStyles(fingerprint).slice(0, 3);
+    if (dominants.length === 0) {
+        return '';
+    }
+
+    const total = dominants.reduce((sum, s) => sum + s.share, 0) || 1;
+    const segments = dominants.map(s =>
+        `<div class="hub-fp-segment" style="background:${getStyleColor(s.name)}; width:${Math.round((s.share / total) * 100)}%"></div>`
+    ).join('');
+    const rows = dominants.map(s => `
+        <span class="hub-fp-chip" style="border-left-color:${getStyleColor(s.name)}">${escapeHtml(s.name)} <strong>${Math.round(s.share * 100)}%</strong></span>
+    `).join('');
+
+    return `
+        <div class="hub-fingerprint">
+            <div class="hub-fp-label">Style Fingerprint</div>
+            <div class="hub-fp-bar">${segments}</div>
+            <div class="hub-fp-legend">${rows}</div>
+        </div>
+    `;
+}
+
 function buildFightHero(vm) {
     const career = state.career;
     const lastName = (state.setup.lastName || 'You').toUpperCase();
@@ -323,8 +353,9 @@ export function renderProfile() {
                     </div>
                     <div class="style-tag">
                         <span>Fighting Style</span>
-                        <span class="v">${escapeHtml(archetype.name)} · ${escapeHtml(vm.country.name)}</span>
+                        <span class="v">${escapeHtml(getStyleLabel(state.career.playerFingerprint))} · ${escapeHtml(vm.country.name)}</span>
                     </div>
+                    ${renderHubFingerprint()}
                 </div>
 
                 <div class="news-card">

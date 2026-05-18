@@ -1,5 +1,6 @@
 import { MAX_ATTRIBUTE, MIN_ATTRIBUTE } from '../data.js';
 import { clamp, state } from '../core.js';
+import { addPoints } from '../domain/style-fingerprint.js';
 
 export const GYM_ACTIONS = {
     boxing: {
@@ -162,6 +163,19 @@ export function applyCampWeekState(actionKey, coach) {
         const currentValue = state.stats[key] || MIN_ATTRIBUTE;
         state.stats[key] = clamp(currentValue + delta, MIN_ATTRIBUTE, MAX_ATTRIBUTE);
     });
+
+    // Training drift: each session at the gym contributes points to the
+    // gym's style pool. Scales with the discipline multiplier so a
+    // session that's a great fit drifts the fingerprint harder. Result
+    // is small per-week change (~1 pt out of ~100 base) but compounds
+    // over a full camp and across a career.
+    if (coach.stylePool && career.playerFingerprint) {
+        const scaledPool = {};
+        Object.entries(coach.stylePool).forEach(([style, raw]) => {
+            scaledPool[style] = raw * multiplier;
+        });
+        career.playerFingerprint = addPoints(career.playerFingerprint, scaledPool);
+    }
 
     career.fitness = clamp(career.fitness + action.careerChanges.fitness + (coachBonus.career.fitness || 0), 45, 100);
     career.morale = clamp(career.morale + action.careerChanges.morale + (coachBonus.career.morale || 0), 40, 100);

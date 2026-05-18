@@ -4,6 +4,8 @@ import { ALL_ATTRIBUTES, MIN_ATTRIBUTE, POINTS_BUDGET } from '../data/attributes
 import { COACHES } from '../data/coaches.js';
 import { ROSTER } from '../data/roster.js';
 import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculations.js';
+import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
+import { createFingerprint } from '../domain/style-fingerprint.js';
 
 const MIN_AGE = 18;
 const MAX_AGE = 60;
@@ -84,9 +86,23 @@ function createRosterState() {
             archetype,
             stats,
             overall: getOverallAverage(stats),
-            difficulty: getDifficultyLabel(entry.difficultyBias)
+            difficulty: getDifficultyLabel(entry.difficultyBias),
+            fingerprint: generateFingerprintForArchetype({
+                countryCode: entry.countryCode,
+                archetypeKey: entry.archetypeKey
+            })
         };
     });
+}
+
+/**
+ * Player fingerprint starts empty and is derived from their chosen
+ * preset on first hub visit (see openProfileSceneAction). Lives
+ * separately from state.career.roster so player drift doesn't bleed
+ * into NPCs.
+ */
+function createDefaultPlayerFingerprint() {
+    return {};
 }
 
 function createPlayerRankings() {
@@ -144,7 +160,8 @@ function createDefaultCareerState() {
             finishes: 0
         },
         lastFightResult: null,
-        preFight: createDefaultPreFightState()
+        preFight: createDefaultPreFightState(),
+        playerFingerprint: createDefaultPlayerFingerprint()
     };
 }
 
@@ -251,6 +268,9 @@ export function hydrateState(snapshot) {
             ...defaultCareer.preFight,
             ...(careerSnapshot.preFight || {})
         },
+        playerFingerprint: careerSnapshot.playerFingerprint && Object.keys(careerSnapshot.playerFingerprint).length > 0
+            ? careerSnapshot.playerFingerprint
+            : defaultCareer.playerFingerprint,
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
         selectedCoach: careerSnapshot.selectedCoach || null,
