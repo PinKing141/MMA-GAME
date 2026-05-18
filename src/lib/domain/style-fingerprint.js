@@ -19,79 +19,116 @@ export function getStyleEntry(name) {
 }
 
 /**
- * Hybrid label thresholds — checked in order. First match wins.
- * Each rule: dominant style at >= a fraction, partner style at >= b fraction.
- * Labels favor terms real MMA analysts use over generic "X + Y" mashups.
- */
-const HYBRID_RULES = [
-    { dominant: 'Wrestling', dMin: 0.5, partner: 'Boxing', pMin: 0.25, label: 'Sprawl & Brawl' },
-    { dominant: 'Wrestling', dMin: 0.5, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Top Grappler' },
-    { dominant: 'Wrestling', dMin: 0.5, partner: 'Muay Thai', pMin: 0.25, label: 'Cage Grinder' },
-    { dominant: 'Boxing', dMin: 0.5, partner: 'Wrestling', pMin: 0.25, label: 'Pressure Boxer' },
-    { dominant: 'Boxing', dMin: 0.5, partner: 'Muay Thai', pMin: 0.25, label: 'Volume Striker' },
-    { dominant: 'Boxing', dMin: 0.5, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Boxing-Submission Hybrid' },
-    { dominant: 'Muay Thai', dMin: 0.45, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Vale Tudo Fighter' },
-    { dominant: 'Muay Thai', dMin: 0.45, partner: 'Wrestling', pMin: 0.25, label: 'Clinch Specialist' },
-    { dominant: 'Muay Thai', dMin: 0.45, partner: 'Boxing', pMin: 0.25, label: 'Eight-Limb Striker' },
-    { dominant: 'Kickboxing', dMin: 0.45, partner: 'Wrestling', pMin: 0.25, label: 'Dutch Wrestler' },
-    { dominant: 'Kickboxing', dMin: 0.45, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Kickbox-Grappler' },
-    { dominant: 'Karate', dMin: 0.45, partner: 'Boxing', pMin: 0.25, label: 'Distance Striker' },
-    { dominant: 'Karate', dMin: 0.45, partner: 'Brazilian Jiu-Jitsu', pMin: 0.20, label: 'Karate Grappler' },
-    { dominant: 'Karate', dMin: 0.45, partner: 'Wrestling', pMin: 0.25, label: 'Blitz Wrestler' },
-    { dominant: 'Tae Kwon Do', dMin: 0.45, partner: 'Boxing', pMin: 0.20, label: 'Kicker-Boxer' },
-    { dominant: 'Tae Kwon Do', dMin: 0.45, partner: 'Wrestling', pMin: 0.25, label: 'Korean Wrestler' },
-    { dominant: 'Sambo', dMin: 0.45, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Combat Sambist' },
-    { dominant: 'Sambo', dMin: 0.45, partner: 'Boxing', pMin: 0.25, label: 'Sambo Striker' },
-    { dominant: 'Brazilian Jiu-Jitsu', dMin: 0.5, partner: 'Wrestling', pMin: 0.25, label: 'Sub Hunter' },
-    { dominant: 'Brazilian Jiu-Jitsu', dMin: 0.5, partner: 'Muay Thai', pMin: 0.25, label: 'BJJ Striker' },
-    { dominant: 'Brazilian Jiu-Jitsu', dMin: 0.5, partner: 'Boxing', pMin: 0.25, label: 'BJJ Boxer' },
-    { dominant: 'Judo', dMin: 0.45, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Judo-Submission Fighter' },
-    { dominant: 'Capoeira', dMin: 0.4, partner: 'Brazilian Jiu-Jitsu', pMin: 0.25, label: 'Capoeira Grappler' },
-    { dominant: 'Kyokushin', dMin: 0.45, partner: 'Boxing', pMin: 0.25, label: 'Knockdown Striker' }
-];
-
-const PURE_THRESHOLD = 0.7;
-
-/**
- * Pure-style labels — what the analysts call someone whose game is one
- * discipline through and through.
+ * Single-word labels for a fighter dominant in one discipline. These
+ * are the words MMA fans actually use — "He's a wrestler", "She's a
+ * boxer", "He's a karateka". No flavor descriptors, no marketing tags.
  */
 const PURE_LABELS = {
-    'Wrestling': 'Pressure Wrestler',
-    'Brazilian Jiu-Jitsu': 'Jiu-Jitsu Specialist',
-    'Boxing': 'Pocket Boxer',
-    'Muay Thai': 'Muay Thai Stylist',
-    'Kickboxing': 'Dutch Kickboxer',
-    'American Kickboxing': 'American Kickboxer',
-    'Tae Kwon Do': 'Taekwondo Stylist',
-    'Karate': 'Karate Stylist',
-    'Kyokushin': 'Knockdown Karateka',
+    'Wrestling': 'Wrestler',
+    'Brazilian Jiu-Jitsu': 'Jiu-Jitsu Black Belt',
+    'Boxing': 'Boxer',
+    'Muay Thai': 'Muay Thai Fighter',
+    'Kickboxing': 'Kickboxer',
+    'American Kickboxing': 'Kickboxer',
+    'Tae Kwon Do': 'Taekwondo Fighter',
+    'Karate': 'Karateka',
+    'Kyokushin': 'Kyokushin Karateka',
     'Sambo': 'Sambist',
     'Judo': 'Judoka',
     'Catch Wrestling': 'Catch Wrestler',
-    'Jiu Jitsu': 'Jujutsu Stylist',
-    'Capoeira': 'Capoeira Stylist',
+    'Jiu Jitsu': 'Jujutsu Fighter',
+    'Capoeira': 'Capoeirista',
     'Krav Maga': 'Krav Maga Fighter',
     'Sumo': 'Sumotori',
     'Savate': 'Savateur',
-    'Kajukenbo': 'Kajukenbo Stylist',
-    'Jeet Kune Do': 'JKD Practitioner',
-    'Wai Wing Chun': 'Wing Chun Stylist',
-    'Silat': 'Silat Stylist',
-    'Bando': 'Bando Stylist',
-    'Kenpo': 'Kenpo Stylist',
+    'Kajukenbo': 'Kajukenbo Fighter',
+    'Jeet Kune Do': 'JKD Fighter',
+    'Wai Wing Chun': 'Wing Chun Fighter',
+    'Silat': 'Silat Fighter',
+    'Bando': 'Bando Fighter',
+    'Kenpo': 'Kenpo Fighter',
     'Goju Ryu': 'Goju Karateka',
-    'Hsing-Yi': 'Internal Stylist',
-    'Pakua': 'Internal Stylist',
-    'Tai Sing Pek Kwar': 'Monkey-Style Stylist',
-    'Lua': 'Lua Practitioner',
+    'Hsing-Yi': 'Hsing-Yi Fighter',
+    'Pakua': 'Pakua Fighter',
+    'Tai Sing Pek Kwar': 'Monkey-Style Fighter',
+    'Lua': 'Lua Fighter',
     'Dambe': 'Dambe Boxer',
     'Nuba Wrestling': 'Nuba Wrestler',
-    'Kuntao': 'Kuntao Stylist',
+    'Kuntao': 'Kuntao Fighter',
     'African Kickfighting': 'African Kickfighter',
-    'Kupigana Ngumi': 'East African Stylist',
+    'Kupigana Ngumi': 'Kupigana Fighter',
     'Chulukua': 'Chulukua Fighter'
 };
+
+/**
+ * Short-noun aliases used when building hybrid labels — "Wrestler-Boxer",
+ * "Karate-Wrestler", etc. The dominant style appears first.
+ */
+const HYBRID_TOKEN = {
+    'Wrestling': 'Wrestler',
+    'Brazilian Jiu-Jitsu': 'Grappler',
+    'Boxing': 'Boxer',
+    'Muay Thai': 'Muay Thai',
+    'Kickboxing': 'Kickboxer',
+    'American Kickboxing': 'Kickboxer',
+    'Tae Kwon Do': 'Taekwondo',
+    'Karate': 'Karate',
+    'Kyokushin': 'Kyokushin',
+    'Sambo': 'Sambo',
+    'Judo': 'Judoka',
+    'Catch Wrestling': 'Catch Wrestler',
+    'Jiu Jitsu': 'Jujutsu',
+    'Capoeira': 'Capoeirista',
+    'Savate': 'Savateur',
+    'Kajukenbo': 'Kajukenbo',
+    'Jeet Kune Do': 'JKD',
+    'Wai Wing Chun': 'Wing Chun',
+    'Silat': 'Silat',
+    'Bando': 'Bando',
+    'Kenpo': 'Kenpo',
+    'Goju Ryu': 'Goju',
+    'Sumo': 'Sumotori',
+    'Krav Maga': 'Krav Maga',
+    'Dambe': 'Dambe',
+    'Nuba Wrestling': 'Nuba Wrestler',
+    'African Kickfighting': 'Kickfighter'
+};
+
+/**
+ * Hybrid rules. Most labels follow "Dominant-Partner" with agent nouns
+ * (Wrestler-Boxer, Karate-Wrestler), built dynamically from HYBRID_TOKEN.
+ * Real-world historical names override where they exist (Vale Tudo,
+ * Combat Sambo) so the label sounds like something a fan would say.
+ */
+const HYBRID_OVERRIDES = [
+    { dominant: 'Muay Thai', partner: 'Brazilian Jiu-Jitsu', label: 'Vale Tudo Fighter' },
+    { dominant: 'Sambo', partner: 'Brazilian Jiu-Jitsu', label: 'Combat Sambo Fighter' },
+    { dominant: 'Boxing', partner: 'Muay Thai', label: 'Striker' },
+    { dominant: 'Muay Thai', partner: 'Boxing', label: 'Striker' },
+    { dominant: 'Kickboxing', partner: 'Muay Thai', label: 'Striker' },
+    { dominant: 'Muay Thai', partner: 'Kickboxing', label: 'Striker' },
+    { dominant: 'Brazilian Jiu-Jitsu', partner: 'Wrestling', label: 'Grappler' },
+    { dominant: 'Wrestling', partner: 'Brazilian Jiu-Jitsu', label: 'Grappler' }
+];
+
+const HYBRID_THRESHOLD_DOMINANT = 0.45;
+const HYBRID_THRESHOLD_PARTNER = 0.25;
+const PURE_THRESHOLD = 0.7;
+
+function buildHybridLabel(dominantName, partnerName) {
+    const override = HYBRID_OVERRIDES.find(
+        rule => rule.dominant === dominantName && rule.partner === partnerName
+    );
+    if (override) {
+        return override.label;
+    }
+    const dToken = HYBRID_TOKEN[dominantName] || dominantName;
+    const pToken = HYBRID_TOKEN[partnerName] || partnerName;
+    if (dToken === pToken) {
+        return dToken;
+    }
+    return `${dToken}-${pToken}`;
+}
 
 /**
  * Create a normalized fingerprint from an unweighted list or a partial map.
@@ -187,21 +224,18 @@ export function getStyleLabel(fingerprint) {
         return PURE_LABELS[top.name] || top.name;
     }
 
-    for (const rule of HYBRID_RULES) {
-        const d = fingerprint[rule.dominant] || 0;
-        const p = fingerprint[rule.partner] || 0;
-        if (d >= rule.dMin && p >= rule.pMin) {
-            return rule.label;
-        }
+    const second = dominants[1];
+    if (top.share >= HYBRID_THRESHOLD_DOMINANT && second && second.share >= HYBRID_THRESHOLD_PARTNER) {
+        return buildHybridLabel(top.name, second.name);
     }
 
     if (top.share >= 0.5) {
-        // Fall back to the pure label without the "Pure" prefix when the
-        // dominant style is over half but no specific hybrid rule matched.
-        return PURE_LABELS[top.name] || `${top.name} Stylist`;
+        // Dominant style over half but no meaningful partner — just call
+        // them by their dominant identity, no robotic "Stylist" suffix.
+        return PURE_LABELS[top.name] || top.name;
     }
 
-    return 'Well-Rounded MMA';
+    return 'Well-Rounded Fighter';
 }
 
 /**
