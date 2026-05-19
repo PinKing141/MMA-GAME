@@ -39,6 +39,7 @@ import { closeFightReplayModal, openFightReplayModal } from './lib/fight-engine-
 import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, restartGameAction } from './lib/actions/setup-actions.js';
 import { state } from './lib/core.js';
 import { formatSaveStatus, getSavedGameMeta, hasSavedGame, loadGameState, SAVE_META_EVENT, saveGameState, scheduleGameSave } from './lib/persistence.js';
+import { bindSaveManagerEvents, openSaveManager } from './scenes/save-manager.js';
 import { getFightViewModel } from './lib/selectors/fight-selectors.js';
 import { refreshCurrentScene, showScene } from './lib/scene-controller.js';
 import { syncFrameControls, updatePreview } from './scenes/setup.js';
@@ -135,6 +136,15 @@ function wireEvents() {
 
     document.getElementById('btn-load-game').addEventListener('click', () => {
         if (loadGameState()) {
+            clearValidationError('setup-error');
+            clearValidationError('frame-error');
+            showScene(state.currentScene);
+        }
+    });
+
+    document.getElementById('btn-save-manager').addEventListener('click', openSaveManager);
+    bindSaveManagerEvents({
+        onLoaded: () => {
             clearValidationError('setup-error');
             clearValidationError('frame-error');
             showScene(state.currentScene);
