@@ -7,6 +7,7 @@ import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculation
 import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
 import { createFingerprint } from '../domain/style-fingerprint.js';
 import { createPlayerDefaultPersonality, generatePersonality } from '../domain/personality.js';
+import { createDefaultWorldState, hydrateWorldState } from '../world-domain/world-state.js';
 
 const MIN_AGE = 18;
 const MAX_AGE = 60;
@@ -165,7 +166,12 @@ function createDefaultCareerState() {
         preFight: createDefaultPreFightState(),
         playerFingerprint: createDefaultPlayerFingerprint(),
         playerPersonality: createPlayerDefaultPersonality('all-rounder'),
-        rivalries: {}
+        rivalries: {},
+        world: createDefaultWorldState(),
+        playerCallouts: [],
+        playerPromotionId: 'cage-southwest',
+        playerStreak: 0,
+        playerTitleWins: 0
     };
 }
 
@@ -279,6 +285,11 @@ export function hydrateState(snapshot) {
         rivalries: careerSnapshot.rivalries && typeof careerSnapshot.rivalries === 'object'
             ? careerSnapshot.rivalries
             : defaultCareer.rivalries,
+        world: hydrateWorldState(careerSnapshot.world),
+        playerCallouts: Array.isArray(careerSnapshot.playerCallouts) ? careerSnapshot.playerCallouts : [],
+        playerPromotionId: careerSnapshot.playerPromotionId || defaultCareer.playerPromotionId,
+        playerStreak: Number.isFinite(careerSnapshot.playerStreak) ? careerSnapshot.playerStreak : 0,
+        playerTitleWins: Number.isFinite(careerSnapshot.playerTitleWins) ? careerSnapshot.playerTitleWins : 0,
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
         selectedCoach: careerSnapshot.selectedCoach || null,
