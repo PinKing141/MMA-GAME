@@ -40,6 +40,7 @@ import { commitSetupForm, randomizeIdentityAction, randomizeProspectAction, rest
 import { state } from './lib/core.js';
 import { formatSaveStatus, getSavedGameMeta, hasSavedGame, loadGameState, SAVE_META_EVENT, saveGameState, scheduleGameSave } from './lib/persistence.js';
 import { bindSaveManagerEvents, openSaveManager } from './scenes/save-manager.js';
+import { bindMetaBrowserEvents, openMetaBrowser } from './scenes/meta-browser.js';
 import { getFightViewModel } from './lib/selectors/fight-selectors.js';
 import { refreshCurrentScene, showScene } from './lib/scene-controller.js';
 import { syncFrameControls, updatePreview } from './scenes/setup.js';
@@ -151,6 +152,15 @@ function wireEvents() {
         }
     });
 
+    document.getElementById('btn-meta-browser').addEventListener('click', () => openMetaBrowser());
+    bindMetaBrowserEvents({
+        onCareerChanged: () => {
+            clearValidationError('setup-error');
+            clearValidationError('frame-error');
+            showScene(state.currentScene);
+        }
+    });
+
     document.getElementById('btn-to-frame').addEventListener('click', () => {
         commitSetupForm();
         if (!state.setup.firstName || !state.setup.lastName) {
@@ -238,6 +248,10 @@ function wireEvents() {
         }
         if (event.target.closest('#btn-pf-camp')) {
             openGymSceneAction();
+            return;
+        }
+        if (event.target.closest('#btn-pf-meta')) {
+            openMetaBrowser('settings');
             return;
         }
 

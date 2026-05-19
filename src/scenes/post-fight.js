@@ -7,6 +7,7 @@
 
 import { state } from '../lib/core.js';
 import { formatMoney } from '../lib/utils/formatters.js';
+import { isEligibleForNewGamePlus } from '../lib/meta/new-game-plus.js';
 
 function getResult() {
     return state.career.lastFightResult;
@@ -146,6 +147,21 @@ export function renderPostFightScene() {
             </article>
         </div>
 
+        ${(fightResult.newlyUnlockedAchievements || []).length > 0 ? `
+            <div class="pf-achievements">
+                <div class="pf-ach-eyebrow">Achievements unlocked</div>
+                <div class="pf-ach-list">
+                    ${fightResult.newlyUnlockedAchievements.map(a => `
+                        <div class="pf-ach-item pf-tone-${a.tier === 'platinum' ? 'gold' : a.tier === 'gold' ? 'gold' : 'red'}">
+                            <span class="pf-ach-tier">${a.tier.toUpperCase()}</span>
+                            <span class="pf-ach-name">${a.title}</span>
+                            <span class="pf-ach-desc">${a.description}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
         <div class="continue-bar">
             <div class="text">
                 <div class="head">${isWin ? 'Where to next?' : 'Pick the next move.'}</div>
@@ -154,6 +170,7 @@ export function renderPostFightScene() {
             <button class="btn" id="btn-pf-replay">Rewatch Fight</button>
             <button class="btn ghost" id="btn-pf-profile">Back to Profile</button>
             <button class="btn ghost small" id="btn-pf-camp">Back to Camp</button>
+            ${isEligibleForNewGamePlus(state) ? '<button class="btn gold small" id="btn-pf-meta">Career Meta</button>' : ''}
         </div>
 
         ${isWin ? '<div class="pf-confetti" aria-hidden="true">' +

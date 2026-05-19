@@ -3,6 +3,22 @@ import { clamp, getWeightClassEntry, state } from '../core.js';
 import { simulateCareerFight } from '../fight-domain/simulate-career-fight.js';
 import { resolveRankingUpdate } from '../ranking-domain/update-rankings.js';
 import { formatMoney, getRankLabel } from '../utils/formatters.js';
+import { getNGPlusOpponentBias } from '../meta/new-game-plus.js';
+import { checkAchievements } from '../meta/achievements.js';
+import { submitLeaderboards } from '../meta/leaderboards.js';
+
+const DIFFICULTY_BIAS = {
+    easy: -4,
+    normal: 0,
+    hard: 4,
+    insane: 8
+};
+
+function getDifficultyBias() {
+    const diffBias = DIFFICULTY_BIAS[state.difficulty] ?? 0;
+    const ngPlus = getNGPlusOpponentBias(state.ngPlusTier || 0);
+    return diffBias + (ngPlus.overallModifier || 0);
+}
 
 function getPlayerRankKey() {
     return getWeightClassEntry(state.setup.weight).key;
@@ -153,7 +169,8 @@ export function simulateFightState() {
                 : 0
         },
         playerFingerprint: state.career.playerFingerprint || {},
-        opponentFingerprint: opponent.fingerprint || {}
+        opponentFingerprint: opponent.fingerprint || {},
+        difficultyBias: getDifficultyBias()
     });
 
     if (simulation.result === 'Draw') {
@@ -238,6 +255,34 @@ export function simulateFightState() {
     if ((preFight.tension || 0) >= 60) {
         state.career.lastFightResult.notes.push(`Pre-fight tension was ${Math.round(preFight.tension)}% — the cage opened at a violent pace.`);
     }
+
+    // Title-fight tracking: if the opponent carries a titleHolder
+    // flag (set by the world matchmaker on TITLE_SHOT offers), update
+    // the player's title bookkeeping after the fight resolves. Feeds
+    // the title-related achievements and leaderboards.
+    const wasTitleFight = Boolean(opponent.titleHolder);
+    const wasDefendingChampion = state.career.playerTitleWins > state.career.titleDefenseCount
+        && state.career.playerStreak >= 1
+        && state.career.lastFightWasTitleDefense !== false;
+
+    // Achievements + leaderboards run last so they see the fully
+    // committed state (record, rankings, purse).
+    if (wasTitleFight && state.career.lastFightResult.result === 'Win') {
+        state.career.playerTitleWins = (state.career.playerTitleWins || 0) + 1;
+        if (state.career.firstTitleFightIndex === undefined) {
+            state.career.firstTitleFightIndex = (state.career.eventHistory || []).length;
+        }
+    }
+    if (wasDefendingChampion && state.career.lastFightResult.result === 'Win') {
+        state.career.titleDefenseCount = (state.career.titleDefenseCount || 0) + 1;
+    }
+
+    const newlyUnlocked = checkAchievements({
+        state,
+        lastFight: state.career.lastFightResult
+    });
+    state.career.lastFightResult.newlyUnlockedAchievements = newlyUnlocked;
+    submitLeaderboards({ state, lastFight: state.career.lastFightResult });
 
     clearCampAfterFight();
     return true;

@@ -1261,10 +1261,13 @@ function getPreFightAdjustments(preFight) {
     return { playerDelta, opponentDelta, finishBias };
 }
 
-export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint }) {
+export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint, difficultyBias = 0 }) {
     const adj = getPreFightAdjustments(preFight);
+    // difficultyBias > 0 → opponents play harder (positive opponent delta).
+    // difficultyBias < 0 → easier opponents. NG+ tiers + difficulty setting
+    // both feed into this single knob.
     const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight) + adj.playerDelta) + ((Math.random() * 6) - 3);
-    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta) + ((Math.random() * 6) - 3);
+    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta + difficultyBias) + ((Math.random() * 6) - 3);
     const scoreGap = Math.abs(playerScore - opponentScore) + adj.finishBias;
 
     let headline;

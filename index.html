@@ -29,6 +29,7 @@
                     <button class="btn ghost small" id="btn-save-game">Save</button>
                     <button class="btn ghost small" id="btn-load-game">Load</button>
                     <button class="btn ghost small" id="btn-save-manager">Slots</button>
+                    <button class="btn ghost small" id="btn-meta-browser">Meta</button>
                 </div>
             </div>
         </header>
@@ -381,6 +382,21 @@
             <footer class="save-manager-foot">
                 <span class="save-manager-note">Saves stay on this device. Export to JSON and import on another browser to move them.</span>
             </footer>
+        </div>
+    </div>
+
+    <div class="meta-browser-modal" id="meta-browser-modal" hidden>
+        <div class="meta-browser-backdrop" data-close-meta-browser></div>
+        <div class="meta-browser-window" role="dialog" aria-modal="true" aria-label="Career meta">
+            <header class="meta-browser-head">
+                <div>
+                    <div class="eyebrow">Meta</div>
+                    <div class="meta-browser-title">Achievements · Leaderboards · Settings</div>
+                </div>
+                <div class="meta-browser-tabs" data-meta-tabs></div>
+                <button class="btn ghost small" data-close-meta-browser>Close</button>
+            </header>
+            <div class="meta-browser-body" data-meta-body></div>
         </div>
     </div>
 
