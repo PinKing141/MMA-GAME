@@ -1,5 +1,50 @@
 'use strict';
 
+const AUDIO = (typeof window !== 'undefined' && window.OctagonAudio) || null;
+
+function audio(method, ...args) {
+  if (!AUDIO) return;
+  try { AUDIO[method]?.(...args); } catch { /* ignore */ }
+}
+
+function audioForStep(step) {
+  if (!AUDIO) return;
+  // Hits — pick a flavor from microText or move type.
+  const micro = (step?.microText || '').toLowerCase();
+  if (step?.corner === 'red' || step?.corner === 'blue') {
+    if (micro.includes('kick') || micro.includes('roundhouse') || micro.includes('teep') || micro.includes('low')) {
+      audio('hit', 'kick');
+    } else if (micro.includes('body') || micro.includes('liver') || micro.includes('hook')) {
+      audio('hit', 'body');
+    } else if (step?.callout && /TAP|REVERSAL|SUB/.test(step.callout)) {
+      audio('thud');
+    } else {
+      audio('hit', step.microText && step.microText.length > 3 ? 'cross' : 'jab');
+    }
+  }
+  // Knockdown / heavy events.
+  if (step?.callout === 'KO' || step?.callout === 'TKO' || /STOPPAGE/.test(step?.callout || '')) {
+    audio('thud');
+    audio('crowdRoar');
+  }
+  if (step?.callout && /TAP/.test(step.callout)) {
+    audio('crowdRoar');
+  }
+  // Fouls → boos.
+  if (step?.foul) {
+    audio('crowdBoo');
+  }
+  // Round break bell.
+  if (step?.phase === 'between_rounds') {
+    audio('bell');
+  }
+  // Final bell.
+  if (step?.phase === 'finished') {
+    audio('bell');
+    setTimeout(() => audio('bell'), 220);
+  }
+}
+
 const VENUES = {
   local: {
     label: 'Local Fights',
@@ -576,6 +621,7 @@ function finish(winnerCorner, method, detail) {
 }
 
 function applyStep(step) {
+  audioForStep(step);
   if (step.redState) {
     state.fighterState.red = clone(step.redState);
   }
@@ -734,6 +780,10 @@ function play() {
   hideOutcome();
   renderTransport();
   clearTimer();
+  // Opening bell + crowd ambience as the fight starts.
+  audio('walkoutDrums', false);
+  audio('crowdMurmur', true);
+  audio('bell');
   state.timer = window.requestAnimationFrame(stepPlaybackFrame);
 }
 
@@ -766,6 +816,9 @@ function setVenueOptions(allowedVenues) {
 function loadReplay(replay) {
   pause();
   clearReplayUi();
+  // Pre-fight: walkout drums + crowd murmur ambience.
+  audio('walkoutDrums', true);
+  audio('crowdMurmur', true);
 
   state.titleEyebrow = replay?.titleEyebrow || 'Live Fight';
   state.scorecards = clone(replay?.scorecards || DEFAULT_SCORECARDS);
@@ -806,17 +859,25 @@ function getState() {
 }
 
 function bindEvents() {
-  document.getElementById('btn-play-replay').addEventListener('click', play);
-  document.getElementById('btn-pause-replay').addEventListener('click', pause);
+  document.getElementById('btn-play-replay').addEventListener('click', () => {
+    audio('ui', 'confirm');
+    play();
+  });
+  document.getElementById('btn-pause-replay').addEventListener('click', () => {
+    audio('ui', 'cancel');
+    pause();
+  });
 
   document.querySelectorAll('[data-speed]').forEach(button => {
     button.addEventListener('click', () => {
+      audio('ui', 'click');
       setSpeed(Number(button.dataset.speed));
     });
   });
 
   document.querySelectorAll('[data-venue]').forEach(button => {
     button.addEventListener('click', () => {
+      audio('ui', 'click');
       setVenue(button.dataset.venue);
     });
   });
