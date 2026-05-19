@@ -12,7 +12,7 @@ import { createDefaultWorldState, hydrateWorldState } from '../world-domain/worl
 const MIN_AGE = 18;
 const MAX_AGE = 60;
 
-export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym-picker', 'gym', 'interview', 'weigh-in', 'fight'];
+export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym-picker', 'gym', 'interview', 'weigh-in', 'fight', 'post-fight'];
 
 function createDefaultSetupState() {
     return {

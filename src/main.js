@@ -205,6 +205,9 @@ function wireEvents() {
 
     document.getElementById('btn-close-fight-replay').addEventListener('click', () => {
         closeFightReplayModal();
+        if (state.career.lastFightResult) {
+            showScene('post-fight');
+        }
     });
 
     document.getElementById('btn-fight-back-profile').addEventListener('click', () => {
@@ -218,6 +221,23 @@ function wireEvents() {
     document.addEventListener('click', event => {
         if (event.target.closest('[data-close-fight-replay]')) {
             closeFightReplayModal();
+            if (state.career.lastFightResult) {
+                showScene('post-fight');
+            }
+            return;
+        }
+
+        // Post-fight scene buttons.
+        if (event.target.closest('#btn-pf-replay')) {
+            openFightReplayModal(getFightViewModel());
+            return;
+        }
+        if (event.target.closest('#btn-pf-profile') || event.target.closest('#btn-post-fight-back')) {
+            openProfileSceneAction();
+            return;
+        }
+        if (event.target.closest('#btn-pf-camp')) {
+            openGymSceneAction();
             return;
         }
 
