@@ -838,8 +838,22 @@ window.OctagonSim = {
   getState
 };
 
+const DESIGN_WIDTH = 1400;
+const DESIGN_HEIGHT = 880;
+
+function applyAppScale() {
+  const viewport = document.querySelector('.app-viewport');
+  if (!viewport) return;
+  const w = viewport.clientWidth || window.innerWidth;
+  const h = viewport.clientHeight || window.innerHeight;
+  const scale = Math.min(w / DESIGN_WIDTH, h / DESIGN_HEIGHT);
+  document.documentElement.style.setProperty('--app-scale', scale.toFixed(4));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   bindEvents();
+  applyAppScale();
+  window.addEventListener('resize', applyAppScale);
   loadReplay({
     venue: 'local',
     allowedVenues: ['local', 'regional', 'stadium'],

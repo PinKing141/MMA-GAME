@@ -55,27 +55,66 @@ body::before {
   inset: 0;
   background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px);
   pointer-events: none;
+  z-index: 0;
+}
+
+/* ===========================================================
+ * Viewport scaling: the whole engine is designed at a fixed
+ * reference size (1400 x 880). A JS-driven --app-scale variable
+ * scales the app to fit any viewport while preserving every
+ * internal ratio — the cage, panels, gaps, fonts all stay locked
+ * to each other no matter the screen size.
+ * =========================================================== */
+.app-viewport {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .app {
   position: relative;
-  z-index: 1;
-  min-height: 100vh;
+  width: 1400px;
+  height: 880px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 10px;
+  transform-origin: center center;
+  transform: scale(var(--app-scale, 1));
 }
 
 .broadcast-bar {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
   align-items: center;
   padding: 8px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   position: relative;
+  flex-shrink: 0;
+}
+
+/* Always-visible transport / speed controls pinned to the top bar. */
+.broadcast-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-strong);
+}
+
+.broadcast-controls .speed-chip {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.4px;
+  color: var(--text-dim);
+  text-transform: uppercase;
 }
 
 .broadcast-bar::before {
@@ -445,8 +484,7 @@ body::before {
 }
 
 .corner-indicator,
-.round-badge,
-.speed-widget {
+.round-badge {
   background: rgba(0, 0, 0, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
@@ -497,7 +535,7 @@ body::before {
 .cage-canvas {
   position: relative;
   flex: 1;
-  min-height: 392px;
+  aspect-ratio: 16 / 9;
   background-color: #08090e;
   background-size: cover;
   background-position: center;
@@ -664,17 +702,6 @@ body::before {
   margin-bottom: 4px;
 }
 
-.speed-widget {
-  position: absolute;
-  right: 10px;
-  bottom: 76px;
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-}
-
 .speed-controls,
 .transport-controls {
   display: flex;
@@ -776,64 +803,10 @@ body::before {
   font-weight: 700;
 }
 
-@media (max-width: 1100px) {
-  .main-grid {
-    grid-template-columns: 196px minmax(0, 1fr) 196px;
-  }
-}
-
-@media (max-height: 760px) {
-  .app {
-    gap: 8px;
-    padding: 8px;
-  }
-
-  .broadcast-bar {
-    padding: 7px 10px;
-  }
-
-  .main-grid {
-    grid-template-columns: 188px minmax(0, 1fr) 188px;
-    gap: 7px;
-  }
-
-  .fighter-portrait {
-    height: 52px;
-  }
-
-  .cage-canvas {
-    min-height: 350px;
-  }
-
-  .speed-widget {
-    bottom: 68px;
-  }
-}
-
-@media (max-width: 960px) {
-  html,
-  body {
-    overflow: auto;
-  }
-
-  .app {
-    min-height: auto;
-  }
-
-  .broadcast-bar,
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cage-canvas {
-    min-height: 440px;
-  }
-
-  .speed-widget {
-    right: 10px;
-    bottom: 110px;
-  }
-}
+/* Responsive breakpoints intentionally removed: the .app-viewport
+   scaling system locks every internal ratio to the fixed 1400x880
+   design surface. To change ratios for narrow viewports, adjust the
+   scale formula in app.js instead. */
 /* === Ground game / momentum / foul overlays === */
 
 .ground-overlay {

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <div class="app-viewport">
   <div class="app">
     <header class="broadcast-bar">
       <div class="brand-block">
@@ -23,6 +24,20 @@
           <span id="bc-red-name">Red Corner</span>
           <span class="vs">VS</span>
           <span id="bc-blue-name">Blue Corner</span>
+        </div>
+      </div>
+
+      <div class="broadcast-controls" id="broadcast-controls">
+        <div class="speed-chip">Fight speed</div>
+        <div class="transport-controls">
+          <button class="transport-btn" id="btn-play-replay">Play</button>
+          <button class="transport-btn active" id="btn-pause-replay">Pause</button>
+        </div>
+        <div class="speed-controls">
+          <button class="speed-btn" data-speed="0.5">0.5x</button>
+          <button class="speed-btn active" data-speed="1">1x</button>
+          <button class="speed-btn" data-speed="2">2x</button>
+          <button class="speed-btn" data-speed="3">3x</button>
         </div>
       </div>
     </header>
@@ -120,20 +135,6 @@
             </div>
           </div>
 
-          <div class="speed-widget">
-            <div class="speed-chip">Fight speed</div>
-            <div class="transport-controls">
-              <button class="transport-btn" id="btn-play-replay">Play</button>
-              <button class="transport-btn active" id="btn-pause-replay">Pause</button>
-            </div>
-            <div class="speed-controls">
-              <button class="speed-btn" data-speed="0.5">0.5x</button>
-              <button class="speed-btn active" data-speed="1">1x</button>
-              <button class="speed-btn" data-speed="2">2x</button>
-              <button class="speed-btn" data-speed="3">3x</button>
-            </div>
-          </div>
-
           <div class="ticker-panel">
             <div class="ticker-head">Live ticker</div>
             <div class="ticker-list" id="ticker-list"></div>
@@ -195,6 +196,7 @@
     </div>
   </div>
 
+  </div>
   <script src="./app.js"></script>
 </body>
 </html>
