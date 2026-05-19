@@ -113,16 +113,73 @@
         </div>
 
         <div class="cage-canvas" id="cage-canvas">
+          <!-- Tale-of-the-tape splash, shown during pregame -->
+          <div class="tale-of-tape" id="tale-of-tape">
+            <div class="tot-card tot-red">
+              <div class="tot-fighter-svg" id="tot-portrait-red"></div>
+              <div class="tot-name" id="tot-name-red">—</div>
+              <div class="tot-nick" id="tot-nick-red"></div>
+              <div class="tot-meta" id="tot-meta-red"></div>
+              <div class="tot-record" id="tot-record-red">0-0-0</div>
+            </div>
+            <div class="tot-vs">
+              <div class="tot-vs-mark">VS</div>
+              <div class="tot-event" id="tot-event">LIVE</div>
+            </div>
+            <div class="tot-card tot-blue">
+              <div class="tot-fighter-svg" id="tot-portrait-blue"></div>
+              <div class="tot-name" id="tot-name-blue">—</div>
+              <div class="tot-nick" id="tot-nick-blue"></div>
+              <div class="tot-meta" id="tot-meta-blue"></div>
+              <div class="tot-record" id="tot-record-blue">0-0-0</div>
+            </div>
+          </div>
+
+          <!-- Round timer ring -->
+          <div class="timer-ring" id="timer-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="timer-ring-bg" cx="50" cy="50" r="46"></circle>
+              <circle class="timer-ring-fg" id="timer-ring-fg" cx="50" cy="50" r="46"></circle>
+            </svg>
+            <div class="timer-ring-label">
+              <div class="timer-ring-round" id="timer-ring-round">R1</div>
+              <div class="timer-ring-time" id="timer-ring-time">5:00</div>
+            </div>
+          </div>
+
+          <!-- Lower-third broadcast graphic -->
+          <div class="lower-third" id="lower-third">
+            <div class="lower-third-bar">
+              <span class="lower-third-corner" id="lt-corner">RED</span>
+              <span class="lower-third-name" id="lt-name">—</span>
+              <span class="lower-third-stat" id="lt-stat"></span>
+            </div>
+          </div>
+
           <div class="action-callout" id="action-callout">
             <div class="overlay-kicker">Live fight beat</div>
             <div class="overlay-text">Fight moment</div>
           </div>
 
+          <!-- Round break scorecard -->
           <div class="round-end-overlay" id="round-end-overlay">
             <div class="round-end-panel">
-              <div class="outcome-eyebrow">Round end</div>
+              <div class="outcome-eyebrow">Between rounds</div>
               <div class="round-end-title" id="rend-title">ROUND 1</div>
               <div class="round-end-sub" id="rend-sub">Corners reset the pace.</div>
+              <div class="round-scorecard" id="round-scorecard">
+                <div class="rsc-side rsc-red">
+                  <div class="rsc-corner">RED</div>
+                  <div class="rsc-name" id="rsc-red-name">—</div>
+                  <div class="rsc-cards" id="rsc-red-cards"></div>
+                </div>
+                <div class="rsc-divider">JUDGES</div>
+                <div class="rsc-side rsc-blue">
+                  <div class="rsc-corner">BLUE</div>
+                  <div class="rsc-name" id="rsc-blue-name">—</div>
+                  <div class="rsc-cards" id="rsc-blue-cards"></div>
+                </div>
+              </div>
             </div>
           </div>
 

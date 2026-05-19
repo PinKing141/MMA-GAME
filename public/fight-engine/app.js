@@ -464,6 +464,104 @@ function renderAll() {
   renderTicker();
   renderMicroFeeds();
   renderTransport();
+  renderTimerRing();
+  renderLowerThird();
+  renderTaleOfTape();
+}
+
+const ROUND_LENGTH_SECONDS = 300;
+
+function renderTimerRing() {
+  const ring = document.getElementById('timer-ring');
+  if (!ring) return;
+  const timeText = fmtTime(state.timeRemaining);
+  document.getElementById('timer-ring-time').textContent = timeText;
+  document.getElementById('timer-ring-round').textContent =
+    state.phase === 'finished' ? 'END'
+    : state.phase === 'pregame' ? 'PRE'
+    : state.phase === 'between_rounds' ? `R${state.round}` : `R${state.round}`;
+  const fg = document.getElementById('timer-ring-fg');
+  if (!fg) return;
+  const circumference = 2 * Math.PI * 46;
+  const pct = Math.max(0, Math.min(1, state.timeRemaining / ROUND_LENGTH_SECONDS));
+  fg.setAttribute('stroke-dasharray', `${circumference}`);
+  fg.setAttribute('stroke-dashoffset', `${circumference * (1 - pct)}`);
+  ring.classList.toggle('warning', state.timeRemaining <= 60 && state.phase === 'fighting');
+  ring.classList.toggle('hidden', state.phase === 'pregame');
+}
+
+function renderLowerThird() {
+  const lt = document.getElementById('lower-third');
+  if (!lt) return;
+  // Show the last attacker's name + current ground/range tag.
+  const recentAction = state.ticker[state.ticker.length - 1];
+  if (!recentAction || state.phase === 'pregame' || state.phase === 'finished') {
+    lt.classList.remove('show');
+    return;
+  }
+  const corner = recentAction.tone === 'red' || recentAction.tone === 'blue'
+    ? recentAction.tone
+    : null;
+  if (!corner) {
+    lt.classList.remove('show');
+    return;
+  }
+  const fighter = state[corner];
+  document.getElementById('lt-corner').textContent = corner.toUpperCase();
+  document.getElementById('lt-name').textContent = fighter.name || corner;
+  const groundLabel = state.groundPosition ? GROUND_POSITION_LABELS[state.groundPosition] : null;
+  const stat = groundLabel
+    ? `${groundLabel} · ${fighter.stats?.grp ?? '—'} GRP`
+    : `${fighter.stats?.stk ?? '—'} STK · ${fighter.stats?.grp ?? '—'} GRP`;
+  document.getElementById('lt-stat').textContent = stat;
+  lt.classList.remove('show');
+  void lt.offsetWidth;
+  lt.classList.add('show', `corner-${corner}`);
+  // Auto-hide.
+  clearTimeout(lt._timer);
+  lt._timer = setTimeout(() => lt.classList.remove('show'), 2200);
+}
+
+function renderTaleOfTape() {
+  const splash = document.getElementById('tale-of-tape');
+  if (!splash) return;
+  const shouldShow = state.phase === 'pregame' && state.red?.name && state.red.name !== '—';
+  splash.classList.toggle('show', shouldShow);
+
+  ['red', 'blue'].forEach(corner => {
+    const fighter = state[corner];
+    const color = corner === 'red' ? '#e21d36' : '#2563eb';
+    const glow = corner === 'red' ? '#ff5d72' : '#5a8aff';
+    document.getElementById(`tot-portrait-${corner}`).innerHTML = portraitSvg(color, glow);
+    document.getElementById(`tot-name-${corner}`).textContent = fighter.name || '—';
+    document.getElementById(`tot-nick-${corner}`).textContent = fighter.nickname ? `"${fighter.nickname}"` : '';
+    document.getElementById(`tot-meta-${corner}`).innerHTML = `
+      <span>${fighter.country || ''}</span>
+      <span>·</span>
+      <span>${fighter.age || '—'} y/o</span>
+      <span>·</span>
+      <span>${fighter.stance || 'Orthodox'}</span>
+    `;
+    // Record pull from scorecards isn't quite right — show a placeholder.
+    const placeholderRecord = fighter.record || '—';
+    document.getElementById(`tot-record-${corner}`).textContent = typeof placeholderRecord === 'string'
+      ? placeholderRecord
+      : `${placeholderRecord.wins || 0}-${placeholderRecord.losses || 0}-${placeholderRecord.draws || 0}`;
+  });
+  document.getElementById('tot-event').textContent = state.titleEyebrow || 'LIVE FIGHT';
+}
+
+function updateScorecardOverlay(round) {
+  // The between-round overlay surfaces running judge scores.
+  const redScores = (state.scorecards.red || []).slice(0, round);
+  const blueScores = (state.scorecards.blue || []).slice(0, round);
+  const formatCard = (scores) => scores
+    .map((s, i) => `<span class="rsc-card"><label>R${i + 1}</label><strong>${s ?? '—'}</strong></span>`)
+    .join('');
+  document.getElementById('rsc-red-name').textContent = state.red.name || 'Red';
+  document.getElementById('rsc-blue-name').textContent = state.blue.name || 'Blue';
+  document.getElementById('rsc-red-cards').innerHTML = formatCard(redScores);
+  document.getElementById('rsc-blue-cards').innerHTML = formatCard(blueScores);
 }
 
 function flashHit(corner) {
@@ -532,9 +630,11 @@ function clearReplayUi() {
 function showRoundBreak(round) {
   const overlay = document.getElementById('round-end-overlay');
   document.getElementById('rend-title').textContent = `ROUND ${round}`;
-  document.getElementById('rend-sub').textContent = 'Corners settle the work before the next push.';
+  document.getElementById('rend-sub').textContent = 'Judges turn in their cards for the round.';
+  updateScorecardOverlay(round);
   overlay.classList.add('show');
-  window.setTimeout(() => overlay.classList.remove('show'), Math.max(450, 850 / state.speed));
+  // Longer hold so the audience can read scorecards.
+  window.setTimeout(() => overlay.classList.remove('show'), Math.max(1600, 2400 / state.speed));
 }
 
 function showOutcome() {

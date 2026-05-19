@@ -919,3 +919,259 @@ body::before {
   20% { box-shadow: inset 0 0 80px 12px rgba(255, 200, 50, 0.42); }
   100% { box-shadow: inset 0 0 0 0 rgba(255, 200, 50, 0); }
 }
+
+/* === Round timer ring (broadcast-style) === */
+.timer-ring {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 92px;
+  height: 92px;
+  z-index: 5;
+  transition: opacity 240ms ease;
+}
+.timer-ring.hidden { opacity: 0; pointer-events: none; }
+.timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.timer-ring-bg {
+  fill: rgba(0, 0, 0, 0.6);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 3;
+}
+.timer-ring-fg {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 240ms linear, stroke 240ms ease;
+}
+.timer-ring.warning .timer-ring-fg {
+  stroke: var(--red-bright);
+  animation: timerPulse 0.9s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { stroke-width: 4; }
+  50%      { stroke-width: 5.5; }
+}
+.timer-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.timer-ring-round {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  color: var(--text-dim);
+}
+.timer-ring-time {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+  margin-top: 2px;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+
+/* === Lower-third broadcast graphic === */
+.lower-third {
+  position: absolute;
+  left: 16px;
+  bottom: 80px;
+  max-width: 460px;
+  z-index: 5;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 280ms ease, transform 280ms ease;
+  pointer-events: none;
+}
+.lower-third.show { opacity: 1; transform: translateX(0); }
+.lower-third-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: linear-gradient(90deg, rgba(20, 20, 26, 0.96), rgba(20, 20, 26, 0.84));
+  border-left: 3px solid var(--gold);
+  border-top: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+.lower-third.corner-red .lower-third-bar { border-left-color: var(--red-bright); }
+.lower-third.corner-blue .lower-third-bar { border-left-color: var(--blue-bright); }
+.lower-third-corner {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.lower-third-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.lower-third-stat {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1.2px;
+}
+
+/* === Tale of the tape splash (pregame) === */
+.tale-of-tape {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.92));
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 24px 30px;
+}
+.tale-of-tape.show { display: flex; }
+.tot-card {
+  text-align: center;
+  flex: 0 0 240px;
+  padding: 16px;
+  background: rgba(20, 20, 26, 0.82);
+  border-top: 3px solid var(--gold);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.tot-card.tot-red { border-top-color: var(--red-bright); }
+.tot-card.tot-blue { border-top-color: var(--blue-bright); }
+.tot-fighter-svg {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.tot-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: 0.8px;
+  color: var(--text);
+}
+.tot-nick {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--gold-bright);
+  margin-top: 2px;
+  min-height: 14px;
+}
+.tot-meta {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+.tot-record {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 1.4px;
+  color: var(--text);
+  margin-top: 8px;
+}
+.tot-vs {
+  text-align: center;
+  flex-shrink: 0;
+}
+.tot-vs-mark {
+  font-family: var(--font-display);
+  font-size: 64px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  line-height: 1;
+}
+.tot-event {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2.4px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+/* === Between-round scorecard panel === */
+.round-scorecard {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.rsc-side { text-align: center; }
+.rsc-side.rsc-red .rsc-name { color: #ff7a7a; }
+.rsc-side.rsc-blue .rsc-name { color: #6695ff; }
+.rsc-corner {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
+.rsc-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.8px;
+  margin: 2px 0 8px;
+}
+.rsc-cards {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.rsc-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: center;
+  min-width: 32px;
+}
+.rsc-card label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  color: var(--text-dim);
+}
+.rsc-card strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text);
+}
+.rsc-divider {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.4px;
+  color: var(--gold);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 0 4px;
+}
+
+@media (max-width: 760px) {
+  .tot-card { flex: 0 0 180px; padding: 10px; }
+  .tot-name { font-size: 18px; }
+  .tot-record { font-size: 20px; }
+  .tot-vs-mark { font-size: 44px; }
+  .timer-ring { width: 76px; height: 76px; }
+  .timer-ring-time { font-size: 16px; }
+}
