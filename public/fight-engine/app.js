@@ -67,7 +67,11 @@ const state = {
   timer: null,
   calloutTimer: null,
   segment: null,
-  breakUntil: 0
+  breakUntil: 0,
+  groundPosition: null,
+  groundTop: null,
+  momentum: 0,
+  foul: null
 };
 
 function createFighterState(y, facing, x = facing === 180 ? 47 : 53) {
@@ -233,6 +237,17 @@ function renderFighterState(corner) {
   });
 }
 
+const GROUND_POSITION_LABELS = {
+  NEUTRAL_GUARD: 'Open Guard',
+  HALF_GUARD: 'Half Guard',
+  SIDE_CONTROL: 'Side Control',
+  NORTH_SOUTH: 'North-South',
+  MOUNT: 'Full Mount',
+  BACK_CONTROL: 'Back Mount',
+  CLINCH_OVER_UNDER: 'Over-Under Clinch',
+  CLINCH_BODYLOCK: 'Bodylock'
+};
+
 function renderFighterPositions() {
   const canvas = document.getElementById('cage-canvas');
 
@@ -275,7 +290,63 @@ function renderFighterPositions() {
     element.classList.toggle('range-close', currentRange === 'Close');
     element.classList.toggle('range-clinch', currentRange === 'Clinch');
     element.classList.toggle('range-ground', currentRange === 'Ground');
+    element.classList.toggle('top', state.groundTop === corner);
   });
+
+  renderGroundOverlay();
+  renderMomentumMeter();
+}
+
+function renderGroundOverlay() {
+  let overlay = document.getElementById('ground-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ground-overlay';
+    overlay.className = 'ground-overlay';
+    document.getElementById('cage-canvas').appendChild(overlay);
+  }
+  if (!state.groundPosition) {
+    overlay.classList.remove('show');
+    return;
+  }
+  const label = GROUND_POSITION_LABELS[state.groundPosition] || 'Ground';
+  const topName = state.groundTop === 'red'
+    ? (state.red?.name || 'Red').split(' ').slice(-1)[0]
+    : (state.blue?.name || 'Blue').split(' ').slice(-1)[0];
+  const toneCorner = state.groundTop === 'red' ? 'red' : 'blue';
+  overlay.className = `ground-overlay show tone-${toneCorner}`;
+  overlay.innerHTML = `
+    <div class="ground-overlay-eyebrow">Position</div>
+    <div class="ground-overlay-label">${label}</div>
+    <div class="ground-overlay-top">${topName} on top</div>
+  `;
+}
+
+function renderMomentumMeter() {
+  let meter = document.getElementById('momentum-meter');
+  if (!meter) {
+    meter = document.createElement('div');
+    meter.id = 'momentum-meter';
+    meter.className = 'momentum-meter';
+    meter.innerHTML = `
+      <div class="momentum-track">
+        <div class="momentum-fill" id="momentum-fill"></div>
+      </div>
+      <div class="momentum-label">Momentum</div>
+    `;
+    document.getElementById('cage-canvas').appendChild(meter);
+  }
+  const value = state.momentum || 0;
+  const fill = document.getElementById('momentum-fill');
+  const pct = Math.abs(value) * 50; // 0..50% of half-width
+  fill.style.width = `${pct}%`;
+  if (value >= 0) {
+    fill.style.left = '50%';
+    fill.style.background = 'var(--red-bright)';
+  } else {
+    fill.style.left = `${50 - pct}%`;
+    fill.style.background = 'var(--blue-bright)';
+  }
 }
 
 function renderPlaybackFrame() {
@@ -402,8 +473,14 @@ function clearReplayUi() {
   state.micro.blue = [];
   state.segment = null;
   state.breakUntil = 0;
+  state.groundPosition = null;
+  state.groundTop = null;
+  state.momentum = 0;
+  state.foul = null;
   document.getElementById('action-callout').classList.remove('show');
   document.getElementById('round-end-overlay').classList.remove('show');
+  const overlay = document.getElementById('ground-overlay');
+  if (overlay) overlay.classList.remove('show');
   hideOutcome();
 }
 
@@ -510,6 +587,10 @@ function applyStep(step) {
   state.round = step.round ?? state.round;
   state.phase = step.phase ?? 'fighting';
   state.timeRemaining = parseClock(step.time);
+  state.groundPosition = step.groundPosition ?? null;
+  state.groundTop = step.groundTop ?? null;
+  state.momentum = step.momentum ?? state.momentum ?? 0;
+  state.foul = step.foul ?? null;
   appendReplayEvent(step);
 
   if (step.corner === 'red' || step.corner === 'blue') {
@@ -520,7 +601,19 @@ function applyStep(step) {
     showRoundBreak(step.round);
   }
 
+  if (step.foul) {
+    flashFoul();
+  }
+
   renderAll();
+}
+
+function flashFoul() {
+  const canvas = document.getElementById('cage-canvas');
+  canvas.classList.remove('foul-flash');
+  void canvas.offsetWidth;
+  canvas.classList.add('foul-flash');
+  window.setTimeout(() => canvas.classList.remove('foul-flash'), 700);
 }
 
 function clearTimer() {
