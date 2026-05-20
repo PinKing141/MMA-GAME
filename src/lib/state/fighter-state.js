@@ -7,11 +7,14 @@ import { buildPresetStats, clamp, getOverallAverage } from '../utils/calculation
 import { generateFingerprintForArchetype } from '../domain/npc-generator.js';
 import { createFingerprint } from '../domain/style-fingerprint.js';
 import { createPlayerDefaultPersonality, generatePersonality } from '../domain/personality.js';
+import { createDefaultWorldState, hydrateWorldState } from '../world-domain/world-state.js';
+import { getDifficulty, getNGPlusTier } from '../meta/meta-store.js';
+import { getStartingBonus } from '../meta/new-game-plus.js';
 
 const MIN_AGE = 18;
 const MAX_AGE = 60;
 
-export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym-picker', 'gym', 'interview', 'weigh-in', 'fight'];
+export const SCENE_NAMES = ['setup', 'frame', 'allocate', 'profile', 'opponent', 'contract', 'gym-picker', 'gym', 'interview', 'weigh-in', 'fight', 'post-fight'];
 
 function createDefaultSetupState() {
     return {
@@ -36,8 +39,14 @@ export const state = {
     pointsRemaining: POINTS_BUDGET,
     selectedStat: null,
     selectedPreset: 'all-rounder',
+    difficulty: getDifficulty(),
+    ngPlusTier: getNGPlusTier(),
     career: createDefaultCareerState()
 };
+
+function generateCareerId() {
+    return `career-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
 
 function createCountryLookup() {
     return Object.fromEntries(COUNTRIES.map(country => [country.code, country]));
@@ -132,12 +141,16 @@ function createDefaultPreFightState() {
 }
 
 function createDefaultCareerState() {
+    const bonus = getStartingBonus();
     return {
-        cash: 6500,
+        careerId: generateCareerId(),
+        cash: 6500 + (bonus.cash || 0),
         fitness: 100,
         morale: 100,
         sharpness: 35,
-        reputation: 0,
+        reputation: bonus.reputation || 0,
+        firstTitleFightIndex: undefined,
+        titleDefenseCount: 0,
         campWeeksCompleted: 0,
         campWeeksTotal: 4,
         fatigue: 0,
@@ -165,7 +178,12 @@ function createDefaultCareerState() {
         preFight: createDefaultPreFightState(),
         playerFingerprint: createDefaultPlayerFingerprint(),
         playerPersonality: createPlayerDefaultPersonality('all-rounder'),
-        rivalries: {}
+        rivalries: {},
+        world: createDefaultWorldState(),
+        playerCallouts: [],
+        playerPromotionId: 'cage-southwest',
+        playerStreak: 0,
+        playerTitleWins: 0
     };
 }
 
@@ -244,12 +262,15 @@ export function hydrateState(snapshot) {
         : ALL_ATTRIBUTES[0]?.key || null;
     state.selectedPreset = typeof snapshot.selectedPreset === 'string' ? snapshot.selectedPreset : 'all-rounder';
     state.archetype = snapshot.archetype || null;
+    state.difficulty = snapshot.difficulty || getDifficulty();
+    state.ngPlusTier = Number.isFinite(snapshot.ngPlusTier) ? snapshot.ngPlusTier : getNGPlusTier();
 
     const defaultCareer = createDefaultCareerState();
     const careerSnapshot = snapshot.career || {};
     state.career = {
         ...defaultCareer,
         ...careerSnapshot,
+        careerId: careerSnapshot.careerId || defaultCareer.careerId,
         injuries: Array.isArray(careerSnapshot.injuries) ? careerSnapshot.injuries : [],
         trainingHistory: Array.isArray(careerSnapshot.trainingHistory) ? careerSnapshot.trainingHistory : [],
         availableEvents: Array.isArray(careerSnapshot.availableEvents) ? careerSnapshot.availableEvents : [],
@@ -279,6 +300,11 @@ export function hydrateState(snapshot) {
         rivalries: careerSnapshot.rivalries && typeof careerSnapshot.rivalries === 'object'
             ? careerSnapshot.rivalries
             : defaultCareer.rivalries,
+        world: hydrateWorldState(careerSnapshot.world),
+        playerCallouts: Array.isArray(careerSnapshot.playerCallouts) ? careerSnapshot.playerCallouts : [],
+        playerPromotionId: careerSnapshot.playerPromotionId || defaultCareer.playerPromotionId,
+        playerStreak: Number.isFinite(careerSnapshot.playerStreak) ? careerSnapshot.playerStreak : 0,
+        playerTitleWins: Number.isFinite(careerSnapshot.playerTitleWins) ? careerSnapshot.playerTitleWins : 0,
         selectedEvent: careerSnapshot.selectedEvent || null,
         contract: careerSnapshot.contract || null,
         selectedCoach: careerSnapshot.selectedCoach || null,

@@ -1,5 +1,50 @@
 'use strict';
 
+const AUDIO = (typeof window !== 'undefined' && window.OctagonAudio) || null;
+
+function audio(method, ...args) {
+  if (!AUDIO) return;
+  try { AUDIO[method]?.(...args); } catch { /* ignore */ }
+}
+
+function audioForStep(step) {
+  if (!AUDIO) return;
+  // Hits — pick a flavor from microText or move type.
+  const micro = (step?.microText || '').toLowerCase();
+  if (step?.corner === 'red' || step?.corner === 'blue') {
+    if (micro.includes('kick') || micro.includes('roundhouse') || micro.includes('teep') || micro.includes('low')) {
+      audio('hit', 'kick');
+    } else if (micro.includes('body') || micro.includes('liver') || micro.includes('hook')) {
+      audio('hit', 'body');
+    } else if (step?.callout && /TAP|REVERSAL|SUB/.test(step.callout)) {
+      audio('thud');
+    } else {
+      audio('hit', step.microText && step.microText.length > 3 ? 'cross' : 'jab');
+    }
+  }
+  // Knockdown / heavy events.
+  if (step?.callout === 'KO' || step?.callout === 'TKO' || /STOPPAGE/.test(step?.callout || '')) {
+    audio('thud');
+    audio('crowdRoar');
+  }
+  if (step?.callout && /TAP/.test(step.callout)) {
+    audio('crowdRoar');
+  }
+  // Fouls → boos.
+  if (step?.foul) {
+    audio('crowdBoo');
+  }
+  // Round break bell.
+  if (step?.phase === 'between_rounds') {
+    audio('bell');
+  }
+  // Final bell.
+  if (step?.phase === 'finished') {
+    audio('bell');
+    setTimeout(() => audio('bell'), 220);
+  }
+}
+
 const VENUES = {
   local: {
     label: 'Local Fights',
@@ -67,7 +112,11 @@ const state = {
   timer: null,
   calloutTimer: null,
   segment: null,
-  breakUntil: 0
+  breakUntil: 0,
+  groundPosition: null,
+  groundTop: null,
+  momentum: 0,
+  foul: null
 };
 
 function createFighterState(y, facing, x = facing === 180 ? 47 : 53) {
@@ -233,6 +282,17 @@ function renderFighterState(corner) {
   });
 }
 
+const GROUND_POSITION_LABELS = {
+  NEUTRAL_GUARD: 'Open Guard',
+  HALF_GUARD: 'Half Guard',
+  SIDE_CONTROL: 'Side Control',
+  NORTH_SOUTH: 'North-South',
+  MOUNT: 'Full Mount',
+  BACK_CONTROL: 'Back Mount',
+  CLINCH_OVER_UNDER: 'Over-Under Clinch',
+  CLINCH_BODYLOCK: 'Bodylock'
+};
+
 function renderFighterPositions() {
   const canvas = document.getElementById('cage-canvas');
 
@@ -275,7 +335,63 @@ function renderFighterPositions() {
     element.classList.toggle('range-close', currentRange === 'Close');
     element.classList.toggle('range-clinch', currentRange === 'Clinch');
     element.classList.toggle('range-ground', currentRange === 'Ground');
+    element.classList.toggle('top', state.groundTop === corner);
   });
+
+  renderGroundOverlay();
+  renderMomentumMeter();
+}
+
+function renderGroundOverlay() {
+  let overlay = document.getElementById('ground-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ground-overlay';
+    overlay.className = 'ground-overlay';
+    document.getElementById('cage-canvas').appendChild(overlay);
+  }
+  if (!state.groundPosition) {
+    overlay.classList.remove('show');
+    return;
+  }
+  const label = GROUND_POSITION_LABELS[state.groundPosition] || 'Ground';
+  const topName = state.groundTop === 'red'
+    ? (state.red?.name || 'Red').split(' ').slice(-1)[0]
+    : (state.blue?.name || 'Blue').split(' ').slice(-1)[0];
+  const toneCorner = state.groundTop === 'red' ? 'red' : 'blue';
+  overlay.className = `ground-overlay show tone-${toneCorner}`;
+  overlay.innerHTML = `
+    <div class="ground-overlay-eyebrow">Position</div>
+    <div class="ground-overlay-label">${label}</div>
+    <div class="ground-overlay-top">${topName} on top</div>
+  `;
+}
+
+function renderMomentumMeter() {
+  let meter = document.getElementById('momentum-meter');
+  if (!meter) {
+    meter = document.createElement('div');
+    meter.id = 'momentum-meter';
+    meter.className = 'momentum-meter';
+    meter.innerHTML = `
+      <div class="momentum-track">
+        <div class="momentum-fill" id="momentum-fill"></div>
+      </div>
+      <div class="momentum-label">Momentum</div>
+    `;
+    document.getElementById('cage-canvas').appendChild(meter);
+  }
+  const value = state.momentum || 0;
+  const fill = document.getElementById('momentum-fill');
+  const pct = Math.abs(value) * 50; // 0..50% of half-width
+  fill.style.width = `${pct}%`;
+  if (value >= 0) {
+    fill.style.left = '50%';
+    fill.style.background = 'var(--red-bright)';
+  } else {
+    fill.style.left = `${50 - pct}%`;
+    fill.style.background = 'var(--blue-bright)';
+  }
 }
 
 function renderPlaybackFrame() {
@@ -348,6 +464,104 @@ function renderAll() {
   renderTicker();
   renderMicroFeeds();
   renderTransport();
+  renderTimerRing();
+  renderLowerThird();
+  renderTaleOfTape();
+}
+
+const ROUND_LENGTH_SECONDS = 300;
+
+function renderTimerRing() {
+  const ring = document.getElementById('timer-ring');
+  if (!ring) return;
+  const timeText = fmtTime(state.timeRemaining);
+  document.getElementById('timer-ring-time').textContent = timeText;
+  document.getElementById('timer-ring-round').textContent =
+    state.phase === 'finished' ? 'END'
+    : state.phase === 'pregame' ? 'PRE'
+    : state.phase === 'between_rounds' ? `R${state.round}` : `R${state.round}`;
+  const fg = document.getElementById('timer-ring-fg');
+  if (!fg) return;
+  const circumference = 2 * Math.PI * 46;
+  const pct = Math.max(0, Math.min(1, state.timeRemaining / ROUND_LENGTH_SECONDS));
+  fg.setAttribute('stroke-dasharray', `${circumference}`);
+  fg.setAttribute('stroke-dashoffset', `${circumference * (1 - pct)}`);
+  ring.classList.toggle('warning', state.timeRemaining <= 60 && state.phase === 'fighting');
+  ring.classList.toggle('hidden', state.phase === 'pregame');
+}
+
+function renderLowerThird() {
+  const lt = document.getElementById('lower-third');
+  if (!lt) return;
+  // Show the last attacker's name + current ground/range tag.
+  const recentAction = state.ticker[state.ticker.length - 1];
+  if (!recentAction || state.phase === 'pregame' || state.phase === 'finished') {
+    lt.classList.remove('show');
+    return;
+  }
+  const corner = recentAction.tone === 'red' || recentAction.tone === 'blue'
+    ? recentAction.tone
+    : null;
+  if (!corner) {
+    lt.classList.remove('show');
+    return;
+  }
+  const fighter = state[corner];
+  document.getElementById('lt-corner').textContent = corner.toUpperCase();
+  document.getElementById('lt-name').textContent = fighter.name || corner;
+  const groundLabel = state.groundPosition ? GROUND_POSITION_LABELS[state.groundPosition] : null;
+  const stat = groundLabel
+    ? `${groundLabel} · ${fighter.stats?.grp ?? '—'} GRP`
+    : `${fighter.stats?.stk ?? '—'} STK · ${fighter.stats?.grp ?? '—'} GRP`;
+  document.getElementById('lt-stat').textContent = stat;
+  lt.classList.remove('show');
+  void lt.offsetWidth;
+  lt.classList.add('show', `corner-${corner}`);
+  // Auto-hide.
+  clearTimeout(lt._timer);
+  lt._timer = setTimeout(() => lt.classList.remove('show'), 2200);
+}
+
+function renderTaleOfTape() {
+  const splash = document.getElementById('tale-of-tape');
+  if (!splash) return;
+  const shouldShow = state.phase === 'pregame' && state.red?.name && state.red.name !== '—';
+  splash.classList.toggle('show', shouldShow);
+
+  ['red', 'blue'].forEach(corner => {
+    const fighter = state[corner];
+    const color = corner === 'red' ? '#e21d36' : '#2563eb';
+    const glow = corner === 'red' ? '#ff5d72' : '#5a8aff';
+    document.getElementById(`tot-portrait-${corner}`).innerHTML = portraitSvg(color, glow);
+    document.getElementById(`tot-name-${corner}`).textContent = fighter.name || '—';
+    document.getElementById(`tot-nick-${corner}`).textContent = fighter.nickname ? `"${fighter.nickname}"` : '';
+    document.getElementById(`tot-meta-${corner}`).innerHTML = `
+      <span>${fighter.country || ''}</span>
+      <span>·</span>
+      <span>${fighter.age || '—'} y/o</span>
+      <span>·</span>
+      <span>${fighter.stance || 'Orthodox'}</span>
+    `;
+    // Record pull from scorecards isn't quite right — show a placeholder.
+    const placeholderRecord = fighter.record || '—';
+    document.getElementById(`tot-record-${corner}`).textContent = typeof placeholderRecord === 'string'
+      ? placeholderRecord
+      : `${placeholderRecord.wins || 0}-${placeholderRecord.losses || 0}-${placeholderRecord.draws || 0}`;
+  });
+  document.getElementById('tot-event').textContent = state.titleEyebrow || 'LIVE FIGHT';
+}
+
+function updateScorecardOverlay(round) {
+  // The between-round overlay surfaces running judge scores.
+  const redScores = (state.scorecards.red || []).slice(0, round);
+  const blueScores = (state.scorecards.blue || []).slice(0, round);
+  const formatCard = (scores) => scores
+    .map((s, i) => `<span class="rsc-card"><label>R${i + 1}</label><strong>${s ?? '—'}</strong></span>`)
+    .join('');
+  document.getElementById('rsc-red-name').textContent = state.red.name || 'Red';
+  document.getElementById('rsc-blue-name').textContent = state.blue.name || 'Blue';
+  document.getElementById('rsc-red-cards').innerHTML = formatCard(redScores);
+  document.getElementById('rsc-blue-cards').innerHTML = formatCard(blueScores);
 }
 
 function flashHit(corner) {
@@ -402,17 +616,25 @@ function clearReplayUi() {
   state.micro.blue = [];
   state.segment = null;
   state.breakUntil = 0;
+  state.groundPosition = null;
+  state.groundTop = null;
+  state.momentum = 0;
+  state.foul = null;
   document.getElementById('action-callout').classList.remove('show');
   document.getElementById('round-end-overlay').classList.remove('show');
+  const overlay = document.getElementById('ground-overlay');
+  if (overlay) overlay.classList.remove('show');
   hideOutcome();
 }
 
 function showRoundBreak(round) {
   const overlay = document.getElementById('round-end-overlay');
   document.getElementById('rend-title').textContent = `ROUND ${round}`;
-  document.getElementById('rend-sub').textContent = 'Corners settle the work before the next push.';
+  document.getElementById('rend-sub').textContent = 'Judges turn in their cards for the round.';
+  updateScorecardOverlay(round);
   overlay.classList.add('show');
-  window.setTimeout(() => overlay.classList.remove('show'), Math.max(450, 850 / state.speed));
+  // Longer hold so the audience can read scorecards.
+  window.setTimeout(() => overlay.classList.remove('show'), Math.max(1600, 2400 / state.speed));
 }
 
 function showOutcome() {
@@ -499,6 +721,7 @@ function finish(winnerCorner, method, detail) {
 }
 
 function applyStep(step) {
+  audioForStep(step);
   if (step.redState) {
     state.fighterState.red = clone(step.redState);
   }
@@ -510,6 +733,10 @@ function applyStep(step) {
   state.round = step.round ?? state.round;
   state.phase = step.phase ?? 'fighting';
   state.timeRemaining = parseClock(step.time);
+  state.groundPosition = step.groundPosition ?? null;
+  state.groundTop = step.groundTop ?? null;
+  state.momentum = step.momentum ?? state.momentum ?? 0;
+  state.foul = step.foul ?? null;
   appendReplayEvent(step);
 
   if (step.corner === 'red' || step.corner === 'blue') {
@@ -520,7 +747,19 @@ function applyStep(step) {
     showRoundBreak(step.round);
   }
 
+  if (step.foul) {
+    flashFoul();
+  }
+
   renderAll();
+}
+
+function flashFoul() {
+  const canvas = document.getElementById('cage-canvas');
+  canvas.classList.remove('foul-flash');
+  void canvas.offsetWidth;
+  canvas.classList.add('foul-flash');
+  window.setTimeout(() => canvas.classList.remove('foul-flash'), 700);
 }
 
 function clearTimer() {
@@ -641,6 +880,10 @@ function play() {
   hideOutcome();
   renderTransport();
   clearTimer();
+  // Opening bell + crowd ambience as the fight starts.
+  audio('walkoutDrums', false);
+  audio('crowdMurmur', true);
+  audio('bell');
   state.timer = window.requestAnimationFrame(stepPlaybackFrame);
 }
 
@@ -673,6 +916,9 @@ function setVenueOptions(allowedVenues) {
 function loadReplay(replay) {
   pause();
   clearReplayUi();
+  // Pre-fight: walkout drums + crowd murmur ambience.
+  audio('walkoutDrums', true);
+  audio('crowdMurmur', true);
 
   state.titleEyebrow = replay?.titleEyebrow || 'Live Fight';
   state.scorecards = clone(replay?.scorecards || DEFAULT_SCORECARDS);
@@ -713,17 +959,25 @@ function getState() {
 }
 
 function bindEvents() {
-  document.getElementById('btn-play-replay').addEventListener('click', play);
-  document.getElementById('btn-pause-replay').addEventListener('click', pause);
+  document.getElementById('btn-play-replay').addEventListener('click', () => {
+    audio('ui', 'confirm');
+    play();
+  });
+  document.getElementById('btn-pause-replay').addEventListener('click', () => {
+    audio('ui', 'cancel');
+    pause();
+  });
 
   document.querySelectorAll('[data-speed]').forEach(button => {
     button.addEventListener('click', () => {
+      audio('ui', 'click');
       setSpeed(Number(button.dataset.speed));
     });
   });
 
   document.querySelectorAll('[data-venue]').forEach(button => {
     button.addEventListener('click', () => {
+      audio('ui', 'click');
       setVenue(button.dataset.venue);
     });
   });
@@ -745,8 +999,22 @@ window.OctagonSim = {
   getState
 };
 
+const DESIGN_WIDTH = 1400;
+const DESIGN_HEIGHT = 880;
+
+function applyAppScale() {
+  const viewport = document.querySelector('.app-viewport');
+  if (!viewport) return;
+  const w = viewport.clientWidth || window.innerWidth;
+  const h = viewport.clientHeight || window.innerHeight;
+  const scale = Math.min(w / DESIGN_WIDTH, h / DESIGN_HEIGHT);
+  document.documentElement.style.setProperty('--app-scale', scale.toFixed(4));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   bindEvents();
+  applyAppScale();
+  window.addEventListener('resize', applyAppScale);
   loadReplay({
     venue: 'local',
     allowedVenues: ['local', 'regional', 'stadium'],

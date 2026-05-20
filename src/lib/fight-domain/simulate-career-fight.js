@@ -4,6 +4,30 @@ import { clamp, getAttributeAverage } from '../utils/calculations.js';
 import { formatMoney } from '../utils/formatters.js';
 import { getAllowedVenueTiers, getDefaultVenueTier } from './venues.js';
 import { pickMove, pickRange } from '../domain/move-selector.js';
+import {
+    getPosition,
+    getGrapplingScore,
+    pickInitialTop,
+    resolvePositionTransition,
+    isReversal
+} from './ground-positions.js';
+import {
+    pickSubmissionAttempt,
+    resolveSubmissionAttempt
+} from './submission-system.js';
+import {
+    maybeGenerateFoul,
+    resolveFoulIntervention,
+    describeIntervention
+} from './fouls-system.js';
+import {
+    evaluateRefereeStoppage,
+    evaluateDoctorStoppage,
+    getLateFightComeback,
+    updateMomentum,
+    describeMomentum,
+    getCutSeverity
+} from './stoppage-system.js';
 
 function countryCodeToFlagEmoji(code) {
     if (!code || typeof code !== 'string' || code.length !== 2) {
@@ -425,6 +449,36 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
     // Retreat state persists across steps so cage-cutting reads correctly.
     const retreatState = { red: false, blue: false, redWall: null, blueWall: null };
 
+    // Grappling / ground state — current position, who's on top, how
+    // long they've held it, and the running fouls tally.
+    const grappleScores = {
+        red: getGrapplingScore(player.stats),
+        blue: getGrapplingScore(opponent.stats)
+    };
+    const subScores = {
+        red: (player.stats.submissionOffense || 50),
+        blue: (opponent.stats.submissionOffense || 50)
+    };
+    const subDefense = {
+        red: (player.stats.submissionDefense || 50),
+        blue: (opponent.stats.submissionDefense || 50)
+    };
+    const groundState = {
+        active: false,
+        positionKey: 'NEUTRAL_GUARD',
+        topCorner: 'red',
+        holdSteps: 0
+    };
+    const foulHistory = { red: [], blue: [] };
+    const pointDeductions = { red: 0, blue: 0 };
+    let momentum = 0;
+    // Track how many consecutive steps each fighter has spent hurt
+    // without responding — referee stoppage trigger.
+    const hurtStreak = { red: 0, blue: 0 };
+    const responded = { red: true, blue: true };
+    // Optional early stoppage discovered mid-loop (ref/doctor/dq).
+    let earlyStoppage = null;
+
     const openingPositions = getExchangePositions({
         round: 1, step: 0, aggressor: 'red', isFinish: false, range: 'Mid',
         aggressorProfile: playerProfile, defenderProfile: opponentProfile
@@ -444,35 +498,86 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
         const roundKnockdowns = { red: 0, blue: 0 };
 
         for (let step = 0; step < stepCount; step += 1) {
+            if (earlyStoppage) break;
             const isFinish = Boolean(methodInfo.round && round === methodInfo.round && step === stepCount - 1);
-            const aggressor = isFinish
+            let aggressor = isFinish
                 ? winnerCorner
                 : (round + step) % 2 === 0
                     ? (winnerCorner === 'draw' ? 'red' : winnerCorner)
                     : (winnerCorner === 'draw' ? 'blue' : (winnerCorner === 'red' ? 'blue' : 'red'));
-            const defender = aggressor === 'red' ? 'blue' : 'red';
-            const attackerState = aggressor === 'red' ? redState : blueState;
-            const defenderState = defender === 'red' ? redState : blueState;
-            const aggressorFingerprint = aggressor === 'red' ? playerFingerprint : opponentFingerprint;
-            const hasFingerprint = aggressorFingerprint && Object.keys(aggressorFingerprint).length > 0;
+            let defender = aggressor === 'red' ? 'blue' : 'red';
+            let attackerState = aggressor === 'red' ? redState : blueState;
+            let defenderState = defender === 'red' ? redState : blueState;
+            let aggressorFingerprint = aggressor === 'red' ? playerFingerprint : opponentFingerprint;
+            let hasFingerprint = aggressorFingerprint && Object.keys(aggressorFingerprint).length > 0;
 
             // Pick a real move when we have a fingerprint; otherwise
             // fall back to the legacy generic phrase pool.
-            const range = isFinish
+            let range = isFinish
                 ? (getFinishRange(methodInfo.method) || pickRange({ fingerprint: aggressorFingerprint }))
                 : pickRange({ fingerprint: aggressorFingerprint });
+
+            // Ground-game continuity: if we're already on the ground,
+            // stay there for at least one more step (positional grappling
+            // flow). Exit only on neutralizing scrambles handled below.
+            if (groundState.active && !isFinish && Math.random() < 0.7) {
+                range = 'Ground';
+            }
+
+            // When entering Ground or Clinch, initialize the position
+            // system and reassign aggressor to whichever corner won the
+            // entry — i.e. the top fighter, not the corner who happened
+            // to be on the alternating "aggressor" tick.
+            if ((range === 'Ground' || range === 'Clinch') && !groundState.active) {
+                groundState.active = true;
+                groundState.positionKey = range === 'Clinch' ? 'CLINCH_OVER_UNDER' : 'NEUTRAL_GUARD';
+                groundState.topCorner = pickInitialTop({
+                    aggressor,
+                    redGrapple: grappleScores.red,
+                    blueGrapple: grappleScores.blue
+                });
+                groundState.holdSteps = 0;
+            }
+            if (range !== 'Ground' && range !== 'Clinch' && groundState.active) {
+                // Scramble back to the feet — reset ground state.
+                groundState.active = false;
+                groundState.positionKey = 'NEUTRAL_GUARD';
+                groundState.holdSteps = 0;
+            }
+            if (groundState.active) {
+                aggressor = groundState.topCorner;
+                defender = aggressor === 'red' ? 'blue' : 'red';
+                attackerState = aggressor === 'red' ? redState : blueState;
+                defenderState = defender === 'red' ? redState : blueState;
+                aggressorFingerprint = aggressor === 'red' ? playerFingerprint : opponentFingerprint;
+                hasFingerprint = aggressorFingerprint && Object.keys(aggressorFingerprint).length > 0;
+            }
+
             // AI urgency: scoreLead positive when aggressor is ahead on
             // damage this fight, negative when behind. Stamina drops over
             // the fight and rises slightly between rounds.
             const scoreLead = aggressor === 'red'
                 ? (100 - blueState.hp) - (100 - redState.hp)
                 : (100 - redState.hp) - (100 - blueState.hp);
-            const aggression = isFinish ? 0.95 : getAggression({
+
+            // Late-fight comeback overlay — trailing fighters in the
+            // final stretch swing harder, take more risks, and pile on
+            // damage. Burns stamina faster.
+            const timeRemainingInRound = Math.max(0, 300 - Math.round(((step + 1) / (stepCount + 1)) * 282));
+            const comeback = getLateFightComeback({
+                round,
+                totalRounds: resolvedRounds,
+                timeRemainingInRound,
+                scoreLead,
+                fighterHP: attackerState.hp
+            });
+
+            const aggression = isFinish ? 0.95 : Math.min(0.99, getAggression({
                 round,
                 totalRounds: resolvedRounds,
                 scoreLead,
                 stamina: attackerState.stm
-            });
+            }) + comeback.aggressionBonus);
 
             const realMove = hasFingerprint
                 ? pickMove({
@@ -486,11 +591,119 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 })
                 : null;
 
-            const attackText = realMove
-                ? `${getActionVerb(realMove)} a ${realMove.Move}`
-                : (isFinish
-                    ? pickCommentary(actionPools.finish)
-                    : pickCommentary(actionPools[aggressor]));
+            // === Grappling resolution ===
+            // On a ground/clinch step, the simulator first asks: does
+            // the top fighter try a submission this beat? If yes, the
+            // step is the submission attempt (tap / escape / reversal /
+            // hold). Otherwise the step resolves a position transition
+            // and ground striking on top.
+            let groundEvent = null;
+            if (groundState.active && !isFinish) {
+                const submissionTry = pickSubmissionAttempt({
+                    positionKey: groundState.positionKey,
+                    attackerSubScore: subScores[aggressor],
+                    attackerStamina: attackerState.stm,
+                    holdSteps: groundState.holdSteps
+                });
+
+                if (submissionTry) {
+                    const outcome = resolveSubmissionAttempt({
+                        submission: submissionTry,
+                        positionKey: groundState.positionKey,
+                        attackerSubScore: subScores[aggressor],
+                        defenderSubDefense: subDefense[defender],
+                        defenderStamina: defenderState.stm,
+                        defenderHP: defenderState.hp
+                    });
+
+                    groundEvent = {
+                        kind: 'submission',
+                        attempt: submissionTry,
+                        outcome,
+                        text: outcome.description
+                    };
+
+                    // Apply outcome-specific position/momentum shifts.
+                    if (outcome.outcome === 'tap') {
+                        // Real-time submission finish — overrides the
+                        // pre-rolled methodInfo and ends the fight here.
+                        earlyStoppage = {
+                            type: 'SUB',
+                            method: 'Submission',
+                            detail: `Submission · ${submissionTry.label}`,
+                            winner: aggressor,
+                            reason: outcome.description,
+                            round,
+                            time: getTimeForStep(300, step, stepCount, false, null)
+                        };
+                    } else if (outcome.outcome === 'reversal') {
+                        // Failed submission — defender sweeps to top.
+                        groundState.topCorner = defender;
+                        groundState.positionKey = 'NEUTRAL_GUARD';
+                        groundState.holdSteps = 0;
+                    } else if (outcome.outcome === 'escape') {
+                        // Defender escapes the lock but stays grounded.
+                        // The submission's failure penalty downgrades the
+                        // attacker's position.
+                        const pos = getPosition(groundState.positionKey);
+                        if (pos.transitionsDown.length > 0 && submissionTry.failPositionPenalty >= 0.5) {
+                            groundState.positionKey = pos.transitionsDown[0].to;
+                        }
+                        groundState.holdSteps = 0;
+                    } else {
+                        // 'hold' — count this as continued control.
+                        groundState.holdSteps += 1;
+                    }
+                } else {
+                    // No submission this beat — resolve a position
+                    // transition based on the grappling skill gap.
+                    const grappleDelta = grappleScores[aggressor] - grappleScores[defender]
+                        + ((attackerState.stm - defenderState.stm) * 0.2);
+                    const transition = resolvePositionTransition({
+                        currentPosition: groundState.positionKey,
+                        topCorner: groundState.topCorner,
+                        grappleDelta
+                    });
+                    const prevPos = getPosition(groundState.positionKey);
+                    const nextPos = getPosition(transition.nextPosition);
+                    const reversed = isReversal(groundState.topCorner, transition.nextTop);
+                    groundState.positionKey = transition.nextPosition;
+                    groundState.topCorner = transition.nextTop;
+                    groundState.holdSteps = transition.transitionLabel === 'hold'
+                        ? groundState.holdSteps + 1
+                        : 0;
+
+                    if (reversed) {
+                        groundEvent = {
+                            kind: 'reversal',
+                            text: `reverses position — now in ${nextPos.label}`
+                        };
+                    } else if (transition.transitionLabel === 'advance') {
+                        groundEvent = {
+                            kind: 'advance',
+                            text: `advances to ${nextPos.label}`
+                        };
+                    } else if (transition.transitionLabel === 'escape') {
+                        groundEvent = {
+                            kind: 'escape',
+                            text: `frames a frame — escapes back to ${nextPos.label}`
+                        };
+                    } else if (groundState.holdSteps >= 2) {
+                        groundEvent = {
+                            kind: 'control',
+                            text: `controls from ${prevPos.label}`
+                        };
+                    }
+                }
+            }
+
+            const attackText = groundEvent && groundEvent.text
+                ? groundEvent.text
+                : realMove
+                    ? `${getActionVerb(realMove)} a ${realMove.Move}`
+                    : (isFinish
+                        ? pickCommentary(actionPools.finish)
+                        : pickCommentary(actionPools[aggressor]));
 
             // Damage zone follows the move's Target when available.
             const damageZone = realMove
@@ -504,11 +717,27 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
 
             // Damage scales with the move's Power (1-5) so a Power-5
             // kick lands harder than a Power-2 jab. Finishes keep their
-            // dramatic baseline.
+            // dramatic baseline. Position-based modifiers apply when on
+            // the ground (mount strikes hit harder than guard strikes).
             const movePower = realMove ? (realMove.Power || 3) : 3;
-            const damage = isFinish
+            const positionEdge = groundState.active
+                ? getPosition(groundState.positionKey).groundStrikeEdge
+                : 1;
+            const comebackDamageMult = 1 + comeback.damageBonus;
+            let damage = isFinish
                 ? (methodInfo.method === 'Submission' ? 18 : 28)
-                : 3 + Math.round(movePower * 1.2) + Math.floor(Math.random() * 3);
+                : Math.round((3 + Math.round(movePower * 1.2) + Math.floor(Math.random() * 3))
+                    * positionEdge * comebackDamageMult);
+
+            // Submission attempts override regular striking damage with
+            // the resolved outcome's damage.
+            if (groundEvent && groundEvent.kind === 'submission') {
+                damage = groundEvent.outcome.damage;
+            } else if (groundEvent && (groundEvent.kind === 'reversal' || groundEvent.kind === 'escape')) {
+                // Position transitions deal small damage from the
+                // scramble itself.
+                damage = Math.min(damage, 4);
+            }
             const positions = getExchangePositions({
                 round,
                 step,
@@ -523,10 +752,146 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 prevBlue: { x: blueState.x, y: blueState.y }
             });
 
+            // === Foul check ===
+            // Look for fouls before resolving damage so the action
+            // pauses cleanly. Only on standup steps — ground fouls are
+            // handled separately by the back-of-head detection.
+            let foulEvent = null;
+            if (!isFinish && !groundEvent) {
+                const foul = maybeGenerateFoul({
+                    move: realMove,
+                    range,
+                    aggressorAggression: aggression,
+                    defenderDown: defenderState.down
+                });
+                if (foul) {
+                    const intervention = resolveFoulIntervention({
+                        foul,
+                        foulHistory: foulHistory[aggressor]
+                    });
+                    foulHistory[aggressor].push({ ...foul, round, time: timeRemainingInRound });
+                    if (intervention.pointsDeducted > 0) {
+                        pointDeductions[aggressor] += intervention.pointsDeducted;
+                    }
+                    if (intervention.intervention === 'dq') {
+                        earlyStoppage = {
+                            type: 'DQ',
+                            method: 'Disqualification',
+                            detail: `DQ · ${foul.label}`,
+                            winner: defender,
+                            reason: describeIntervention({
+                                foul,
+                                intervention: 'dq',
+                                pointsDeducted: 0,
+                                fouledCorner: defender
+                            }),
+                            round,
+                            time: getTimeForStep(300, step, stepCount, false, null)
+                        };
+                    }
+                    foulEvent = {
+                        foul,
+                        intervention,
+                        text: describeIntervention({
+                            foul,
+                            intervention: intervention.intervention,
+                            pointsDeducted: intervention.pointsDeducted,
+                            fouledCorner: defender
+                        })
+                    };
+
+                    // The fouled fighter recovers slightly during the
+                    // pause — reverse a chunk of just-taken damage.
+                    if (foul.damageReverse > 0) {
+                        defenderState.hp = clamp(defenderState.hp + foul.damageReverse, 0, 100);
+                    }
+                    // The foul itself replaces the normal damage step.
+                    damage = 0;
+                }
+            }
+
             attackerState.stm = clamp(attackerState.stm - (isFinish ? 7 : 3 + Math.round(movePower * 0.5)), 8, 100);
             defenderState.hp = clamp(defenderState.hp - damage, 0, 100);
             defenderState.stm = clamp(defenderState.stm - Math.max(2, Math.round(damage * 0.45)), 0, 100);
             defenderState.damage[damageZone] = clamp(defenderState.damage[damageZone] + damage * 1.3, 0, 100);
+
+            // Submission attempt drains the attacker's stamina too.
+            if (groundEvent && groundEvent.kind === 'submission') {
+                attackerState.stm = clamp(attackerState.stm - groundEvent.outcome.staminaCost, 0, 100);
+            }
+
+            // === Momentum tracking ===
+            momentum = updateMomentum({
+                previousMomentum: momentum,
+                damageDealt: damage,
+                aggressor,
+                knockdown: damage >= 22,
+                submissionAttempt: groundEvent && groundEvent.kind === 'submission',
+                foulCalled: Boolean(foulEvent)
+            });
+
+            // === Referee stoppage check ===
+            // Track whether the defender responded — they "responded"
+            // if they took less than 8 damage this beat or if their HP
+            // is still healthy.
+            if (damage >= 8 && defenderState.hp < 30) {
+                hurtStreak[defender] += 1;
+                responded[defender] = false;
+            } else {
+                hurtStreak[defender] = 0;
+                responded[defender] = true;
+            }
+
+            if (!earlyStoppage && !isFinish) {
+                const refStop = evaluateRefereeStoppage({
+                    defenderHP: defenderState.hp,
+                    defenderDown: defenderState.down,
+                    defenderResponded: responded[defender],
+                    consecutiveHurtSteps: hurtStreak[defender],
+                    damageThisStep: damage,
+                    round
+                });
+                if (refStop.stopped) {
+                    earlyStoppage = {
+                        type: refStop.type,
+                        method: refStop.type,
+                        detail: `${refStop.type} · Referee stoppage`,
+                        winner: aggressor,
+                        reason: refStop.reason,
+                        round,
+                        time: getTimeForStep(300, step, stepCount, false, null)
+                    };
+                }
+            }
+
+            // Cut accumulation — every head-shot adds to a running cut
+            // score that doctors can call on.
+            const cutSeverity = getCutSeverity({
+                headDamage: defenderState.damage.head,
+                lastDamage: damage,
+                target: damageZone
+            });
+            defenderState.cutSeverity = cutSeverity;
+            if (!earlyStoppage && cutSeverity >= 0.9 && damageZone === 'head') {
+                const docStop = evaluateDoctorStoppage({
+                    headDamage: defenderState.damage.head,
+                    bodyDamage: defenderState.damage.body,
+                    cutSeverity,
+                    isRoundBreak: false,
+                    round
+                });
+                if (docStop.stopped) {
+                    earlyStoppage = {
+                        type: 'TKO',
+                        method: 'TKO',
+                        detail: 'TKO · Doctor stoppage (cut)',
+                        winner: aggressor,
+                        reason: docStop.reason,
+                        round,
+                        time: getTimeForStep(300, step, stepCount, false, null)
+                    };
+                }
+            }
 
             // Accumulate per-round stats for the corner note + scoring.
             roundDamage[aggressor] += damage;
@@ -587,27 +952,109 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
 
             const time = getTimeForStep(300, step, stepCount, isFinish, methodInfo.time);
             const fighterName = aggressor === 'red' ? player.name : opponent.name;
-            const styleTag = realMove ? ` (${realMove.Style})` : '';
-            const detailText = isFinish
-                ? `${fighterName} ${attackText}${styleTag}. ${methodInfo.method} ends it in round ${round}.`
-                : `${fighterName} ${attackText}${styleTag}.`;
-            const microText = realMove ? realMove.Move : (isFinish ? methodInfo.method : attackText);
+            const defenderName = defender === 'red' ? player.name : opponent.name;
+            const styleTag = realMove && !groundEvent ? ` (${realMove.Style})` : '';
+
+            // Decorate the position label onto ground events so the
+            // ticker reads "Smith advances to Side Control" etc.
+            const positionTag = groundState.active
+                ? ` · ${getPosition(groundState.positionKey).label}`
+                : '';
+
+            let detailText;
+            let microText;
+            let callout = '';
+            let tone = isFinish ? 'danger' : aggressor;
+
+            if (foulEvent) {
+                detailText = `${fighterName} — ${foulEvent.text}`;
+                microText = foulEvent.foul.label;
+                callout = foulEvent.foul.callout;
+                tone = 'danger';
+            } else if (groundEvent && groundEvent.kind === 'submission') {
+                detailText = `${fighterName} ${groundEvent.outcome.description}${positionTag}.`;
+                microText = groundEvent.attempt.shortLabel;
+                if (groundEvent.outcome.outcome === 'tap') {
+                    callout = `${groundEvent.attempt.shortLabel.toUpperCase()} TAP`;
+                    tone = 'danger';
+                } else if (groundEvent.outcome.outcome === 'reversal') {
+                    callout = 'REVERSAL';
+                    tone = defender;
+                } else if (groundEvent.outcome.outcome === 'escape') {
+                    callout = 'ESCAPE';
+                } else {
+                    callout = 'SUB ATTEMPT';
+                }
+            } else if (groundEvent) {
+                detailText = `${fighterName} ${groundEvent.text}.`;
+                microText = getPosition(groundState.positionKey).shortLabel;
+                callout = groundEvent.kind === 'advance'
+                    ? `→ ${getPosition(groundState.positionKey).shortLabel.toUpperCase()}`
+                    : groundEvent.kind === 'reversal'
+                        ? 'SWEEP'
+                        : '';
+                if (groundEvent.kind === 'reversal') tone = aggressor;
+            } else {
+                detailText = isFinish
+                    ? `${fighterName} ${attackText}${styleTag}. ${methodInfo.method} ends it in round ${round}.`
+                    : `${fighterName} ${attackText}${styleTag}.`;
+                microText = realMove ? realMove.Move : (isFinish ? methodInfo.method : attackText);
+                callout = isFinish ? methodInfo.method.toUpperCase() : (damage >= 8 ? 'Clean Shot' : '');
+            }
+
+            // Comeback tag for trailing fighters in late rounds.
+            if (comeback.label && damage >= 6 && !foulEvent) {
+                callout = comeback.label.toUpperCase();
+                tone = 'danger';
+            }
+
+            // Momentum-swing tag — only shown when the swing is large
+            // and on a non-finish exchange.
+            const momentumTag = describeMomentum(momentum);
+            const tickerTextDecorated = momentumTag && !isFinish && !callout && Math.abs(momentum) > 0.5
+                ? `${detailText} ${momentumTag.label}.`
+                : detailText;
 
             timeline.push({
                 round,
                 time,
                 corner: aggressor,
-                tone: isFinish ? 'danger' : aggressor,
-                tickerText: detailText,
+                tone,
+                tickerText: tickerTextDecorated,
                 microText,
-                callout: isFinish ? methodInfo.method.toUpperCase() : (damage >= 8 ? 'Clean Shot' : ''),
-                dramatic: isFinish || (damage >= 8 && dramaticMoments.has(methodInfo.method)),
+                callout,
+                dramatic: isFinish || (damage >= 8 && dramaticMoments.has(methodInfo.method)) || Boolean(foulEvent) || Boolean(earlyStoppage),
                 redState: cloneReplayState(redState),
                 blueState: cloneReplayState(blueState),
-                phase: isFinish ? 'finished' : 'fighting',
-                range
+                phase: isFinish || earlyStoppage ? 'finished' : 'fighting',
+                range,
+                groundPosition: groundState.active ? groundState.positionKey : null,
+                groundTop: groundState.active ? groundState.topCorner : null,
+                foul: foulEvent ? foulEvent.foul.key : null,
+                momentum
             });
+
+            // Real-time stoppage — push a closing event and bail.
+            if (earlyStoppage && !isFinish) {
+                timeline.push({
+                    round: earlyStoppage.round,
+                    time: earlyStoppage.time,
+                    corner: earlyStoppage.winner === 'draw' ? 'gold' : earlyStoppage.winner,
+                    tone: 'danger',
+                    tickerText: earlyStoppage.reason,
+                    microText: earlyStoppage.type,
+                    callout: earlyStoppage.type,
+                    dramatic: true,
+                    redState: cloneReplayState(redState),
+                    blueState: cloneReplayState(blueState),
+                    phase: 'finished',
+                    range
+                });
+                break;
+            }
         }
+
+        if (earlyStoppage) break;
 
         if (round < resolvedRounds && !methodInfo.round) {
             const dominantRange = Object.entries(roundRangeCount)
@@ -629,6 +1076,35 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
             blueState.stm = clamp(blueState.stm + (blueState.hp < 40 ? 8 : 14), 0, 100);
             redState.down = false;
             blueState.down = false;
+            // Ground state resets between rounds.
+            groundState.active = false;
+            groundState.positionKey = 'NEUTRAL_GUARD';
+            groundState.holdSteps = 0;
+
+            // Between-round doctor check — chronic head/body damage at
+            // the bell triggers a corner stoppage.
+            for (const corner of ['red', 'blue']) {
+                const fs = corner === 'red' ? redState : blueState;
+                const docStop = evaluateDoctorStoppage({
+                    headDamage: fs.damage.head,
+                    bodyDamage: fs.damage.body,
+                    cutSeverity: fs.cutSeverity || 0,
+                    isRoundBreak: true,
+                    round
+                });
+                if (docStop.stopped) {
+                    earlyStoppage = {
+                        type: 'TKO',
+                        method: 'TKO',
+                        detail: 'TKO · Doctor stoppage (between rounds)',
+                        winner: corner === 'red' ? 'blue' : 'red',
+                        reason: docStop.reason,
+                        round,
+                        time: '5:00'
+                    };
+                    break;
+                }
+            }
 
             timeline.push({
                 round,
@@ -643,14 +1119,41 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                 blueState: cloneReplayState(blueState),
                 phase: 'between_rounds'
             });
+
+            if (earlyStoppage) {
+                timeline.push({
+                    round: earlyStoppage.round,
+                    time: earlyStoppage.time,
+                    corner: earlyStoppage.winner,
+                    tone: 'danger',
+                    tickerText: earlyStoppage.reason,
+                    microText: 'Doctor stoppage',
+                    callout: 'DOCTOR STOPPAGE',
+                    dramatic: true,
+                    redState: cloneReplayState(redState),
+                    blueState: cloneReplayState(blueState),
+                    phase: 'finished'
+                });
+                break;
+            }
         }
     }
 
     const scorecards = buildScorecards(resultLabel, winnerCorner, totalRounds);
-    const outcome = {
-        winnerCorner,
-        winnerName: resultLabel === 'Draw' ? 'Draw' : winnerCorner === 'red' ? player.name.toUpperCase() : opponent.name.toUpperCase(),
-        method: resultLabel === 'Draw'
+    // Apply running point deductions to the final round of the offender.
+    if (pointDeductions.red > 0 || pointDeductions.blue > 0) {
+        const finalIdx = scorecards.red.length - 1;
+        scorecards.red[finalIdx] = Math.max(7, scorecards.red[finalIdx] - pointDeductions.red);
+        scorecards.blue[finalIdx] = Math.max(7, scorecards.blue[finalIdx] - pointDeductions.blue);
+    }
+
+    // Early stoppage overrides the pre-rolled outcome.
+    const finalWinnerCorner = earlyStoppage
+        ? earlyStoppage.winner
+        : winnerCorner;
+    const finalMethod = earlyStoppage
+        ? earlyStoppage.type
+        : resultLabel === 'Draw'
             ? 'Draw'
             : methodInfo.method === 'Submission'
                 ? 'SUB'
@@ -658,10 +1161,21 @@ function buildReplay({ player, opponent, contract, fightNight, resultLabel, meth
                     ? 'TKO'
                     : methodInfo.method.includes('Decision')
                         ? 'Decision'
-                        : 'KO',
-        detail: methodInfo.method,
-        round: methodInfo.round || totalRounds,
-        time: methodInfo.time || '5:00'
+                        : 'KO';
+    const finalDetail = earlyStoppage ? earlyStoppage.detail : methodInfo.method;
+
+    const outcome = {
+        winnerCorner: finalWinnerCorner,
+        winnerName: resultLabel === 'Draw' && !earlyStoppage
+            ? 'Draw'
+            : finalWinnerCorner === 'red'
+                ? player.name.toUpperCase()
+                : opponent.name.toUpperCase(),
+        method: finalMethod,
+        detail: finalDetail,
+        round: earlyStoppage ? earlyStoppage.round : (methodInfo.round || totalRounds),
+        time: earlyStoppage ? earlyStoppage.time : (methodInfo.time || '5:00'),
+        pointDeductions: { ...pointDeductions }
     };
 
     return {
@@ -747,10 +1261,13 @@ function getPreFightAdjustments(preFight) {
     return { playerDelta, opponentDelta, finishBias };
 }
 
-export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint }) {
+export function simulateCareerFight({ player, opponent, contract, fightNight, preFight, playerFingerprint, opponentFingerprint, difficultyBias = 0 }) {
     const adj = getPreFightAdjustments(preFight);
+    // difficultyBias > 0 → opponents play harder (positive opponent delta).
+    // difficultyBias < 0 → easier opponents. NG+ tiers + difficulty setting
+    // both feed into this single knob.
     const playerScore = getCompositeScore(player.stats, getPlayerConditionAdjustment(fightNight) + adj.playerDelta) + ((Math.random() * 6) - 3);
-    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta) + ((Math.random() * 6) - 3);
+    const opponentScore = getCompositeScore(opponent.stats, getOpponentConditionAdjustment(opponent) + adj.opponentDelta + difficultyBias) + ((Math.random() * 6) - 3);
     const scoreGap = Math.abs(playerScore - opponentScore) + adj.finishBias;
 
     let headline;

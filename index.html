@@ -28,6 +28,8 @@
                     <div class="save-status" id="save-status">No save yet</div>
                     <button class="btn ghost small" id="btn-save-game">Save</button>
                     <button class="btn ghost small" id="btn-load-game">Load</button>
+                    <button class="btn ghost small" id="btn-save-manager">Slots</button>
+                    <button class="btn ghost small" id="btn-meta-browser">Meta</button>
                 </div>
             </div>
         </header>
@@ -357,6 +359,45 @@
                 <button class="btn ghost" id="btn-fight-back-profile">Back to Profile</button>
             </div>
         </section>
+
+        <section class="scene" id="scene-post-fight"></section>
+    </div>
+
+    <div class="save-manager-modal" id="save-manager-modal" hidden>
+        <div class="save-manager-backdrop" data-close-save-manager></div>
+        <div class="save-manager-window" role="dialog" aria-modal="true" aria-label="Save manager">
+            <header class="save-manager-head">
+                <div>
+                    <div class="eyebrow">Save Manager</div>
+                    <div class="save-manager-title">Career Save Slots</div>
+                </div>
+                <div class="save-manager-actions">
+                    <button class="btn small" data-action="save-new">New Save</button>
+                    <button class="btn ghost small" data-action="import">Import</button>
+                    <input type="file" id="save-import-input" accept="application/json,.json" hidden>
+                    <button class="btn ghost small" data-close-save-manager>Close</button>
+                </div>
+            </header>
+            <div class="save-manager-body" data-slots-list></div>
+            <footer class="save-manager-foot">
+                <span class="save-manager-note">Saves stay on this device. Export to JSON and import on another browser to move them.</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="meta-browser-modal" id="meta-browser-modal" hidden>
+        <div class="meta-browser-backdrop" data-close-meta-browser></div>
+        <div class="meta-browser-window" role="dialog" aria-modal="true" aria-label="Career meta">
+            <header class="meta-browser-head">
+                <div>
+                    <div class="eyebrow">Meta</div>
+                    <div class="meta-browser-title">Achievements · Leaderboards · Settings</div>
+                </div>
+                <div class="meta-browser-tabs" data-meta-tabs></div>
+                <button class="btn ghost small" data-close-meta-browser>Close</button>
+            </header>
+            <div class="meta-browser-body" data-meta-body></div>
+        </div>
     </div>
 
     <div class="fight-replay-modal" id="fight-replay-modal" hidden>
